@@ -10,6 +10,23 @@ classdef ray
     properties (Access=private)
         dist_to_detector double % distance to the detector
     end
+
+    methods (Access=private)
+        function set_a = get_set_a(self, voxels, v_dims, coord, i_min, i_max, dist_to_detector)
+            % Get the set of a values for a given coordinate - created for speed reasons
+            if abs(dist_to_detector) < 1e-14 % Avoid floating point errors
+                set_a = []; return % No intersections as the ray is parallel to the plane
+            end
+
+            len = i_max - i_min + 1;
+            set_a = zeros(1, len);
+            set_a(1) = (voxels.get_single_coord(coord, i_min) - self.start_point(coord)) ./ dist_to_detector;
+            da = v_dims ./ dist_to_detector;
+            for i = 2:len
+                set_a(i) = set_a(i-1) + da;
+            end
+        end
+    end
     
     methods
         function obj = ray(start_point, direction, dist_to_detector)
@@ -24,21 +41,6 @@ classdef ray
             obj.end_point        = start_point + direction .* dist_to_detector;
 
             obj.energy = 1;
-        end
-
-        function set_a = get_set_a(self, voxels, v_dims, coord, i_min, i_max, dist_to_detector)
-            % Get the set of a values for a given coordinate - created for speed reasons
-            if abs(dist_to_detector) < 1e-14 % Avoid floating point errors
-                set_a = []; return % No intersections as the ray is parallel to the plane
-            end
-
-            len = i_max - i_min + 1;
-            set_a = zeros(1, len);
-            set_a(1) = (voxels.get_single_coord(coord, i_min) - self.start_point(coord)) ./ dist_to_detector;
-            da = v_dims ./ dist_to_detector;
-            for i = 2:len
-                set_a(i) = set_a(i-1) + da;
-            end
         end
 
         function [lengths, indices] = get_intersections(self, voxels)
@@ -88,12 +90,12 @@ classdef ray
             
             % Get the union of the arrays
             %rmmissing is a hack to remove NaNs, need to find a better way
-            a = rmmissing(unique([a_set_x, a_set_y, a_set_z]));
-            a = union(a(a >= a_min & a <= a_max), [a_min, a_max]); % Remove any values outside the range and add the min and max values
+            a = rmmissing(unique([a_set_x, a_set_y, a_set_z, a_min, a_max]));
+            a = a(a >= a_min & a <= a_max); % Remove any values outside the range and add the min and max values
 
             % Calculate the lengths of the intersections and calculate the indices of the intersections
             len_a = length(a);
-            d_12 = sum((self.start_point - self.end_point) .^ 2);
+            d_12 = sqrt(sum((self.start_point - self.end_point) .^ 2));
             lengths = zeros(1, len_a - 1);
             indices = zeros(3, len_a - 1);
             dist_to_voxels = (self.start_point - init_plane) ./ voxels.dimensions;
@@ -103,7 +105,7 @@ classdef ray
                 indices(:, i-1) = 1 + (dist_to_voxels + ((a_i + a_i_1) .* vox_v1_to_v2_2)) ;
                 lengths(i-1) = d_12 * (a_i - a_i_1);
             end
-            indices = min(floor(indices) + 1, index_max);
+            indices = min(floor(indices), index_max);
         end
 
         function mu = calculate_mu (self, voxels)
