@@ -1,10 +1,10 @@
 function func = voxel_box(box_centre, box_size)
     % This function returns a function handle that can be used to create a box of size box_size
-    func = @voxel_cross;
-    function result = voxel_cross(i, j, k)
-        result = zeros(length(i));
-        box_min = box_centre - box_size;
-        box_max = box_centre + box_size;
+    func = @box;
+    box_min = box_centre - box_size/2;
+    box_max = box_centre + box_size/2;
+    function result = box(i, j, k)
+        result = zeros(1, length(i));
         result(                                 ...
             i >= box_min(1) & i <= box_max(1) & ...
             j >= box_min(2) & j <= box_max(2) & ...
