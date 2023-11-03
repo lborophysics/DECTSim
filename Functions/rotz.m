@@ -1,4 +1,4 @@
-function R = zrot(angle)
+function R = rotz(angle)
 arguments
     angle (1,1) double
 end
