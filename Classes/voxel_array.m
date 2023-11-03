@@ -21,8 +21,9 @@ classdef voxel_array
             obj.dimensions = ones(3, 1) * voxel_size;
 
             assert(sum(object_dims ~= 0) == 3, 'There must be at least one length in each dimension')            
-            obj.num_planes = object_dims ./ voxel_size;
+            obj.num_planes = object_dims ./ voxel_size + 1; % +1 to include the last plane (fence post problem)
             
+            % In the future, I need to create this array based on the get_voxel_mu
             obj.get_voxel_mu = get_voxel_mu;
         end
 
@@ -37,7 +38,11 @@ classdef voxel_array
         end
 
         function mu = get_mu(obj, i, j, k)
-            mu = obj.get_voxel_mu(i, j, k);
+            % Convert indices to position at centre of voxel
+            position = obj.get_point_position(i, j, k) + obj.dimensions ./ 2;
+
+            % Get mu at position
+            mu = obj.get_voxel_mu(position(1, :), position(2, :), position(3, :));
         end
     end
 end
