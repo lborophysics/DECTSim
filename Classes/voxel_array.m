@@ -31,6 +31,7 @@ classdef voxel_array
         end
 
         function plane = get_single_coord(obj, coord, index)
+            assert(coord <= 3 && coord >= 1, 'assert:failure', 'coord must be between 1 and 3')
             %assert(index <= obj.num_planes(coord) && index >= 1, 'index must be between 1 and N(coord)')
             plane = obj.array_position(coord) + (index - 1) * obj.dimensions(coord);
         end
