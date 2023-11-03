@@ -10,7 +10,7 @@ classdef curved_detector
     end
 
     methods
-        function obj = detector(vec_to_detector, dist_to_detector, detector_angle, detector_size)
+        function obj = curved_detector(vec_to_detector, dist_to_detector, detector_angle, detector_size)
             arguments
                 vec_to_detector (3, 1) double
                 dist_to_detector       double
@@ -19,7 +19,7 @@ classdef curved_detector
             end
             obj.pixel_angle     = detector_size / dist_to_detector;
             obj.detector_angle  = detector_angle;
-            obj.rot_matrix      = zrot(-detector_angle / 2);
+            obj.rot_matrix      = rotz(-detector_angle / 2);
             obj.vec_to_detector = obj.rot_matrix * vec_to_detector; % rotate to edge of detector
         end
         
