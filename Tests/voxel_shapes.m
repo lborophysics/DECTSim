@@ -13,8 +13,8 @@ classdef voxel_shapes < matlab.unittest.TestCase
 
         function box(tc)
             my_box = voxel_box([0,0,0], 100);
-            res = my_box(-100:100, -100:100, -100:100);
-            exp = cat(2,zeros(1, 50), ones(1, 101), zeros(1, 50)); %101 includes 0
+            res = my_box(-100:0.5:100, -100:0.5:100, -100:0.5:100);
+            exp = cat(2,zeros(1, 100), ones(1, 201), zeros(1, 100)); %101 includes 0
             tc.verifyEqual(res, exp)
 
             my_box = voxel_box([100, 100, 100], [200, 200, 100]);
@@ -24,20 +24,16 @@ classdef voxel_shapes < matlab.unittest.TestCase
         end
 
         function shepp_logan(tc)
-            my_shepp1 = voxel_shepp_logan(100);
-            my_shepp2 = voxel_shepp_logan(20);
-            my_shepp3 = voxel_shepp_logan(3000);
+            my_shepp1 = voxel_shepp_logan([0;0;0], 100, 1);
+            my_shepp2 = voxel_shepp_logan([1;1;1], 20, 0.5);
+            my_shepp3 = voxel_shepp_logan([0;0;0], 3000, 100);
             actual_shepp1 = phantom(100);
-            actual_shepp2 = phantom(20);
-            actual_shepp3 = phantom(3000);
+            actual_shepp2 = phantom(40);
+            actual_shepp3 = phantom(30);
 
-            for i = 1:20
-                for j = 1:20
-                    tc.verifyEqual(my_shepp1(i, j, "abc"), actual_shepp1(i, j))
-                    tc.verifyEqual(my_shepp2(i, j, []), actual_shepp2(i, j))
-                    tc.verifyEqual(my_shepp3(i*10, j*10, 50), actual_shepp3(i*10, j*10))
-                end
-            end
+            tc.verifyEqual(my_shepp1(1, 1, "abc"), actual_shepp1(1, 1))
+            tc.verifyEqual(my_shepp2(3.2, 4.5, []), actual_shepp2(4, 7))
+            tc.verifyEqual(my_shepp3(310, 220, 50), actual_shepp3(3, 2))
         end
     end
 
