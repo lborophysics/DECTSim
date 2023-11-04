@@ -1,5 +1,8 @@
 name: Run MATLAB Tests on GitHub-Hosted Runner
-on: [push, workflow_dispatch]
+on:   
+  pull_request:
+    types:
+      - opened
 jobs:
   my-job:
     name: Run MATLAB Tests and Generate Artifacts
