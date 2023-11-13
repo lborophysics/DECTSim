@@ -1,4 +1,4 @@
-classdef voxel_shapes < matlab.unittest.TestCase
+classdef test_voxel_shapes < matlab.unittest.TestCase
 
     methods (TestClassSetup)
         % Shared setup for the entire test class
