@@ -4,8 +4,8 @@ on:
     branches:
       - main
   pull_request:
-    types:
-      - opened
+    branches:
+      - main
 jobs:
   my-job:
     name: Run MATLAB Tests and Generate Artifacts
