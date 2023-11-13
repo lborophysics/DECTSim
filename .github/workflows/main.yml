@@ -1,5 +1,8 @@
 name: Run MATLAB Tests on GitHub-Hosted Runner
-on:   
+on:
+  push:
+    branches:
+    - dev-josh
   pull_request:
     types:
       - opened
