@@ -35,20 +35,6 @@ classdef curved_detector
             pixel = floor(angle / obj.pixel_angle) + 1;
         end
 
-        function pixel_array = get_pixel_array(obj, ray_array)
-            mu_array = zeros(1, ceil(obj.detector_angle / obj.pixel_angle));
-            num_hits = mu_array;
-            for i = 1:length(ray_array)
-                pixel = obj.get_hit_pixel(ray_array{i}.direction);
-                mu_array(pixel) = mu_array(pixel) + exp(-ray_array{i}.mu);
-                num_hits(pixel) = num_hits(pixel) + ray_array{i}.energy;
-            end
-            pixel_array = zeros(1, length(mu_array));
-            for i = 1:length(mu_array)
-                pixel_array(i) = mu_array(i) * num_hits(i);
-            end 
-        end
-
         function obj = move_detector(obj, new_direction) % How can I make this fast?
             arguments
                 obj           detector
