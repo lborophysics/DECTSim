@@ -1,4 +1,4 @@
-classdef voxel_shapes_tests < matlab.unittest.TestCase
+ classdef voxel_shapes_tests < matlab.unittest.TestCase
 
     methods (TestClassSetup)
         % Shared setup for the entire test class
@@ -31,9 +31,9 @@ classdef voxel_shapes_tests < matlab.unittest.TestCase
             actual_shepp2 = phantom(40);
             actual_shepp3 = phantom(30);
 
-            tc.verifyEqual(my_shepp1(1, 1, "abc"), actual_shepp1(1, 1))
-            tc.verifyEqual(my_shepp2(3.2, 4.5, []), actual_shepp2(4, 7))
-            tc.verifyEqual(my_shepp3(310, 220, 50), actual_shepp3(3, 2))
+            tc.verifyEqual(my_shepp1(0, 0, "abc"), actual_shepp1(50, 50))
+            tc.verifyEqual(my_shepp2(-6.8, -5.5, []), actual_shepp2(4, 7))
+            tc.verifyEqual(my_shepp3(1810, 1720, 50), actual_shepp3(3, 2))
         end
     end
 
