@@ -34,3 +34,4 @@ codegen/
 
 # Profile results
 profile_results/
+coverage_results/
