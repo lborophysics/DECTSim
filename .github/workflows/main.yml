@@ -1,8 +1,13 @@
 name: Run MATLAB Tests on GitHub-Hosted Runner
-on:   
+on:
+  push:
+    branches:
+      - main
   pull_request:
-    types:
-      - opened
+    branches:
+      - main
+  workflow_dispatch:
+
 jobs:
   my-job:
     name: Run MATLAB Tests and Generate Artifacts
@@ -15,5 +20,25 @@ jobs:
       - name: Run tests and generate artifacts
         uses: matlab-actions/run-tests@v1
         with:
+          logging-level: verbose
+          select-by-folder: Tests
           test-results-junit: test-results/results.xml
           code-coverage-cobertura: code-coverage/coverage.xml
+      - name: Code Coverage Report
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: code-coverage/coverage.xml
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '80 90'
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
