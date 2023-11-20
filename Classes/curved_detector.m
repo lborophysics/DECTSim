@@ -37,7 +37,7 @@ classdef curved_detector
 
         function obj = move_detector(obj, new_direction) % How can I make this fast?
             arguments
-                obj           detector
+                obj           curved_detector
                 new_direction (3, 1) double
             end
             obj.vec_to_detector = obj.rot_matrix * new_direction;
