@@ -24,7 +24,7 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(detector.detector_angle, pi/2);
         end
 
-        function test_hit_pixel(tc)
+        function test_hit_curved_pixel(tc)
             init_unit_vector = [1; 0; 0];
             detector = curved_detector([1; 0; 0], 90, pi/2, 18);
 
@@ -36,6 +36,19 @@ classdef detector_tests < matlab.unittest.TestCase
             end
         end
 
-        % function test_rot
+        function test_hit_para_pixel(tc)
+            unit_vector = [1; 0; 0];
+            detector = parallel_detector([0;0;0], unit_vector, 5, 11, 0.1);
+
+            trans_by_pixel = [0; 1; 0] * 0.1;
+            start = [0; -5.45; 0];
+            for i = 1:110
+                my_ray = ray(start, unit_vector, 5);
+                tc.verifyEqual(detector.get_hit_pixel(my_ray), i)
+                start = start + trans_by_pixel;
+            end
+        end
+
+             
     end
 end

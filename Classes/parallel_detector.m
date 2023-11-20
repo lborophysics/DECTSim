@@ -26,7 +26,8 @@ classdef parallel_detector
             obj.detector_width  = detector_width  ;
             obj.detector_centre = source_position + vec_to_detector .* dist_to_detector;
             obj.detector_corner = obj.detector_centre - obj.rotz_90*vec_to_detector.*detector_width/2;
-            obj.num_pixels      = ceil(detector_width / pixel_width);
+            obj.num_pixels      = detector_width / pixel_width;
+            assert(mod(obj.num_pixels, 1) == 0, 'Detector width must be divisible by pixel width');
             
             % Produce a function which returns the vectors in which rays should be to hit all the pixels
 
@@ -42,8 +43,12 @@ classdef parallel_detector
             % Actually I need to implement an algorithm with fewer assumptions, 
             % remove dependence on source and depend on the unit vector instead, 
             % which comes with a start point!!
+            assert(sum((ray_instance.end_point - obj.detector_centre) ~= 0) == 1, 'Ray does not hit detector plane')
+            
             corner_to_ray = norm(ray_instance.end_point - obj.detector_corner);
-            pixel = ceil(round(corner_to_ray / obj.pixel_width, 12));
+            assert(corner_to_ray > 0 && corner_to_ray < obj.detector_width, 'Ray does not hit detector')
+            
+            pixel = floor(round(corner_to_ray / obj.pixel_width, 12)) + 1;
         end
 
         function obj = rotate_detector(obj, angle) % How can I make this fast?
