@@ -21,7 +21,7 @@ jobs:
         uses: matlab-actions/run-tests@v1
         with:
           logging-level: verbose
-          select-by-folder: Tests
+          select-by-folder: tests
           test-results-junit: test-results/results.xml
           code-coverage-cobertura: code-coverage/coverage.xml
       - name: Code Coverage Report
