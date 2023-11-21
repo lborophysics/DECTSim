@@ -106,6 +106,7 @@ classdef ray
                 lengths(i-1) = d_12 * (a_i - a_i_1);
             end
             indices = min(floor(indices), index_max);
+            % indices = indices(indices > 0 & indices <= voxels.num_planes); % Remove any indices outside the range
         end
 
         function mu = calculate_mu (self, voxels)
