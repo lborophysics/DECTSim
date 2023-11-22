@@ -70,19 +70,6 @@ classdef detector_tests < matlab.unittest.TestCase
             end
         end
 
-        function test_hit_para_pixel(tc)
-            unit_vector = [0; -1; 0];
-            detector = parallel_detector(2, 11, 0.1, 0);
-
-            trans_by_pixel = [1; 0; 0] * 0.1;
-            start = [-5.45; 1; 0];
-            for i = 1:110
-                my_ray = ray(start, unit_vector, 2);
-                tc.verifyEqual(detector.get_hit_pixel(my_ray), i)
-                start = start + trans_by_pixel;
-            end
-        end
-
         function test_para_ray_gen(tc)
             unit_vector = [0; -1; 0];
             detector = parallel_detector(2, 11, 0.1, 0);

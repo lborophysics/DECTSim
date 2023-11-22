@@ -33,20 +33,6 @@ classdef parallel_detector < detector
             self.num_rotations = ceil(pi / rotation_angle);
         end
 
-%        Redundant???
-         function pixel = get_hit_pixel(self, ray_instance)
-            arguments
-                self          parallel_detector
-                ray_instance  ray
-            end
-            assert(sum((ray_instance.end_point - self.centre) ~= 0) == 1, 'Ray does not hit detector line')
-            
-            corner_to_ray = norm(ray_instance.end_point - self.corner);
-            assert(corner_to_ray > 0 && corner_to_ray < self.width, 'Ray does not hit detector')
-            
-            pixel = floor(round(corner_to_ray / self.pixel_width, 12)) + 1;
-        end 
-
         function scan_angles = get_scan_angles(self)
             % Get the angles at which the detector should be rotated to scan the object (in degrees)
             scan_angles = rad2deg(linspace(0, pi, self.num_rotations+1));
