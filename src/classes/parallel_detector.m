@@ -1,48 +1,31 @@
 classdef parallel_detector < detector
    
-    properties(Access = protected)
+    properties
+        centre           (3, 1) double
         corner           (3, 1) double
-        detector_vec     (3, 1) double = [1;0;0] % Vector from corner to corner of detector
-        to_source_vec    (3, 1) double = [0;1;0] % Vector from source to centre of detector
-        dist_to_detector        double
-        rot_mat          (3, 3) double
-        rotz90           (3, 3) double = rotz(pi/2)
+        width            (1, 1) double
+        pixel_width      (1, 1) double        
+        detector_vec     (3, 1) double = [1;0;0] % Vector from left to right corner of detector
     end
 
     methods
-        function self = parallel_detector(dist_to_detector, detector_width, pixel_width, rotation_angle)
+        function self = parallel_detector(dist_to_detector, detector_length, pixel_width, rotation_angle)
             arguments
-                dist_to_detector double
-                detector_width   double
-                pixel_width      double
-                rotation_angle   double
+                dist_to_detector  double
+                detector_length   double
+                pixel_width       double
+                rotation_angle    double = pi/180
             end
-            % Detector Properties
-            self.pixel_width      = pixel_width     ;
-            self.width            = detector_width  ;
-            self.dist_to_detector = dist_to_detector;
-            self.num_pixels       = detector_width / pixel_width;
-            assert(mod(self.num_pixels, 1) == 0, 'Detector width must be divisible by pixel width');
+            self@detector(dist_to_detector, rotation_angle, detector_length / pixel_width, pi);
+            self.width       = detector_length;
+            self.pixel_width = pixel_width;
             
             % Only true for initial configuration
             self.centre = self.to_source_vec * -dist_to_detector/2;
-            self.corner = self.centre - self.detector_vec * detector_width/2;
-
-            % Define how the detector should be rotated
-            self.rot_mat = rotz(rotation_angle);
-            self.num_rotations = ceil(pi / rotation_angle);
-        end
-
-        function scan_angles = get_scan_angles(self)
-            % Get the angles at which the detector should be rotated to scan the object (in degrees)
-            scan_angles = rad2deg(linspace(0, pi, self.num_rotations+1));
-            scan_angles = scan_angles(1:end-1);
+            self.corner = self.centre - self.detector_vec * self.width/2;
         end
 
         function self = rotate(self) % How can I make this fast?
-            arguments 
-                self  parallel_detector
-            end
             % Rotate the detector and the source (better to do this than recalculate the source position?)
             self.detector_vec  = self.rot_mat * self.detector_vec;
             self.to_source_vec = self.rot_mat * self.to_source_vec;
@@ -60,12 +43,22 @@ classdef parallel_detector < detector
                 ray_per_pixel  int32             = 1
             end
             assert(nargin==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
+
+            % Cache some variables to make the function faster
+            corner           = self.corner; 
+            detector_vec     = self.detector_vec;
+            pixel_width      = self.pixel_width;
+            dist_to_detector = self.dist_to_detector;
+            to_source_vec    = self.to_source_vec;
+            num_pixels       = self.num_pixels;
+
+            % Create the function which returns the rays
             ray_generator = @generator;
             function xray = generator(pixel)
-                assert(pixel <= self.num_pixels, 'Pixel number exceeds number of pixels in detector')
-                pixel_centre = self.corner + self.detector_vec .* (pixel - 0.5) * self.pixel_width;
-                source_position = pixel_centre + self.to_source_vec * self.dist_to_detector;
-                xray = ray(source_position, -self.to_source_vec, self.dist_to_detector);
+                assert(pixel <= num_pixels && pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
+                pixel_centre = corner + detector_vec .* (pixel - 0.5) * pixel_width;
+                source_position = pixel_centre + to_source_vec * dist_to_detector;
+                xray = ray(source_position, -to_source_vec, dist_to_detector);
             end
         end
     end
