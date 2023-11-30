@@ -11,7 +11,7 @@ classdef ray
         dist_to_detector double % distance to the detector
     end
 
-    methods (Access=private)
+    methods (Access=protected)
         function set_a = get_set_a(self, voxels, v_dims, coord, i_min, i_max, dist_to_detector)
             % Get the set of a values for a given coordinate - created for speed reasons
             if abs(dist_to_detector) < 1e-14 % Avoid floating point errors
@@ -49,13 +49,16 @@ classdef ray
                 voxels voxel_array
             end
             % Get the minimum and maximum parameters of the array
-            v1_to_v2 = self.end_point - self.start_point; % Vector from v1 to v2
+            ray_start = self.start_point;
+            v1_to_v2 = self.end_point - ray_start; % Vector from v1 to v2
+            dims = voxels.dimensions;
+            %Can this be simplified when the ray is parallel to 2 planes?
 
-            init_plane = voxels.get_point_position(1, 1, 1);
-            last_plane = voxels.get_point_position(voxels.num_planes(1), voxels.num_planes(2), voxels.num_planes(3));
+            init_plane = voxels.get_point_position([1; 1; 1]);
+            last_plane = voxels.get_point_position(voxels.num_planes);
             
-            a1 = (init_plane - self.start_point) ./ v1_to_v2;
-            an = (last_plane - self.start_point) ./ v1_to_v2;
+            a1 = (init_plane - ray_start) ./ v1_to_v2;
+            an = (last_plane - ray_start) ./ v1_to_v2;
 
             a_min = max([0, min(a1(1), an(1)), min(a1(2), an(2)), min(a1(3), an(3))]);
             a_max = min([1, max(a1(1), an(1)), max(a1(2), an(2)), max(a1(3), an(3))]);
@@ -73,20 +76,20 @@ classdef ray
             % Ensure that the index is not less than 1 (this can happen due to floating point errors)
             index_min = max(                                                                         ...
                 floor(voxels.num_planes -                                                            ... 
-                    (last_plane - self.start_point - a_min_coord .* v1_to_v2) ./ voxels.dimensions), ...
+                    (last_plane - ray_start - a_min_coord .* v1_to_v2) ./ dims), ...
                 [1;1;1]                                                                              ...
                 );
 
-            index_max = min(                                                                         ...
+            index_max = min(                                                 ...
                 ceil(1 +                                                                             ...    
-                    (self.start_point - init_plane + a_max_coord .* v1_to_v2) ./ voxels.dimensions), ...
+                    (ray_start - init_plane + a_max_coord .* v1_to_v2) ./ dims), ...
                 voxels.num_planes                                                                    ...
                 );
             
             % Get the intersection points - this is faster than a for loop
-            a_set_x = self.get_set_a(voxels, voxels.dimensions(1), 1, index_min(1), index_max(1), v1_to_v2(1));
-            a_set_y = self.get_set_a(voxels, voxels.dimensions(2), 2, index_min(2), index_max(2), v1_to_v2(2));
-            a_set_z = self.get_set_a(voxels, voxels.dimensions(3), 3, index_min(3), index_max(3), v1_to_v2(3));
+            a_set_x = self.get_set_a(voxels, dims(1), 1, index_min(1), index_max(1), v1_to_v2(1));
+            a_set_y = self.get_set_a(voxels, dims(2), 2, index_min(2), index_max(2), v1_to_v2(2));
+            a_set_z = self.get_set_a(voxels, dims(3), 3, index_min(3), index_max(3), v1_to_v2(3));
             
             % Get the union of the arrays
             %rmmissing is a hack to remove NaNs, need to find a better way
@@ -95,17 +98,20 @@ classdef ray
 
             % Calculate the lengths of the intersections and calculate the indices of the intersections
             len_a = length(a);
-            d_12 = sqrt(sum((self.start_point - self.end_point) .^ 2));
+            d_12 = norm(v1_to_v2);
             lengths = zeros(1, len_a - 1);
             indices = zeros(3, len_a - 1);
-            dist_to_voxels = (self.start_point - init_plane) ./ voxels.dimensions;
-            vox_v1_to_v2_2 = v1_to_v2 ./ (2 .* voxels.dimensions);
-            for i = 2:len_a
-                a_i = a(i); a_i_1 = a(i-1); % Pre-access the values to speed up the code
-                indices(:, i-1) = 1 + (dist_to_voxels + ((a_i + a_i_1) .* vox_v1_to_v2_2)) ;
-                lengths(i-1) = d_12 * (a_i - a_i_1);
+            dist_to_voxels = (ray_start - init_plane) ./ dims;
+            vox_v1_to_v2_2 = v1_to_v2 ./ (2 .* dims);
+            a_1 = a(2:end);
+            parfor i = 1:len_a-1
+                a_i = a_1(i); a_i_1 = a(i); % Pre-access the values to speed up the code
+                indices(:, i) = 1 + (dist_to_voxels + ((a_i + a_i_1) .* vox_v1_to_v2_2));
+                lengths(i) = d_12 * (a_i - a_i_1);
             end
             indices = min(floor(indices), index_max);
+            indices = indices(:, lengths > 1e-14); % Remove any indices with a length of 0 (this can happen due to floating point errors)
+            lengths = lengths(lengths > 1e-14); % Remove any lengths of 0 (this can happen due to floating point errors)
             % indices = indices(indices > 0 & indices <= voxels.num_planes); % Remove any indices outside the range
         end
 
