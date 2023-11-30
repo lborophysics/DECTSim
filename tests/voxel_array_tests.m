@@ -47,28 +47,28 @@ classdef voxel_array_tests < matlab.unittest.TestCase
 
         function test_get_point_position(tc)
             % Verify get_point_position
-            tc.verifyEqual(tc.test_obj1.get_point_position(1, 1, 1), [-5; -5; -5]);
-            tc.verifyEqual(tc.test_obj1.get_point_position(1, 2, 3), [-5; -4; -3]);
-            tc.verifyEqual(tc.test_obj1.get_point_position(11, 10, 9), [5; 4; 3]);
-            tc.verifyEqual(tc.test_obj1.get_point_position(...
+            tc.verifyEqual(tc.test_obj1.get_point_position([1; 1; 1]), [-5; -5; -5]);
+            tc.verifyEqual(tc.test_obj1.get_point_position([1; 2; 3]), [-5; -4; -3]);
+            tc.verifyEqual(tc.test_obj1.get_point_position([11; 10; 9]), [5; 4; 3]);
+            tc.verifyEqual(tc.test_obj1.get_points_position(...
             [1, 1, 11], [1, 2, 10], [1, 3, 9]), [-5, -5, 5; -5, -4, 4; -5, -3, 3;]);
             
-            tc.verifyEqual(tc.test_obj2.get_point_position(1, 1, 1), [-5; -5; -5]);
-            tc.verifyEqual(tc.test_obj2.get_point_position(1, 2, 3), [-5; -4.5; -4]);
-            tc.verifyEqual(tc.test_obj2.get_point_position(21, 20, 19), [5; 4.5; 4]);
-            tc.verifyEqual(tc.test_obj2.get_point_position(...
+            tc.verifyEqual(tc.test_obj2.get_point_position([1; 1; 1]), [-5; -5; -5]);
+            tc.verifyEqual(tc.test_obj2.get_point_position([1; 2; 3]), [-5; -4.5; -4]);
+            tc.verifyEqual(tc.test_obj2.get_point_position([21; 20; 19]), [5; 4.5; 4]);
+            tc.verifyEqual(tc.test_obj2.get_points_position(...
             [1, 1, 21], [1, 2, 20], [1, 3, 19]), [-5, -5, 5; -5, -4.5, 4.5; -5, -4, 4;]);
 
-            tc.verifyEqual(tc.test_obj3.get_point_position(1, 1, 1), [-5; -5; -5]);
-            tc.verifyEqual(tc.test_obj3.get_point_position(1, 2, 3), [-5; -4; -3]);
-            tc.verifyEqual(tc.test_obj3.get_point_position(10, 9, 8), [4; 3; 2]);
-            tc.verifyEqual(tc.test_obj3.get_point_position(...
+            tc.verifyEqual(tc.test_obj3.get_point_position([1; 1; 1]), [-5; -5; -5]);
+            tc.verifyEqual(tc.test_obj3.get_point_position([1; 2; 3]), [-5; -4; -3]);
+            tc.verifyEqual(tc.test_obj3.get_point_position([10; 9; 8]), [4; 3; 2]);
+            tc.verifyEqual(tc.test_obj3.get_points_position(...
             [1, 1, 10], [1, 2, 9], [1, 3, 8]), [-5, -5, 4; -5, -4, 3; -5, -3, 2;]);
 
-            tc.verifyEqual(tc.test_obj4.get_point_position(1, 1, 1), [0; -1; -4.5]);
-            tc.verifyEqual(tc.test_obj4.get_point_position(1, 2, 3), [0; 0; -2.5]);
-            tc.verifyEqual(tc.test_obj4.get_point_position(10, 9, 8), [9; 7; 2.5]);
-            tc.verifyEqual(tc.test_obj4.get_point_position(...
+            tc.verifyEqual(tc.test_obj4.get_point_position([1; 1; 1]), [0; -1; -4.5]);
+            tc.verifyEqual(tc.test_obj4.get_point_position([1; 2; 3]), [0; 0; -2.5]);
+            tc.verifyEqual(tc.test_obj4.get_point_position([10; 9; 8]), [9; 7; 2.5]);
+            tc.verifyEqual(tc.test_obj4.get_points_position(...
             [1, 1, 10], [1, 2, 9], [1, 3, 8]), [0, 0, 9; -1, 0, 7; -4.5, -2.5, 2.5;]);
         end
 
@@ -97,10 +97,10 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             for i = 1:3
                 for j = 10:12
                     for k = 5:7
-                        ijk1 = tc.test_obj1.get_point_position(i, j, k) + tc.test_obj1.dimensions/2;
-                        ijk2 = tc.test_obj2.get_point_position(i, j, k) + tc.test_obj2.dimensions/2;
-                        ijk3 = tc.test_obj3.get_point_position(i, j, k) + tc.test_obj3.dimensions/2;
-                        ijk4 = tc.test_obj4.get_point_position(i, j, k) + tc.test_obj4.dimensions/2;
+                        ijk1 = tc.test_obj1.get_point_position([i; j; k]) + tc.test_obj1.dimensions/2;
+                        ijk2 = tc.test_obj2.get_point_position([i; j; k]) + tc.test_obj2.dimensions/2;
+                        ijk3 = tc.test_obj3.get_point_position([i; j; k]) + tc.test_obj3.dimensions/2;
+                        ijk4 = tc.test_obj4.get_point_position([i; j; k]) + tc.test_obj4.dimensions/2;
 
                         tc.verifyEqual(tc.test_obj1.get_mu(i, j, k), ijk1(1) + ijk1(2) + ijk1(3));
                         tc.verifyEqual(tc.test_obj2.get_mu(i, j, k), ijk2(1) + ijk2(2) + ijk2(3));

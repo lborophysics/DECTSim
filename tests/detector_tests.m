@@ -13,27 +13,27 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_curved_init(tc)
             % detector = curved_detector(9, 18, pi/180, pi/2); % using detector width
             detector = curved_detector(9, pi, pi/180, pi/2);
-            tc.verifyEqual(detector.init_to_source_vec, [1; 0; 0], 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.init_source_pos, detector.source_position, 'AbsTol', 1e-15);
             tc.verifyEqual(detector.source_position, [0; 4.5; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_angle, pi/180);
 
             detector = detector.rotate();
-            tc.verifyEqual(detector.init_to_source_vec, [0; 1; 0], 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.init_source_pos, [0; 4.5; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.source_position, [-4.5; 0; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_angle, pi/180);
 
             detector = curved_detector(9, pi, pi/180);
             detector = detector.rotate();
-            tc.verifyEqual(detector.init_to_source_vec, rotz(pi/180)*[1; 0; 0], 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.source_position, 4.5*rotz(pi/2 + pi/180)*[1; 0; 0], 'AbsTol', 1e-15);
 
             % detector = curved_detector(11, 11, pi/30, pi/4); % using detector width
             detector = curved_detector(11, pi/3, pi/30, pi/4);
-            tc.verifyEqual(detector.init_to_source_vec, rotz(-pi/6)*[0; 1; 0], 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.init_source_pos, detector.source_position, 'AbsTol', 1e-15);
             tc.verifyEqual(detector.source_position, [0; 5.5; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_angle, pi/30);
             
             detector = detector.rotate();
-            tc.verifyEqual(detector.init_to_source_vec, rotz(pi/4)*(rotz(-pi/6)*[0; 1; 0]), 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.init_source_pos, [0; 5.5; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.source_position, rotz(pi/4)*[0; 5.5; 0], 'AbsTol', 1e-15); 
             tc.verifyEqual(detector.pixel_angle, pi/30);
         end
@@ -125,6 +125,33 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(image(:, 2), [1-2*sq2/3;1-sq2/3;1;1-sq2/3;1-2*sq2/3], 'AbsTol', 1e-15);
             tc.verifyEqual(image(:, 3), [0;1/sq2;1/sq2;1/sq2;0], 'AbsTol', 1e-15);
             tc.verifyEqual(image(:, 4), [1-2*sq2/3;1-sq2/3;1;1-sq2/3;1-2*sq2/3], 'AbsTol', 1e-15);
+        end
+
+        function test_generate_image_p(tc)
+            detector = parallel_detector(10, 5, 1, pi/4);
+            my_box = voxel_box([0;0;0], [3;3;3]);
+            array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
+            sq2 = sqrt(2);
+            
+            image = detector.generate_image_p(array);
+            tc.verifyEqual(size(image), [5, 4]);
+            tc.verifyEqual(image(:, 1), [0;1/sq2;1/sq2;1/sq2;0], 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 2), [1-2*sq2/3;1-sq2/3;1;1-sq2/3;1-2*sq2/3], 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 3), [0;1/sq2;1/sq2;1/sq2;0], 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 4), [1-2*sq2/3;1-sq2/3;1;1-sq2/3;1-2*sq2/3], 'AbsTol', 1e-15);
+        end
+
+        function test_curved_generate_image_p(tc)
+            dist_to_detector = 10;
+            detector_angle = pi/20;
+            pixel_angle = detector_angle/500;
+            rotation_angle = pi/8;
+            detector = curved_detector(dist_to_detector, detector_angle, pixel_angle, rotation_angle);
+            my_box = voxel_box([0;0;0], [3;3;3]);
+            array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
+            image = detector.generate_image(array);
+            image_p = detector.generate_image_p(array);
+            tc.verifyEqual(image_p, image, 'AbsTol', 1e-14)
         end
     end
 end

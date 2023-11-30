@@ -27,8 +27,12 @@ classdef voxel_array
             obj.get_voxel_mu = get_voxel_mu;
         end
 
-        function position = get_point_position(obj, i, j, k)
-            position = obj.array_position + ([i; j; k] - 1) .* obj.dimensions;
+        function position = get_point_position(obj, indices)
+            position = obj.array_position + (indices - 1) .* obj.dimensions;
+        end
+
+        function position = get_points_position(obj, i, j, k)
+            position = obj.array_position + ([i;j;k] - 1) .* obj.dimensions;
         end
 
         function plane = get_single_coord(obj, coord, index)
@@ -39,7 +43,7 @@ classdef voxel_array
 
         function mu = get_mu(obj, i, j, k)
             % Convert indices to position at centre of voxel
-            position = obj.get_point_position(i, j, k) + obj.dimensions ./ 2;
+            position = obj.get_point_position([i; j; k]) + obj.dimensions ./ 2;
 
             % Get mu at position
             mu = obj.get_voxel_mu(position(1, :), position(2, :), position(3, :));
