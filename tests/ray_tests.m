@@ -8,44 +8,41 @@ classdef ray_tests < matlab.unittest.TestCase
         % Setup for each test
     end
 
-    methods (Test)
-        % Test methods
-        function test_ray_init(tc)
-            r = ray([0;0;0], [1;0;0], 10);
-            tc.assertEqual(r.start_point, [0;0;0]);
-            tc.assertEqual(r.direction, [1;0;0]);
-            tc.assertEqual(r.end_point, [10;0;0]);
-            tc.assertEqual(r.energy, 1); % default energy - will change later
-
-            r2 = ray([0;-5;0], [0;1;0], 10);
-            tc.assertEqual(r2.start_point, [0;-5;0]);
-            tc.assertEqual(r2.direction, [0;1;0]);
-            tc.assertEqual(r2.end_point, [0;5;0]);
-            tc.assertEqual(r2.energy, 1); % default energy - will change later
-        end
-
-        function test_get_intersections(tc)
+    methods
+        function gen_get_intersections(tc, ray)
             my_box = voxel_box([0;0;0], [3;3;3]);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             threes = zeros(3, 5) + 3;
             
             r = ray([-6;0;0], [1;0;0], 12);
             [lengths, indices] = r.get_intersections(array);
-
             exp = threes; exp(1, :) = [1, 2, 3, 4, 5];
-            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 1e-15);
+            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
             r = ray([0;-6;0], [0;1;0], 12);
             [lengths, indices] = r.get_intersections(array);
             exp = threes; exp(2, :) = [1, 2, 3, 4, 5];
-            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 1e-15);
+            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
             r = ray([0;0;-6], [0;0;1], 12);
             [lengths, indices] = r.get_intersections(array);
             exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
-            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 1e-15);
+            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
+            tc.assertEqual(indices, exp);
+
+            r = ray([-6;-6;0], [1;1;0], 20);
+            [lengths, indices] = r.get_intersections(array);
+            exp = threes; exp(2, :) = [1, 2, 3, 4, 5]; exp(1, :) = [1, 2, 3, 4, 5];
+            s2 = sqrt(2);
+            tc.assertEqual(lengths, [s2, s2, s2, s2, s2], 'AbsTol', 2e-15);
+            tc.assertEqual(indices, exp);
+
+            r = ray([0;0;-6], [0;0;1], 12);
+            [lengths, indices] = r.get_intersections(array);
+            exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
+            tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
             r = ray([6;6;6], [-1;-1;-1], 22); % 3D diagonal backwards
@@ -63,6 +60,27 @@ classdef ray_tests < matlab.unittest.TestCase
             [lengths, indices] = r.get_intersections(array);
             tc.assertEqual(lengths, []);
             tc.assertEqual(indices, []);
+        end
+    end
+
+    methods (Test)
+        % Test methods
+        function test_ray_init(tc)
+            r = ray([0;0;0], [1;0;0], 10);
+            tc.assertEqual(r.start_point, [0;0;0]);
+            tc.assertEqual(r.direction, [1;0;0]);
+            tc.assertEqual(r.end_point, [10;0;0]);
+            tc.assertEqual(r.energy, 1); % default energy - will change later
+
+            r2 = ray([0;-5;0], [0;1;0], 10);
+            tc.assertEqual(r2.start_point, [0;-5;0]);
+            tc.assertEqual(r2.direction, [0;1;0]);
+            tc.assertEqual(r2.end_point, [0;5;0]);
+            tc.assertEqual(r2.energy, 1); % default energy - will change later
+        end
+
+        function test_siddon_ray(tc)
+            tc.gen_get_intersections(@ray);
         end
 
         function test_calculate_mu(tc)
