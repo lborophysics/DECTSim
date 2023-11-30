@@ -1,11 +1,13 @@
 classdef detector
     properties (Access=protected) % Do all these need to be stored? Could be calculated on the fly?
-        dist_to_detector (1, 1) double % Distance from source to detector
-        num_pixels       (1, 1) double % Number of pixels in the detector
-        num_rotations    (1, 1) double % Number of rotations around the object
-        rot_mat          (3, 3) double % Matrix for each individual rotation of the detector around the object
-        total_rotation   (1, 1) double % The maximum rotation of the detector around the object
-        to_source_vec    (3, 1) double = [0;1;0] % Vector from source to centre of detector
+        dist_to_detector   (1, 1) double % Distance from source to detector
+        num_pixels         (1, 1) double % Number of pixels in the detector
+        num_rotations      (1, 1) double % Number of rotations around the object
+        rot_mat            (3, 3) double % Matrix for each individual rotation of the detector around the object
+        rot_angle          (1, 1) double
+        total_rotation     (1, 1) double % The maximum rotation of the detector around the object
+        init_to_source_vec (3, 1) double = [0;1;0] % The initial vector from the left edge of the detector to the source
+        to_source_vec      (3, 1) double = [0;1;0] % Vector from source to centre of detector
     end
 
     methods
@@ -27,6 +29,7 @@ classdef detector
             end
 
             % Define how the detector should be rotated
+            self.rot_angle     = rotation_angle;
             self.rot_mat       = rotz(rotation_angle);
             self.num_rotations = ceil(total_rotation / rotation_angle); % default to 180 degrees
         end
@@ -53,6 +56,18 @@ classdef detector
             image = mat2gray(-log(image'));
         end
         
+        function image = generate_image_p(self, voxels)
+            image = zeros(self.num_rotations, self.num_pixels);
+            get_pixel_generator = @self.get_pixel_generator;
+            for i = 1:self.num_rotations
+                pixel_calc = get_pixel_generator(i);
+                parfor j = 1:self.num_pixels
+                    image(i, j) = feval(pixel_calc, j, voxels);
+                end
+            end
+            image = mat2gray(-log(image'));
+        end
+        
         function scan_angles = get_scan_angles(self)
             % Get the angles at which the detector should be rotated to scan the object (in degrees)
             scan_angles = rad2deg(linspace(0, self.total_rotation, self.num_rotations+1));
@@ -62,6 +77,11 @@ classdef detector
     % Protect the following methods?
     
         function ray_generator = get_ray_generator(self, ray_per_pixel)
+            % get_ray_generator  Get a ray generator for this detector template
+            error('Not implemented for base class, must be implemented in subclass');
+        end
+
+        function pixel_generator = get_pixel_generator(self, ray_per_pixel)
             % get_ray_generator  Get a ray generator for this detector template
             error('Not implemented for base class, must be implemented in subclass');
         end
