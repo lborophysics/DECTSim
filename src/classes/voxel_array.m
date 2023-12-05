@@ -3,7 +3,7 @@ classdef voxel_array
         array_position (3, 1) double % position of the top left corner of the array
         num_planes     (3, 1) double % number of planes in each dimension
         dimensions     (3, 1) double % dimensions of each voxel
-        get_voxel_mu   
+        get_voxel_mu
     end
     
     methods
@@ -12,7 +12,7 @@ classdef voxel_array
                 centre       (3, 1) double
                 object_dims  (3, 1) double
                 voxel_size   (1, 1) double
-                get_voxel_mu
+                get_voxel_mu 
             end
             % Constructor method
             obj.array_position = centre - object_dims ./ 2;
@@ -41,12 +41,12 @@ classdef voxel_array
             plane = obj.array_position(coord) + (index - 1) * obj.dimensions(coord);
         end
 
-        function mu = get_mu(obj, i, j, k)
+        function mu = get_mu(obj, i, j, k, energy)
             % Convert indices to position at centre of voxel
             position = obj.get_point_position([i; j; k]) + obj.dimensions ./ 2;
 
             % Get mu at position
-            mu = obj.get_voxel_mu(position(1, :), position(2, :), position(3, :));
+            mu = obj.get_voxel_mu(position(1, :), position(2, :), position(3, :), energy);
         end
     end
 end

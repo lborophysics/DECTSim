@@ -126,7 +126,7 @@ classdef ray
             if isempty(lengths) % No intersections
                 mu = 0;
             else
-                mu = sum(lengths .* voxels.get_mu(indices(1, :), indices(2, :), indices(3, :)));
+                mu = sum(lengths .* voxels.get_mu(indices(1, :), indices(2, :), indices(3, :), self.energy));
             end
         end
 

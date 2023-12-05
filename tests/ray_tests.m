@@ -84,20 +84,20 @@ classdef ray_tests < matlab.unittest.TestCase
         end
 
         function test_calculate_mu(tc)
-            my_box = voxel_box([0;0;0], [3;3;3]);
+            my_box = voxel_box([0;0;0], [3;3;3], @water);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             
             r = ray([-6;0;0], [1;0;0], 12);
-            tc.assertEqual(r.calculate_mu(array), 3);
+            tc.assertEqual(r.calculate_mu(array), 3*water(1));
 
             r = ray([0;-6;0], [0;1;0], 12);
-            tc.assertEqual(r.calculate_mu(array), 3);
+            tc.assertEqual(r.calculate_mu(array), 3*water(1));
 
             r = ray([0;0;-6], [0;0;1], 12);
-            tc.assertEqual(r.calculate_mu(array), 3);
+            tc.assertEqual(r.calculate_mu(array), 3*water(1));
             
             r = ray([6;6;6], [-1;-1;-1], 22); % 3D diagonal backwards
-            tc.assertEqual(r.calculate_mu(array), 3*sqrt(3), 'AbsTol', 5e-15);
+            tc.assertEqual(r.calculate_mu(array), 3*sqrt(3)*water(1), 'AbsTol', 5e-15);
 
             r = ray([6;6;6], [1;1;1], 22); % 3D diagonal away
             tc.assertEqual(r.calculate_mu(array), 0);
