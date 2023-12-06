@@ -4,7 +4,7 @@ function func = voxel_shepp_logan(centre, phantom_size, voxel_size)
     array_size = floor(phantom_size / voxel_size);
     left_corner = centre - phantom_size / 2;
     twoD_phantom = phantom(array_size);
-    function result = shepp_logan(i, j, ~)
+    function result = shepp_logan(i, j, ~, ~)
         % Convert coordinates to indices
         i = floor((i - left_corner(1)) / voxel_size);
         j = floor((j - left_corner(2)) / voxel_size);

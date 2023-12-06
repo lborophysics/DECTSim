@@ -115,7 +115,7 @@ classdef detector_tests < matlab.unittest.TestCase
         
         function test_generate_image(tc)
             detector = parallel_detector(10, 5, 1, pi/4);
-            my_box = voxel_box([0;0;0], [3;3;3]);
+            my_box = voxel_box([0;0;0], [3;3;3], @(e)1);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             sq2 = sqrt(2);
             
@@ -129,7 +129,7 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_generate_image_p(tc)
             detector = parallel_detector(10, 5, 1, pi/4);
-            my_box = voxel_box([0;0;0], [3;3;3]);
+            my_box = voxel_box([0;0;0], [3;3;3], @(e)1);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             sq2 = sqrt(2);
             
@@ -147,7 +147,7 @@ classdef detector_tests < matlab.unittest.TestCase
             pixel_angle = detector_angle/500;
             rotation_angle = pi/8;
             detector = curved_detector(dist_to_detector, detector_angle, pixel_angle, rotation_angle);
-            my_box = voxel_box([0;0;0], [3;3;3]);
+            my_box = voxel_box([0;0;0], [3;3;3], @(e)1);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             image = detector.generate_image(array);
             image_p = detector.generate_image_p(array);
