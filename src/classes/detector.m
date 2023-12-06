@@ -1,4 +1,4 @@
-classdef detector
+classdef (Abstract) detector
     properties (Access=protected) % Do all these need to be stored? Could be calculated on the fly?
         dist_to_detector   (1, 1) double % Distance from source to detector
         num_pixels         (1, 1) double % Number of pixels in the detector
@@ -8,6 +8,12 @@ classdef detector
         total_rotation     (1, 1) double % The maximum rotation of the detector around the object
         init_to_source_vec (3, 1) double = [0;1;0] % The initial vector from the left edge of the detector to the source
         to_source_vec      (3, 1) double = [0;1;0] % Vector from source to centre of detector
+    end
+
+    methods (Abstract)
+        rotate(self)
+        get_ray_generator(self, ray_per_pixel)
+        get_pixel_generator(self, ray_per_pixel)
     end
 
     methods
@@ -34,10 +40,6 @@ classdef detector
             self.num_rotations = ceil(total_rotation / rotation_angle); % default to 180 degrees
         end
         
-        function rotate(self)
-            % rotate  Rotate the detector by one rotation
-            error('Not implemented for base class, must be implemented in subclass');
-        end
 
         function image = generate_image(self, voxels)
             image = zeros(self.num_rotations, self.num_pixels);
@@ -72,18 +74,6 @@ classdef detector
             % Get the angles at which the detector should be rotated to scan the object (in degrees)
             scan_angles = rad2deg(linspace(0, self.total_rotation, self.num_rotations+1));
             scan_angles = scan_angles(1:end-1);
-        end
-
-    % Protect the following methods?
-    
-        function ray_generator = get_ray_generator(self, ray_per_pixel)
-            % get_ray_generator  Get a ray generator for this detector template
-            error('Not implemented for base class, must be implemented in subclass');
-        end
-
-        function pixel_generator = get_pixel_generator(self, ray_per_pixel)
-            % get_ray_generator  Get a ray generator for this detector template
-            error('Not implemented for base class, must be implemented in subclass');
         end
 
         function pixel = detector_response(~, attenuation)
