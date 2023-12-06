@@ -81,6 +81,31 @@
             tc.verifyEqual(my_shepp2(-6.8, -5.5, []), actual_shepp2(4, 7))
             tc.verifyEqual(my_shepp3(1810, 1720, 50), actual_shepp3(3, 2))
         end
+
+        function test_collection(tc)
+            big_box = voxel_box([0,0,0], 10, @(e) 10);
+            med_box = voxel_box([0,0,0], 6, @(e) 5);
+            small_box = voxel_box([0,0,0], 2, @(e) 1);
+            my_collection = voxel_collection(big_box, med_box, small_box);
+            for x = -5:5
+                if abs(x) <= 1
+                    tc.verifyEqual(my_collection(x, 0, 0, 1), 1)
+                elseif abs(x) <= 3
+                    tc.verifyEqual(my_collection(x, 0, 0, 1), 5)
+                else
+                    tc.verifyEqual(my_collection(x, 0, 0, 1), 10)
+                end
+            end
+            for y = -5:5
+                if abs(y) <= 1
+                    tc.verifyEqual(my_collection(0, y, 0, 1), 1)
+                elseif abs(y) <= 3
+                    tc.verifyEqual(my_collection(0, y, 0, 1), 5)
+                else
+                    tc.verifyEqual(my_collection(0, y, 0, 1), 10)
+                end
+            end
+        end
     end
 
 end
