@@ -3,31 +3,39 @@ classdef parallel_detector < detector
     properties
         init_centre       (3, 1) double
         centre            (3, 1) double
-        init_corner       (3, 1) double
-        corner            (3, 1) double
-        width             (1, 1) double
-        pixel_width       (1, 1) double        
+        pixel_dims        (1, 2) double
         init_detector_vec (3, 1) double = [1;0;0] % Vector from left to right corner of detector
         detector_vec      (3, 1) double = [1;0;0] % Vector from left to right corner of detector
     end
+    methods (Access=private, Static)
+        function generator = get_ray_generator_static(ny_pixels, nz_pixels, centre, detector_vec, pixel_width, pixel_height, dist_to_detector, to_source_vec)
+            generator = @get_ray_attrs; % Create the function which returns the rays
+            function [xray] = get_ray_attrs(y_pixel, z_pixel)
+                assert(y_pixel <= ny_pixels && y_pixel > 0 && z_pixel <= nz_pixels && z_pixel > 0, ...
+                    "Pixel number must be between 1 and the number of pixels on the detector.")
+                pixel_centre = centre +  ... 
+                            detector_vec .* (y_pixel - (ny_pixels+1)/2) .* pixel_width + ...
+                            [0;0;pixel_height] .* (z_pixel - (nz_pixels+1)/2);
+                source_position = pixel_centre + to_source_vec * dist_to_detector;
+                xray = ray(source_position, -to_source_vec, dist_to_detector);
+            end
+        end
+    end
 
     methods
-        function self = parallel_detector(dist_to_detector, detector_length, pixel_width, rotation_angle)
+        function self = parallel_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations)
             arguments
-                dist_to_detector  double
-                detector_length   double
-                pixel_width       double
-                rotation_angle    double = pi/180
+                dist_to_detector         double
+                pixel_dims        (1, 2) double
+                n_pixels          (1, 2) double
+                num_rotations            double = 180
             end
-            self@detector(dist_to_detector, rotation_angle, detector_length / pixel_width, pi);
-            self.width       = detector_length;
-            self.pixel_width = pixel_width;
+            self@detector(dist_to_detector, num_rotations, n_pixels, pi);
+            self.pixel_dims = pixel_dims;
             
             % Only true for initial configuration
             self.centre = self.to_source_vec * -dist_to_detector/2;
             self.init_centre = self.centre;
-            self.corner = self.centre - self.detector_vec * self.width/2;
-            self.init_corner = self.corner;
         end
 
         function self = rotate(self) % How can I make this fast?
@@ -35,9 +43,6 @@ classdef parallel_detector < detector
             self.detector_vec  = self.rot_mat * self.detector_vec;
             self.to_source_vec = self.rot_mat * self.to_source_vec;
             self.centre        = self.rot_mat * self.centre;
-
-            % Recalculate the corner
-            self.corner = self.centre - self.detector_vec.*self.width/2;
         end
 
         function ray_generator = get_ray_generator(self, ray_per_pixel)
@@ -49,22 +54,11 @@ classdef parallel_detector < detector
             end
             assert(nargin==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
 
-            % Cache some variables to make the function faster
-            corner           = self.corner; 
-            detector_vec     = self.detector_vec;
-            pixel_width      = self.pixel_width;
-            dist_to_detector = self.dist_to_detector;
-            to_source_vec    = self.to_source_vec;
-            num_pixels       = self.num_pixels;
-
             % Create the function which returns the rays
-            ray_generator = @generator;
-            function xray = generator(pixel)
-                assert(pixel <= num_pixels && pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
-                pixel_centre = corner + detector_vec .* (pixel - 0.5) * pixel_width;
-                source_position = pixel_centre + to_source_vec * dist_to_detector;
-                xray = ray(source_position, -to_source_vec, dist_to_detector);
-            end
+            ray_generator = parallel_detector.get_ray_generator_static(...
+                self.ny_pixels, self.nz_pixels, self.centre, self.detector_vec, ...
+                self.pixel_dims(1), self.pixel_dims(2), self.dist_to_detector, self.to_source_vec...
+            );
         end
         function pixel_generator = get_pixel_generator(self, angle_index, ray_per_pixel)
             % Create a function which returns the rays which should be fired to hit each pixel.
@@ -77,25 +71,21 @@ classdef parallel_detector < detector
             assert(nargin==2, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
             
             if angle_index == 1; rot_mat = eye(3);
-            else;                rot_mat = rotz(self.rot_angle * (angle_index - 1));
+            else               ; rot_mat = rotz(self.rot_angle * (angle_index - 1));
             end
             detector_vec  = rot_mat * self.init_detector_vec;
             to_source_vec = rot_mat * self.init_to_source_vec;
-            corner        = rot_mat * self.init_centre - detector_vec.*self.width/2;
-
-            % Cache some variables to make the function faster
-            pixel_width      = self.pixel_width;
-            dist_to_detector = self.dist_to_detector;
-            num_pixels       = self.num_pixels;
+            centre        = rot_mat * self.init_centre;
             detector_response= @self.detector_response;
 
             % Create the function which returns the rays
             pixel_generator = @generator;
-            function pixel_value = generator(pixel, voxels)
-                assert(pixel <= num_pixels && pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
-                pixel_centre = corner + detector_vec .* (pixel - 0.5) * pixel_width;
-                source_position = pixel_centre + to_source_vec * dist_to_detector;
-                xray = ray(source_position, -to_source_vec, dist_to_detector);
+            static_ray_generator = parallel_detector.get_ray_generator_static(...
+                self.ny_pixels, self.nz_pixels, centre, detector_vec, ...
+                self.pixel_dims(1), self.pixel_dims(2), self.dist_to_detector, to_source_vec...
+            );
+            function pixel_value = generator(y_pixel, z_pixel, voxels)
+                xray = static_ray_generator(y_pixel, z_pixel);
                 pixel_value = detector_response(xray.calculate_mu(voxels));
             end
         end
