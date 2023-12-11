@@ -19,29 +19,29 @@ classdef (Abstract) detector
 
     methods
 
-        function self = detector(dist_to_detector, rotation_angle, ny_pixels, nz_pixels, total_rotation)
+        function self = detector(dist_to_detector, num_rotations, n_pixels, total_rotation)
             % detector  Construct a detector object
             arguments
                 dist_to_detector (1, 1) double
-                rotation_angle   (1, 1) double
-                ny_pixels        (1, 1) double
-                nz_pixels        (1, 1) double
+                num_rotations    (1, 1) double
+                n_pixels         (1, 2) double
                 total_rotation   (1, 1) double
             end
             self.dist_to_detector = dist_to_detector;
             self.total_rotation   = total_rotation;
+            ny_pixels = n_pixels(1); nz_pixels = n_pixels(2);
             if mod(ny_pixels, 1) ~= 0 || mod(nz_pixels, 1) ~= 0
-                assert(abs(mod(ny_pixels, 1)) < 1e-12, 'Number of pixels must be an integer, got %f', ny_pixels);
-                assert(abs(mod(nz_pixels, 1)) < 1e-12, 'Number of pixels must be an integer, got %f', nz_pixels);
+                assert(abs(mod(ny_pixels, 1)) < 1e-15*ny_pixels, 'Number of pixels must be an integer, got %f', ny_pixels);
+                assert(abs(mod(nz_pixels, 1)) < 1e-15*nz_pixels, 'Number of pixels must be an integer, got %f', nz_pixels);
                 ny_pixels = round(ny_pixels);
                 nz_pixels = round(nz_pixels);
             end
             self.ny_pixels = ny_pixels;
             self.nz_pixels = nz_pixels;
             % Define how the detector should be rotated
-            self.rot_angle     = rotation_angle;
-            self.rot_mat       = rotz(rotation_angle);
-            self.num_rotations = ceil(total_rotation / rotation_angle); % default to 180 degrees
+            self.rot_angle     = total_rotation / num_rotations;
+            self.rot_mat       = rotz(self.rot_angle);
+            self.num_rotations = num_rotations;
         end
         
 

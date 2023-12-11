@@ -1,28 +1,41 @@
-classdef curved_detector < detector_1d
+classdef curved_detector < detector
     properties
         init_source_pos    (3, 1) double % The initial position of the source
         source_position    (3, 1) double % The position of the source
-        pixel_angle        (1, 1) double % The angle covered by each pixel
+        pixel_angle        (1, 1) double % The angle covered by each pixel in y
+        pixel_height       (1, 1) double % The height of each pixel in z
     end
+    methods (Access=private, Static)
+        function generator = get_ray_generator_static(ny_pixels, nz_pixels, pixel_angle, pixel_height, dist_to_detector, to_source_vec, source_pos)
+            generator = @get_ray_attrs; % Create the function which returns the rays
+            function [xray] = get_ray_attrs(y_pixel, z_pixel)
+                assert(y_pixel <= ny_pixels && y_pixel > 0 && z_pixel <= nz_pixels && z_pixel > 0, ...
+                        "Pixel number must be between 1 and the number of pixels on the detector.")
+                z_shift = pixel_height * (z_pixel - (nz_pixels+1)/2);
+                final_length = sqrt(dist_to_detector.^2 + z_shift.^2);
+                pixel_vec = (rotz(pixel_angle * (y_pixel - (ny_pixels+1)/2)) * to_source_vec.*dist_to_detector - ...
+                            [0;0;z_shift]) ./ final_length;
+                xray = ray(source_pos, -pixel_vec, final_length);
+            end
+        end
+    end
+
     methods
-        function self = curved_detector(dist_to_detector, detector_angle, pixel_angle, rotation_angle)
+        function self = curved_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations)
             arguments
                 dist_to_detector double
-                detector_angle   double
-                % detector_width   double
-                pixel_angle      double
-                rotation_angle   double = pi/180
+                pixel_dims       (1, 2) double
+                n_pixels         (1, 2) double
+                num_rotations    double = 360
             end
-            % detector_angle = 2 * asin(detector_width / (2 * dist_to_detector));
-
-            self@detector_1d(dist_to_detector, rotation_angle, detector_angle/pixel_angle, 2*pi);
-            self.pixel_angle    = pixel_angle;
+            self@detector(dist_to_detector, num_rotations, n_pixels, 2*pi);
+            self.pixel_angle =  pixel_dims(1) / dist_to_detector;
+            self.pixel_height = pixel_dims(2);
             
             % Only true for initial configuration
             self.init_source_pos    = self.to_source_vec * dist_to_detector/2; 
             self.source_position    = self.init_source_pos;
-            self.init_to_source_vec = rotz(-detector_angle/2) * self.to_source_vec; % Change from center to edge
-            self.to_source_vec      = self.init_to_source_vec;                      % Change from center to edge
+            self.init_to_source_vec = self.to_source_vec;
         end
 
         function self = rotate(self)
@@ -40,20 +53,11 @@ classdef curved_detector < detector_1d
             end
             assert(nargin==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
 
-            % Cache some variables to make the function faster
-            pixel_angle      = self.pixel_angle;
-            dist_to_detector = self.dist_to_detector;
-            num_pixels       = self.ny_pixels;
-            to_source_vec    = rotz(pixel_angle / 2) * self.to_source_vec;
-            source_pos       = self.source_position;
-
             % Create the function which returns the rays
-            ray_generator = @generator;
-            function xray = generator(y_pixel, ~)            
-                assert(y_pixel <= num_pixels && y_pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
-                pixel_vec = rotz(pixel_angle * (y_pixel - 1)) * to_source_vec;
-                xray = ray(source_pos, -pixel_vec, dist_to_detector);
-            end
+            ray_generator = self.get_ray_generator_static(...
+                self.ny_pixels, self.nz_pixels, self.pixel_angle, self.pixel_height, ...
+                self.dist_to_detector, self.to_source_vec, self.source_position...
+            );
         end
         function pixel_generator = get_pixel_generator(self, angle_index, ray_per_pixel)
             % Create a function which returns the rays which should be fired to hit each pixel.
@@ -65,30 +69,21 @@ classdef curved_detector < detector_1d
             end
             assert(nargin==2, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
             
-            % Cache some variables to make the function faster
-            pixel_angle      = self.pixel_angle;
-            dist_to_detector = self.dist_to_detector;
-            num_pixels       = self.ny_pixels;
-            detector_response= @self.detector_response;
-
-            if angle_index == 1
-                rot_mat = eye(3); 
-                rot_mat_edge = rotz(pixel_angle / 2); % Change from center of pixel to edge of pixel
-            else
-                cur_angle = self.rot_angle * (angle_index - 1);
-                rot_mat = rotz(cur_angle);
-                rot_mat_edge = rotz(pixel_angle / 2 + cur_angle);
+            if angle_index == 1; rot_mat = eye(3); 
+            else               ; rot_mat = rotz(self.rot_angle * (angle_index - 1));
             end
-
-            to_source_vec = rot_mat_edge * self.init_to_source_vec;
+            to_source_vec = rot_mat * self.init_to_source_vec;
             source_pos    = rot_mat * self.init_source_pos;
+            detector_response= @self.detector_response;
 
             % Create the function which returns the rays
             pixel_generator = @generator;
-            function pixel_value = generator(y_pixel, ~, voxels)
-                assert(y_pixel <= num_pixels && y_pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
-                pixel_vec = rotz(pixel_angle * (y_pixel - 1)) * to_source_vec;
-                xray = ray(source_pos, -pixel_vec, dist_to_detector);
+            static_ray_generator = curved_detector.get_ray_generator_static(...
+                self.ny_pixels, self.nz_pixels, self.pixel_angle, self.pixel_height, ...
+                self.dist_to_detector, to_source_vec, source_pos...
+            );
+            function pixel_value = generator(y_pixel, z_pixel, voxels)
+                xray = static_ray_generator(y_pixel, z_pixel);
                 pixel_value = detector_response(xray.calculate_mu(voxels));
             end
         end
