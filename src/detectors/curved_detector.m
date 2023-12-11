@@ -1,4 +1,4 @@
-classdef curved_detector < detector
+classdef curved_detector < detector_1d
     properties
         init_source_pos    (3, 1) double % The initial position of the source
         source_position    (3, 1) double % The position of the source
@@ -15,7 +15,7 @@ classdef curved_detector < detector
             end
             % detector_angle = 2 * asin(detector_width / (2 * dist_to_detector));
 
-            self@detector(dist_to_detector, rotation_angle, detector_angle/pixel_angle, 2*pi);
+            self@detector_1d(dist_to_detector, rotation_angle, detector_angle/pixel_angle, 2*pi);
             self.pixel_angle    = pixel_angle;
             
             % Only true for initial configuration
@@ -43,15 +43,15 @@ classdef curved_detector < detector
             % Cache some variables to make the function faster
             pixel_angle      = self.pixel_angle;
             dist_to_detector = self.dist_to_detector;
-            num_pixels       = self.num_pixels;
+            num_pixels       = self.ny_pixels;
             to_source_vec    = rotz(pixel_angle / 2) * self.to_source_vec;
             source_pos       = self.source_position;
 
             % Create the function which returns the rays
             ray_generator = @generator;
-            function xray = generator(pixel)            
-                assert(pixel <= num_pixels && pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
-                pixel_vec = rotz(pixel_angle * (pixel - 1)) * to_source_vec;
+            function xray = generator(y_pixel, ~)            
+                assert(y_pixel <= num_pixels && y_pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
+                pixel_vec = rotz(pixel_angle * (y_pixel - 1)) * to_source_vec;
                 xray = ray(source_pos, -pixel_vec, dist_to_detector);
             end
         end
@@ -68,7 +68,7 @@ classdef curved_detector < detector
             % Cache some variables to make the function faster
             pixel_angle      = self.pixel_angle;
             dist_to_detector = self.dist_to_detector;
-            num_pixels       = self.num_pixels;
+            num_pixels       = self.ny_pixels;
             detector_response= @self.detector_response;
 
             if angle_index == 1
@@ -85,9 +85,9 @@ classdef curved_detector < detector
 
             % Create the function which returns the rays
             pixel_generator = @generator;
-            function pixel_value = generator(pixel, voxels)
-                assert(pixel <= num_pixels && pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
-                pixel_vec = rotz(pixel_angle * (pixel - 1)) * to_source_vec;
+            function pixel_value = generator(y_pixel, ~, voxels)
+                assert(y_pixel <= num_pixels && y_pixel > 0, "Pixel number must be between 1 and the number of pixels on the detector.")
+                pixel_vec = rotz(pixel_angle * (y_pixel - 1)) * to_source_vec;
                 xray = ray(source_pos, -pixel_vec, dist_to_detector);
                 pixel_value = detector_response(xray.calculate_mu(voxels));
             end

@@ -1,7 +1,8 @@
 classdef (Abstract) detector
     properties (Access=protected) % Do all these need to be stored? Could be calculated on the fly?
         dist_to_detector   (1, 1) double % Distance from source to detector
-        num_pixels         (1, 1) double % Number of pixels in the detector
+        ny_pixels          (1, 1) double % Number of pixels in the y direction
+        nz_pixels          (1, 1) double % Number of pixels in the z direction
         num_rotations      (1, 1) double % Number of rotations around the object
         rot_mat            (3, 3) double % Matrix for each individual rotation of the detector around the object
         rot_angle          (1, 1) double
@@ -18,22 +19,25 @@ classdef (Abstract) detector
 
     methods
 
-        function self = detector(dist_to_detector, rotation_angle, num_pixels, total_rotation)
+        function self = detector(dist_to_detector, rotation_angle, ny_pixels, nz_pixels, total_rotation)
             % detector  Construct a detector object
             arguments
                 dist_to_detector (1, 1) double
                 rotation_angle   (1, 1) double
-                num_pixels       (1, 1) double
+                ny_pixels        (1, 1) double
+                nz_pixels        (1, 1) double
                 total_rotation   (1, 1) double
             end
             self.dist_to_detector = dist_to_detector;
             self.total_rotation   = total_rotation;
-            self.num_pixels       = num_pixels;
-            if mod(num_pixels, 1) ~= 0
-                assert(abs(mod(num_pixels, 1)) < 1e-12, 'Number of pixels must be an integer, got %f', num_pixels);
-                self.num_pixels = round(num_pixels);
+            if mod(ny_pixels, 1) ~= 0 || mod(nz_pixels, 1) ~= 0
+                assert(abs(mod(ny_pixels, 1)) < 1e-12, 'Number of pixels must be an integer, got %f', ny_pixels);
+                assert(abs(mod(nz_pixels, 1)) < 1e-12, 'Number of pixels must be an integer, got %f', nz_pixels);
+                ny_pixels = round(ny_pixels);
+                nz_pixels = round(nz_pixels);
             end
-
+            self.ny_pixels = ny_pixels;
+            self.nz_pixels = nz_pixels;
             % Define how the detector should be rotated
             self.rot_angle     = rotation_angle;
             self.rot_mat       = rotz(rotation_angle);
@@ -42,32 +46,39 @@ classdef (Abstract) detector
         
 
         function image = generate_image(self, voxels)
-            image = zeros(self.num_rotations, self.num_pixels);
+            image = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             for i = 1:self.num_rotations
                 ray_generator = self.get_ray_generator();
-                for j = 1:self.num_pixels
+                image_at_angle = zeros(self.ny_pixels, self.nz_pixels);
+                for k = 1:self.nz_pixels
+                    for j = 1:self.ny_pixels
+                        ray = ray_generator(j, k);
                     
-                    ray = ray_generator(j);
+                        mu = ray.calculate_mu(voxels);
                     
-                    mu = ray.calculate_mu(voxels);
-                    
-                    image(i, j) = self.detector_response(mu);
+                        image_at_angle(j, k) = self.detector_response(mu);
+                    end
                 end
+                image(:, :, i) = image_at_angle;
                 self = self.rotate();
             end
-            image = mat2gray(-log(image'));
+            image = -log(image);
         end
         
         function image = generate_image_p(self, voxels)
-            image = zeros(self.num_rotations, self.num_pixels);
+            image = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             get_pixel_generator = @self.get_pixel_generator;
             for i = 1:self.num_rotations
                 pixel_calc = get_pixel_generator(i);
-                parfor j = 1:self.num_pixels
-                    image(i, j) = feval(pixel_calc, j, voxels);
+                image_at_angle = zeros(self.ny_pixels, self.nz_pixels);
+                for k = 1:self.nz_pixels
+                    parfor j = 1:self.ny_pixels
+                        image_at_angle(j, k) = feval(pixel_calc, j, k, voxels);
+                    end
                 end
+                image(:, :, i) = image_at_angle;
             end
-            image = mat2gray(-log(image'));
+            image = -log(image);
         end
         
         function scan_angles = get_scan_angles(self)
