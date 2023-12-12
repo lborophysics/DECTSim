@@ -36,5 +36,5 @@ function mu = lung(energy)
       2.198E-02; 1.922E-02; 1.794E-02;
     ], energy);
   end
-  mu = mu * 0.4; % convert from cm^2/g to units of cm^-1 10.1016/j.jmbbm.2020.103682
+  mu = mu * 1.050; % convert from cm^2/g to units of cm^-1 https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html
 end

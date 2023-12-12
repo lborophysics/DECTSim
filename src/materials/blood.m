@@ -36,5 +36,5 @@ function mu = blood(energy)
       2.196E-02; 1.920E-02; 1.793E-02;
     ], energy);
   end
-  mu = mu * 1.06; % correction for density https://hypertextbook.com/facts/2004/MichaelShmukler.shtml
+  mu = mu * 1.06; % correction for density https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html
 end

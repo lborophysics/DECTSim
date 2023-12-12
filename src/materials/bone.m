@@ -56,6 +56,6 @@ function mu = bone(energy)
       2.132E-02; 2.068E-02;
     ], energy);
   end
-  mu = mu * 1.8; % Bone density: https://doi.org/10.1016/j.irbm.2018.10.006
+  mu = mu * 1.92; % Bone density: https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html
 end
 
