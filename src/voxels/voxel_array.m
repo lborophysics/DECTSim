@@ -10,7 +10,7 @@ classdef voxel_array
         function obj = voxel_array(centre, object_dims, voxel_size, get_voxel_mu)
             arguments
                 centre       (3, 1) double
-                object_dims  (3, 1) double
+                object_dims  (3, 1) double 
                 voxel_size   (1, 1) double
                 get_voxel_mu 
             end
@@ -24,7 +24,7 @@ classdef voxel_array
             obj.num_planes = object_dims ./ voxel_size + 1; % +1 to include the last plane (fence post problem)
             
             % In the future, I need to create this array based on the get_voxel_mu
-            obj.get_voxel_mu = get_voxel_mu;
+            obj.get_voxel_mu = @(x, y, z, e) get_voxel_mu(x, y, z, e/1000); %Convert energy from MeV to KeV
         end
 
         function position = get_point_position(obj, indices)

@@ -21,9 +21,9 @@
                         if x^2 + y^2 <= radius^2
                             for z = -2:0.25:2
                                 if z >= -width/2 && z <= width/2
-                                    tc.verifyEqual(my_cyl(x, y, z, 1), water(1))
+                                    tc.verifyEqual(my_cyl(x, y, z, 10), water(10))
                                 else
-                                    tc.verifyEqual(my_cyl(x, y, z, 1), 0)
+                                    tc.verifyEqual(my_cyl(x, y, z, 10), 0)
                                 end
                             end
                         else
@@ -59,8 +59,8 @@
 
         function box(tc)
             my_box = voxel_box([0,0,0], 100, @water);
-            res = my_box(-100:0.5:100, -100:0.5:100, -100:0.5:100, 1);
-            exp = cat(2,zeros(1, 100), zeros(1, 201)+water(1), zeros(1, 100)); %101 includes 0
+            res = my_box(-100:0.5:100, -100:0.5:100, -100:0.5:100, 10);
+            exp = cat(2,zeros(1, 100), zeros(1, 201)+water(10), zeros(1, 100)); %101 includes 0
             tc.verifyEqual(res, exp)
 
             my_box = voxel_box([100, 100, 100], [200, 200, 100], @water);

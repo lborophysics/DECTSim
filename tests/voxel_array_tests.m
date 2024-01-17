@@ -32,17 +32,17 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             tc.verifyEqual(tc.test_obj2.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj2.num_planes, [21; 21; 21]);
             tc.verifyEqual(tc.test_obj2.dimensions, [0.5; 0.5; 0.5]);
-            tc.verifyEqual(tc.test_obj2.get_voxel_mu(1, 2, 3, 4), 10);
+            tc.verifyEqual(tc.test_obj2.get_voxel_mu(1, 2, 3, 4000), 10);
 
             tc.verifyEqual(tc.test_obj3.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj3.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj3.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj3.get_voxel_mu(1, 2, 3, -3), -7);
+            tc.verifyEqual(tc.test_obj3.get_voxel_mu(1, 2, 3, -3000), -7);
 
             tc.verifyEqual(tc.test_obj4.array_position, [0; -1; -4.5]);
             tc.verifyEqual(tc.test_obj4.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj4.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj4.get_voxel_mu(1, 2, 3, 1), 7);            
+            tc.verifyEqual(tc.test_obj4.get_voxel_mu(1, 2, 3, 1000), 7);            
         end
 
         function test_get_point_position(tc)
@@ -103,10 +103,10 @@ classdef voxel_array_tests < matlab.unittest.TestCase
                             ijk3 = tc.test_obj3.get_point_position([i; j; k]) + tc.test_obj3.dimensions/2;
                             ijk4 = tc.test_obj4.get_point_position([i; j; k]) + tc.test_obj4.dimensions/2;
 
-                            tc.verifyEqual(tc.test_obj1.get_mu(i, j, k, e), ijk1(1) + ijk1(2) + ijk1(3) + e);
-                            tc.verifyEqual(tc.test_obj2.get_mu(i, j, k, e), ijk2(1) + ijk2(2) + ijk2(3) + e);
-                            tc.verifyEqual(tc.test_obj3.get_mu(i, j, k, e), ijk3(1) - ijk3(2) - ijk3(3) + e);
-                            tc.verifyEqual(tc.test_obj4.get_mu(i, j, k, e), ijk4(1) + ijk4(2) + ijk4(3) + e);
+                            tc.verifyEqual(tc.test_obj1.get_mu(i, j, k, e), ijk1(1) + ijk1(2) + ijk1(3) + e/1000);
+                            tc.verifyEqual(tc.test_obj2.get_mu(i, j, k, e), ijk2(1) + ijk2(2) + ijk2(3) + e/1000);
+                            tc.verifyEqual(tc.test_obj3.get_mu(i, j, k, e), ijk3(1) - ijk3(2) - ijk3(3) + e/1000);
+                            tc.verifyEqual(tc.test_obj4.get_mu(i, j, k, e), ijk4(1) + ijk4(2) + ijk4(3) + e/1000);
                         end
                     end
                 end

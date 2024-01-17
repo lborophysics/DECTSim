@@ -36,5 +36,5 @@ function mu = muscle(energy)
       2.192E-02; 1.915E-02; 1.786E-02;
     ], energy);
   end
-  mu = mu * 1.06; % correction for muscle density https://doi.org/10.1093/gerona/56.5.B191
+  mu = mu * 1.050; % correction for muscle density https://physics.nist.gov/PhysRefData/XrayMassCoef/tab2.html
 end
