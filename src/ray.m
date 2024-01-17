@@ -4,7 +4,7 @@ classdef ray
         end_point   (3, 1) double % 3D point
         direction   (3, 1) double % unit vector
 
-        energy      double      % energy of the ray in MeV
+        energy      double      % energy of the ray in KeV
     end
 
     properties (Access=private)
@@ -40,7 +40,7 @@ classdef ray
             obj.dist_to_detector = dist_to_detector;
             obj.end_point        = start_point + direction .* dist_to_detector;
 
-            obj.energy = 0.12;
+            obj.energy = 10; %KeV
         end
 
         function [lengths, indices] = get_intersections(self, voxels)
