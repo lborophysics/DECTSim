@@ -13,6 +13,9 @@ jobs:
     name: Run MATLAB Tests and Generate Artifacts
     runs-on: ubuntu-latest
     steps:
+      - name: Get Photon Attenuation Package
+        run: wget https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/12092/versions/7/download/zip/PhotonAttenuation.zip
+        run: unzip PhotonAttenuation.zip PhotonAttenuationQ.m -d src/
       - name: Check out repository
         uses: actions/checkout@v3
       - name: Set up MATLAB
