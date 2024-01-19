@@ -15,6 +15,7 @@ jobs:
     steps:
       - name: Get Photon Attenuation Package
         run: wget https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/12092/versions/7/download/zip/PhotonAttenuation.zip
+      - name: Retrieve necessary file
         run: unzip PhotonAttenuation.zip PhotonAttenuationQ.m -d src/
       - name: Check out repository
         uses: actions/checkout@v3
