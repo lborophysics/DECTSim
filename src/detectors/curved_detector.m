@@ -21,14 +21,15 @@ classdef curved_detector < detector
     end
 
     methods
-        function self = curved_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations)
+        function self = curved_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations, scatter_factor)
             arguments
                 dist_to_detector double
                 pixel_dims       (1, 2) double
                 n_pixels         (1, 2) double
                 num_rotations    double = 360
+                scatter_factor   double = 0
             end
-            self@detector(dist_to_detector, num_rotations, n_pixels, 2*pi);
+            self@detector(dist_to_detector, num_rotations, n_pixels, 2*pi, scatter_factor);
             self.pixel_angle =  pixel_dims(1) / dist_to_detector;
             self.pixel_height = pixel_dims(2);
             

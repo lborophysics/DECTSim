@@ -23,14 +23,15 @@ classdef parallel_detector < detector
     end
 
     methods
-        function self = parallel_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations)
+        function self = parallel_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations, scatter_factor)
             arguments
                 dist_to_detector         double
                 pixel_dims        (1, 2) double
                 n_pixels          (1, 2) double
                 num_rotations            double = 180
+                scatter_factor           double = 0
             end
-            self@detector(dist_to_detector, num_rotations, n_pixels, pi);
+            self@detector(dist_to_detector, num_rotations, n_pixels, pi, scatter_factor);
             self.pixel_dims = pixel_dims;
             
             % Only true for initial configuration

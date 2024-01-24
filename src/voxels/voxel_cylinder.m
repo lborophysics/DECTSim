@@ -13,4 +13,3 @@ function func = voxel_cylinder(centre, radius, width, material)
             ) = material(energy);
     end
 end
-
