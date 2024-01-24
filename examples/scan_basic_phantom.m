@@ -23,7 +23,7 @@ voxels = voxel_array(vox_arr_center, zeros(3, 1)+phantom_radius*2, voxel_size, p
 
 % Detector constants
 dist_to_detector = 105; % cm
-pixel_size = [0.1 0.1]; % mm
+pixel_size = [0.1 0.1]; % cm (so pixel size = 1mm)
 num_pixels = [900 1];
 num_rotations = 180;
 
