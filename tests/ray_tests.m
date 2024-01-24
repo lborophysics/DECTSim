@@ -70,13 +70,13 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(r.start_point, [0;0;0]);
             tc.assertEqual(r.direction, [1;0;0]);
             tc.assertEqual(r.end_point, [10;0;0]);
-            tc.assertEqual(r.energy, 10); % default energy - may change later
+            tc.assertEqual(r.energy, 100); % default energy - may change later
 
             r2 = ray([0;-5;0], [0;1;0], 10);
             tc.assertEqual(r2.start_point, [0;-5;0]);
             tc.assertEqual(r2.direction, [0;1;0]);
             tc.assertEqual(r2.end_point, [0;5;0]);
-            tc.assertEqual(r2.energy, 10); % default energy - may change later
+            tc.assertEqual(r2.energy, 100); % default energy - may change later
         end
 
         function test_siddon_ray(tc)
@@ -86,7 +86,7 @@ classdef ray_tests < matlab.unittest.TestCase
         function test_calculate_mu(tc)
             my_box = voxel_box([0;0;0], [3;3;3], @water);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
-            voxel_attenuation = water(10/1000); % Default value of ray
+            voxel_attenuation = water(100/1000); % Default value of ray
             
             r = ray([-6;0;0], [1;0;0], 12);
             tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 2e-16);
@@ -110,14 +110,14 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(r.start_point, [1;0;0]);
             tc.assertEqual(r.direction, [0;1;0]);
             tc.assertEqual(r.end_point, [1;10;0]);
-            tc.assertEqual(r.energy, 10); % default energy - may change later
+            tc.assertEqual(r.energy, 100); % default energy - may change later
 
             r = ray([0;0;0], [1;0;0], 5);
             r = r.update_parameters([0;0;1], [0;0;1]);
             tc.assertEqual(r.start_point, [0;0;1]);
             tc.assertEqual(r.direction, [0;0;1]);
             tc.assertEqual(r.end_point, [0;0;6]);
-            tc.assertEqual(r.energy, 10); % default energy - may change later
+            tc.assertEqual(r.energy, 100); % default energy - may change later
         end
 
         function test_move_start_point(tc)
@@ -126,14 +126,14 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(r.start_point, [1;0;0]);
             tc.assertEqual(r.direction, [1;0;0]);
             tc.assertEqual(r.end_point, [11;0;0]);
-            tc.assertEqual(r.energy, 10); % default energy - may change later
+            tc.assertEqual(r.energy, 100); % default energy - may change later
 
             r = ray([0;0;0], [1;0;0], 10);
             r = r.move_start_point([0;0;1]);
             tc.assertEqual(r.start_point, [0;0;1]);
             tc.assertEqual(r.direction, [1;0;0]);
             tc.assertEqual(r.end_point, [10;0;1]);
-            tc.assertEqual(r.energy, 10); % default energy - may change later
+            tc.assertEqual(r.energy, 100); % default energy - may change later
         end
     end
 end

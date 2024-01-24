@@ -40,7 +40,7 @@ classdef ray
             obj.dist_to_detector = dist_to_detector;
             obj.end_point        = start_point + direction .* dist_to_detector;
 
-            obj.energy = 10; %KeV
+            obj.energy = 100; %KeV
         end
 
         function [lengths, indices] = get_intersections(self, voxels)
