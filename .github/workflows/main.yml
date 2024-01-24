@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - dev-josh
   pull_request:
     branches:
       - main
