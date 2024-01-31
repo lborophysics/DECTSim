@@ -124,7 +124,7 @@ classdef (Abstract) detector
             skernel = self.scatter_kernel;
             sfactor = self.scatter_factor;
             air = self.air_scan();
-            for i = 1:self.num_rotationss
+            for i = 1:self.num_rotations
                 % Create a 2D image, with padding of the size of the kernel
                 slice = image(:, :, i);
                 air_slice = air(:, :, i);   
