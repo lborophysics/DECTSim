@@ -3,16 +3,16 @@ classdef voxel_array
         array_position (3, 1) double % position of the top left corner of the array
         num_planes     (3, 1) double % number of planes in each dimension
         dimensions     (3, 1) double % dimensions of each voxel
-        get_voxel_mu
+        voxel_obj
     end
     
     methods
-        function obj = voxel_array(centre, object_dims, voxel_size, get_voxel_mu)
+        function obj = voxel_array(centre, object_dims, voxel_size, voxel_obj)
             arguments
                 centre       (3, 1) double
                 object_dims  (3, 1) double 
                 voxel_size   (1, 1) double
-                get_voxel_mu 
+                voxel_obj    
             end
             % Constructor method
             obj.array_position = centre - object_dims ./ 2;
@@ -24,7 +24,7 @@ classdef voxel_array
             obj.num_planes = object_dims ./ voxel_size + 1; % +1 to include the last plane (fence post problem)
             
             % In the future, I need to create this array based on the get_voxel_mu
-            obj.get_voxel_mu = @(x, y, z, e) get_voxel_mu(x, y, z, e/1000); %Convert energy from MeV to KeV
+            obj.voxel_obj = voxel_obj;
         end
 
         function position = get_point_position(obj, indices)
@@ -46,7 +46,16 @@ classdef voxel_array
             position = obj.get_point_position([i; j; k]) + obj.dimensions ./ 2;
 
             % Get mu at position
-            mu = obj.get_voxel_mu(position(1, :), position(2, :), position(3, :), energy);
+            mu = obj.voxel_obj.get_mu(position(1, :), position(2, :), position(3, :), energy);
+        end
+        
+        function mat = get_material(obj, i, j, k)
+            % Get material at position
+            if isa(obj.voxel_obj, 'voxel_collection')
+                mat = obj.voxel_obj.get_material(i, j, k);
+            else
+                mat = obj.voxel_obj.material;
+            end
         end
     end
 end
