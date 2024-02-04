@@ -1,15 +1,18 @@
-classdef material
+classdef get_material
     %MATERIAL A class to represent a material and its properties necessary 
     % for ray tracing and scattering
     
     properties
+        get_mu
+    end
+    
+    properties (Access=protected)
         atomic_numbers
         mass_fractions
-        get_mu
         density
     end
 
-    properties (Access=private)
+    properties (Access=private, Constant)
         known_materials = {'air','blood','bone','lung','muscle','water'};
         known_densitys = [1.205E-03, 1.06, 1.92, 1.05, 1.05, 1.00];
         known_atomic_numbers = {...
@@ -47,7 +50,7 @@ classdef material
     end
 
     methods
-        function self = material(varargin)
+        function self = get_material(varargin)
             %MATERIAL Construct a material object
             %   material("material_name") creates a material object with the properties of the given material, if it is available
             %   material(atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
@@ -56,30 +59,28 @@ classdef material
                 error(aac, 'MATLAB:notEnoughInputs', 'Not enough input arguments.') 
             elseif nargin == 1
                 material_name = varargin{1};
-                assert(isstring(material_name), 'When only one input is given, it should be a string with the name of the material');
+                assert(isstring(material_name), 'assert:failure', 'When only one input is given, it should be a string with the name of the material.');
                 material_index = find(self.known_materials == lower(material_name));
                 if any(material_index)
                     self.atomic_numbers = self.known_atomic_numbers{material_index};
                     self.mass_fractions = self.known_mass_fractions{material_index};
                     self.density = self.known_densitys(material_index);
                 else
-                    aac = matlab.lang.correction.AppendArgumentsCorrection('"blood"');
-                    list_available_materials = strjoin(self.known_materials, ', ');
-                    error(aac, 'MATLAB:invalidMaterial', ...
+                    error('MATLAB:invalidMaterial', ...
                         'The material %s is not available. Available materials are: %s', ...
-                        material_name, list_available_materials);
+                        material_name, strjoin(self.known_materials, ', '));
                 end
             elseif nargin == 3
                 self.atomic_numbers = varargin{1};
                 self.mass_fractions = varargin{2};
-                self.mass_fractions = self.mass_fractions / sum(self.mass_fractions); 
                 self.density = varargin{3};
-                assert(isnumeric(self.density) && isscalar(self.density), 'The density should be a scalar number');
-                assert(isvector(self.atomic_numbers), 'The atomic numbers should be a vector');
-                assert(isvector(self.mass_fractions), 'The mass fractions should be a vector');
-                assert(length(self.atomic_numbers) == length(self.mass_fractions), 'The atomic numbers and mass fractions should have the same length');
+                assert(isvector(self.atomic_numbers), 'assert:failure', 'The atomic numbers should be a vector.');
+                assert(isvector(self.mass_fractions), 'assert:failure', 'The mass fractions should be a vector.');
+                assert(length(self.atomic_numbers) == length(self.mass_fractions), 'assert:failure', 'The atomic numbers and mass fractions should have the same length.');
+                assert(isnumeric(self.density) && isscalar(self.density), 'assert:failure', 'The density should be a scalar number.');
+                self.mass_fractions = self.mass_fractions / sum(self.mass_fractions); 
             else
-                error('MATLAB:invalidInput', 'Invalid number of input arguments');
+                error('MATLAB:invalidInput', 'Invalid number of input arguments.');
             end
             self.get_mu = @(E) sum(PhotonAttenuationQ(self.atomic_numbers, E, 1) .* self.mass_fractions) * self.density;
         end

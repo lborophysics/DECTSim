@@ -14,7 +14,7 @@
         function test_cylinder(tc)
             radius = 1;
             width = 2;
-            water= material("water");
+            water= get_material("water");
             my_cyl = voxel_cylinder([0, 0, 0], radius, width, water);
             for x = -2:0.25:2
                 if x ^ 2 <= radius ^ 2
@@ -59,7 +59,7 @@
         end
 
         function box(tc)
-            water = material("water");
+            water = get_material("water");
             my_box = voxel_box([0,0,0], 100, water);
             res = my_box(-100:0.5:100, -100:0.5:100, -100:0.5:100, 10);
             exp = cat(2,zeros(1, 100), zeros(1, 201)+water.get_mu(10), zeros(1, 100)); %101 includes 0
@@ -85,11 +85,11 @@
         end
 
         function test_collection(tc)
-            mat1 = material("water"); mat1.get_mu = @(e) 10;
+            mat1 = get_material("water"); mat1.get_mu = @(e) 10;
             big_box = voxel_box([0,0,0], 10, mat1);
-            mat2 = material("water"); mat2.get_mu = @(e) 5;
+            mat2 = get_material("water"); mat2.get_mu = @(e) 5;
             med_box = voxel_box([0,0,0], 6, mat2);
-            mat3 = material("water"); mat3.get_mu = @(e) 1;
+            mat3 = get_material("water"); mat3.get_mu = @(e) 1;
             small_box = voxel_box([0,0,0], 2, mat3);
             my_collection = voxel_collection(big_box, med_box, small_box);
             for x = -5:5

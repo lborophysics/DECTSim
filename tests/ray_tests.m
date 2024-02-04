@@ -84,7 +84,7 @@ classdef ray_tests < matlab.unittest.TestCase
         end
 
         function test_calculate_mu(tc)
-            water = material("water");
+            water = get_material("water");
             my_box = voxel_box([0;0;0], [3;3;3], water);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             voxel_attenuation = water.get_mu(100/1000); % Default value of ray
