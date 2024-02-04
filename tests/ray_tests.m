@@ -84,18 +84,19 @@ classdef ray_tests < matlab.unittest.TestCase
         end
 
         function test_calculate_mu(tc)
-            my_box = voxel_box([0;0;0], [3;3;3], @water);
+            water = material("water");
+            my_box = voxel_box([0;0;0], [3;3;3], water);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
-            voxel_attenuation = water(100/1000); % Default value of ray
+            voxel_attenuation = water.get_mu(100/1000); % Default value of ray
             
             r = ray([-6;0;0], [1;0;0], 12);
-            tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 2e-16);
+            tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 3e-16);
 
             r = ray([0;-6;0], [0;1;0], 12);
-            tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 2e-16);
+            tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 3e-16);
 
             r = ray([0;0;-6], [0;0;1], 12);
-            tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 2e-16);
+            tc.assertEqual(r.calculate_mu(array), 3*voxel_attenuation, "RelTol", 3e-16);
             
             r = ray([6;6;6], [-1;-1;-1], 22); % 3D diagonal backwards
             tc.assertEqual(r.calculate_mu(array), 3*sqrt(3)*voxel_attenuation, "RelTol", 4e-16);

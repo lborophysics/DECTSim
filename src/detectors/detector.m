@@ -95,12 +95,9 @@ classdef (Abstract) detector
 
         function scan = air_scan(self)
             % air_scan  Generate a scan of air
-            Z = [6, 7, 8, 18];
-            R = [0.000124, 0.755268, 0.231781, 0.012827];
-            density = 1.205E-03;
             dtd = self.dist_to_detector;
-            air = gen_material(Z, R, density);
-            air_cylinder = @(i,j,k,e) air(e);
+            air = material("air");
+            air_cylinder = @(i,j,k,e) air.get_mu(e);
             array = voxel_array(zeros(3, 1), zeros(3,1)+dtd*2, dtd/100, air_cylinder);
             scan = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             ray_generator = self.get_ray_generator();

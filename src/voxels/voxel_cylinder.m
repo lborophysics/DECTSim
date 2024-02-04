@@ -5,6 +5,7 @@ function func = voxel_cylinder(centre, radius, width, material)
     rsq = radius ^ 2;
     x = centre(1); y = centre(2); z = centre(3);
     func = @cylinder;
+    material = @material.get_mu;
     function result = cylinder(i, j, k, energy)
         result = zeros(1, length(i));
         result( ...

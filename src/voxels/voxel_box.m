@@ -3,6 +3,7 @@ function func = voxel_box(box_centre, box_size, material)
     func = @box;
     box_min = box_centre - box_size/2;
     box_max = box_centre + box_size/2;
+    material = @material.get_mu;
     function result = box(i, j, k, energy)
         result = zeros(1, length(i));
         result(                                 ...

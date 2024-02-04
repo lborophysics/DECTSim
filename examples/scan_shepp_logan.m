@@ -2,7 +2,7 @@
 vox_arr_center = zeros(3, 1); 
 phantom_size = 500; 
 voxel_size = 1;
-material = @water;
+water = material("water");
 
 % Create voxel array
 voxel_generator = voxel_shepp_logan(vox_arr_center, phantom_size, voxel_size);
