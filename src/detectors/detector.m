@@ -52,8 +52,17 @@ classdef (Abstract) detector
             self.scatter_kernel = get_scatter_kernel();
         end
         
+        function check_voxels(self, voxels)
+            % Check that the voxels are all within the detector
+            init_plane = voxels.get_point_position([1; 1; 1]);
+            last_plane = voxels.get_point_position(voxels.num_planes);
+            assert(init_plane(1)^2 + init_plane(2)^2 <= (self.dist_to_detector/2)^2, 'Voxels array is not entirely within the detector');
+            assert(last_plane(1)^2 + last_plane(2)^2 <= (self.dist_to_detector/2)^2, 'Voxels array is not entirely within the detector');
+        end
+
 
         function image = generate_image(self, voxels)
+            self.check_voxels(voxels);
             image = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             for i = 1:self.num_rotations
                 ray_generator = self.get_ray_generator();
@@ -76,6 +85,7 @@ classdef (Abstract) detector
         end
         
         function image = generate_image_p(self, voxels)
+            self.check_voxels(voxels);
             image = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             get_pixel_generator = @self.get_pixel_generator;
             for i = 1:self.num_rotations
