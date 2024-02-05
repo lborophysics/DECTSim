@@ -29,18 +29,18 @@ classdef ray
     end
     
     methods
-        function obj = ray(start_point, direction, dist_to_detector)
+        function self = ray(start_point, direction, dist_to_detector)
             arguments
                 start_point (3, 1) double
                 direction   (3, 1) double
                 dist_to_detector   double
             end
-            obj.start_point      = start_point;
-            obj.direction        = direction;
-            obj.dist_to_detector = dist_to_detector;
-            obj.end_point        = start_point + direction .* dist_to_detector;
+            self.start_point      = start_point;
+            self.direction        = direction;
+            self.dist_to_detector = dist_to_detector;
+            self.end_point        = start_point + direction .* dist_to_detector;
 
-            obj.energy = 100; %KeV
+            self.energy = 100; %KeV
         end
 
         function [lengths, indices] = get_intersections(self, voxels)
