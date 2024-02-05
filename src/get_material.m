@@ -3,8 +3,11 @@ classdef get_material
     % for ray tracing and scattering
     
     properties
-        get_mu        % Function handle to get the linear attenuation coefficient of the material for a given energy
-        material_id   % Unique identifier of the material, generated from the material name
+        get_mu % Function handle to get the linear attenuation coefficient of the material for a given energy
+        id     % Unique identifier of the material, generated from the material name
+    end
+    
+    properties (Constant)
     end
 
     properties (Access=protected)
@@ -47,8 +50,6 @@ classdef get_material
             % "Standard atomic weights of the elements 2021 (IUPAC Technical Report)" 
             % Pure and Applied Chemistry, vol. 94, no. 5, 2022, pp. 573-600. 
             % https://doi.org/10.1515/pac-2019-0603
-        avogadro_number = 6.02214076 * 10^23; % atoms/mol, Source: https://pml.nist.gov/cgi-bin/cuu/Value?na
-        em_ee = 510.99895; % KeV, Source: https://pml.nist.gov/cgi-bin/cuu/Value?mec2mev
     end
 
     methods
@@ -82,13 +83,27 @@ classdef get_material
             end
             % Create a unique identifier for the material (spend time in creating this, but save time in the future by not having to compare strings)
             alphabet = 'abcdefghijklmnopqrstuvwxyz'; Map(alphabet) = 1:length(alphabet);
-            self.material_id = bin2dec(convertCharsToStrings(dec2bin(Map(convertStringsToChars(lower(material_name))))));
+            self.id = bin2dec(convertCharsToStrings(dec2bin(Map(convertStringsToChars(lower(material_name))))));
             
             % Set the function handle to get the linear attenuation coefficient
             self.get_mu = @(E) sum(PhotonAttenuationQ(self.atomic_numbers, E/1000, 1) .* self.mass_fractions) * self.density; %Convert energy from MeV to KeV
         end
 
-        function cs = get_cross_section(self, Z, E)
+        function mfp = get_mean_free_path(self, E)
+            % GET_MEAN_FREE_PATH Get the mean free path of the material for a given energy
+            imfp = 0;
+            for i = 1:length(self.atomic_numbers)
+                imfp = imfp + 1 / ...
+                    (constants.avogadro_number * self.density * self.mass_fractions(i) ...
+                     * get_material.get_cross_section(self.atomic_numbers(i), E) ...
+                     / self.atomic_masses(self.atomic_numbers(i)));
+            end
+            mfp = 1 / imfp; % cm
+        end
+    end
+
+    methods (Static, Access=private)
+        function cs = get_cross_section(Z, E)
             %GET_CROSS_SECTION Get the cross section of the material for a given energy (CREDIT: Geant4)
             % The values, formulae and code is taken directly from 
             % https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/standard/src/G4KleinNishinaCompton.cc
@@ -106,14 +121,14 @@ classdef get_material
             else;       T0 = 15; % KeV
             end 
             
-            X = max(E, T0) / self.em_ee; % Unitless
+            X = max(E, T0) / constants.em_ee; % Unitless
             p1Z = Z*(d1 + e1*Z + f1*Z*Z); p2Z = Z*(d2 + e2*Z + f2*Z*Z); % cm^2
             p3Z = Z*(d3 + e3*Z + f3*Z*Z); p4Z = Z*(d4 + e4*Z + f4*Z*Z); % cm^2
             
             cs = p1Z*log(1.+2.*X)/X + (p2Z + p3Z*X + p4Z*X*X)/(1. + a*X + b*X*X + c*X*X*X); % cm^2
 
             if E < T0
-                X = (T0+1) / self.em_ee; % Unitless
+                X = (T0+1) / constants.em_ee; % Unitless
                 sigma = p1Z*log(1.+2.*X)/X + (p2Z + p3Z*X + p4Z*X*X)/(1. + a*X + b*X*X + c*X*X*X); % cm^2
                 c1 = -T0*(sigma-cs)/cs; % Unitless
                 if Z > 1.5; c2 = 0.375-0.0556*log(Z); %Unitless 
@@ -122,18 +137,6 @@ classdef get_material
                 y = log(E/T0); % Unitless
                 cs = cs * exp(-y*(c1+c2*y)); % cm^2
             end
-        end
-
-        function mfp = get_mean_free_path(self, E)
-            % GET_MEAN_FREE_PATH Get the mean free path of the material for a given energy
-            imfp = 0;
-            for i = 1:length(self.atomic_numbers)
-                imfp = imfp + 1 / ...
-                    (self.avogadro_number * self.density * self.mass_fractions(i) ...
-                     * self.get_cross_section(self.atomic_numbers(i), E) ...
-                     / self.atomic_masses(self.atomic_numbers(i)));
-            end
-            mfp = 1 / imfp; % cm
         end
     end
 end
