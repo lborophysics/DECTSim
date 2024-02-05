@@ -15,7 +15,8 @@
             radius = 1;
             width = 2;
             water= get_material("water");
-            my_cyl = voxel_cylinder([0, 0, 0], radius, width, water);
+            cylinder = voxel_cylinder([0, 0, 0], radius, width, water);
+            my_cyl = @(i, j, k, e) cylinder.get_mu(i, j, k, e);
             for x = -2:0.25:2
                 if x ^ 2 <= radius ^ 2
                     for y = -2:0.25:2
@@ -35,14 +36,16 @@
                     tc.verifyEqual(my_cyl(x, 0, 0, 1), 0)
                 end
             end
-            my_cyl = voxel_cylinder([1, 2, 3], radius, width, water);
+            cylinder = voxel_cylinder([1, 2, 3], radius, width, water);
+            my_cyl = @(i, j, k, e) cylinder.get_mu(i, j, k, e);
+
             for x = -1:0.25:3
                 if (x-1) ^ 2 <= radius ^ 2
                     for y = 0:0.25:4
                         if (x-1)^2 + (y-2)^2 <= radius^2
                             for z = 1:0.25:5
                                 if z - 3 >= -width/2 && z - 3 <= width/2
-                                    tc.verifyEqual(my_cyl(x, y, z, 0.5), water.get_mu(0.5))
+                                    tc.verifyEqual(my_cyl(x, y, z, 5), water.get_mu(5))
                                 else
                                     tc.verifyEqual(my_cyl(x, y, z, 1), 0)
                                 end
@@ -61,13 +64,13 @@
         function box(tc)
             water = get_material("water");
             my_box = voxel_box([0,0,0], 100, water);
-            res = my_box(-100:0.5:100, -100:0.5:100, -100:0.5:100, 10);
+            res = my_box.get_mu(-100:0.5:100, -100:0.5:100, -100:0.5:100, 10);
             exp = cat(2,zeros(1, 100), zeros(1, 201)+water.get_mu(10), zeros(1, 100)); %101 includes 0
             tc.verifyEqual(res, exp)
 
             my_box = voxel_box([100, 100, 100], [200, 200, 100], water);
-            res = my_box(-100:300, -100:300, 50:0.25:150, 0.02);
-            exp = cat(2,zeros(1, 100), zeros(1, 201) + water.get_mu(0.02), zeros(1, 100)); %101 includes 0
+            res = my_box.get_mu(-100:300, -100:300, 50:0.25:150, 2);
+            exp = cat(2,zeros(1, 100), zeros(1, 201) + water.get_mu(2), zeros(1, 100)); %101 includes 0
             tc.verifyEqual(res, exp)
         end
 
@@ -92,22 +95,23 @@
             mat3 = get_material("water"); mat3.get_mu = @(e) 1;
             small_box = voxel_box([0,0,0], 2, mat3);
             my_collection = voxel_collection(big_box, med_box, small_box);
+            get_mu = @(i, j, k, e) my_collection.get_mu(i, j, k, e);
             for x = -5:5
                 if abs(x) <= 1
-                    tc.verifyEqual(my_collection(x, 0, 0, 1), 1)
+                    tc.verifyEqual(get_mu(x, 0, 0, 1), 1)
                 elseif abs(x) <= 3
-                    tc.verifyEqual(my_collection(x, 0, 0, 1), 5)
+                    tc.verifyEqual(get_mu(x, 0, 0, 1), 5)
                 else
-                    tc.verifyEqual(my_collection(x, 0, 0, 1), 10)
+                    tc.verifyEqual(get_mu(x, 0, 0, 1), 10)
                 end
             end
             for y = -5:5
                 if abs(y) <= 1
-                    tc.verifyEqual(my_collection(0, y, 0, 1), 1)
+                    tc.verifyEqual(get_mu(0, y, 0, 1), 1)
                 elseif abs(y) <= 3
-                    tc.verifyEqual(my_collection(0, y, 0, 1), 5)
+                    tc.verifyEqual(get_mu(0, y, 0, 1), 5)
                 else
-                    tc.verifyEqual(my_collection(0, y, 0, 1), 10)
+                    tc.verifyEqual(get_mu(0, y, 0, 1), 10)
                 end
             end
         end

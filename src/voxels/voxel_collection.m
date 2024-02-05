@@ -20,18 +20,18 @@ classdef voxel_collection
             end
         end
 
-        function mat = get_material(self, i, j, k)
-            arguments
-                self
-                i (1, 1) double
-                j (1, 1) double
-                k (1, 1) double
-            end
+        function [mat, id] = get_material(self, i, j, k) % i, j, k single values
             for v = self.voxel_objs
                 if v{1}.is_in_object(i, j, k)
                     mat = v{1}.material;
+                    id = v{1}.material.id;
                 end
             end
         end
+
+        function mfp = get_mean_free_path(self, i, j, k, energy)
+            [material, ~] = self.get_material(i, j, k);
+            mfp = material.get_mean_free_path(energy);
+        end            
     end
 end
