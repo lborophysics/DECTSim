@@ -21,15 +21,16 @@ classdef curved_detector < detector
     end
 
     methods
-        function self = curved_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations, scatter_factor)
+        function self = curved_detector(dist_to_detector, pixel_dims, n_pixels, num_rotations, scatter_type, scatter_factor)
             arguments
                 dist_to_detector double
                 pixel_dims       (1, 2) double
                 n_pixels         (1, 2) double
                 num_rotations    double = 360
+                scatter_type     string = "none"
                 scatter_factor   double = 0
             end
-            self@detector(dist_to_detector, num_rotations, n_pixels, 2*pi, scatter_factor);
+            self@detector(dist_to_detector, num_rotations, n_pixels, 2*pi, scatter_type, scatter_factor);
             self.pixel_angle =  pixel_dims(1) / dist_to_detector;
             self.pixel_height = pixel_dims(2);
             
@@ -39,10 +40,16 @@ classdef curved_detector < detector
             self.init_to_source_vec = self.to_source_vec;
         end
 
-        function self = rotate(self)
+        function rotate(self)
             % rotate the detector by the rotation angle
             self.to_source_vec   = self.rot_mat * self.to_source_vec;
             self.source_position = self.rot_mat * self.source_position;
+        end
+
+        function reset(self)
+            % reset the detector to its initial position
+            self.to_source_vec   = self.init_to_source_vec;
+            self.source_position = self.init_source_pos;
         end
 
         function ray_generator = get_ray_generator(self, ray_per_pixel)
@@ -87,6 +94,11 @@ classdef curved_detector < detector
                 xray = static_ray_generator(y_pixel, z_pixel);
                 pixel_value = detector_response(xray.calculate_mu(voxels));
             end
+        end
+
+        function pixel_hit = hit_pixel(self, xray)
+            % Get the pixel which the xray hits
+            error("Not implemented")
         end
     end
 end
