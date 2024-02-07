@@ -20,7 +20,7 @@ jobs:
       - name: Retrieve necessary file
         run: unzip PhotonAttenuation.zip PhotonAttenuationQ.m -d src/
       - name: Set up MATLAB
-        uses: matlab-actions/setup-matlab@v1
+        uses: matlab-actions/setup-matlab@v2
       - name: Run tests and generate artifacts
         uses: matlab-actions/run-tests@v1
         with:
