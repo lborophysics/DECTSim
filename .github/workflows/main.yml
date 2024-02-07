@@ -22,7 +22,7 @@ jobs:
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v1
       - name: Run tests and generate artifacts
-        uses: matlab-actions/run-tests@v1
+        uses: matlab-actions/run-tests@v2
         with:
           logging-level: verbose
           select-by-folder: tests
