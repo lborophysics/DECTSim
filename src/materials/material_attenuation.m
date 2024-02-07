@@ -1,16 +1,13 @@
-classdef get_material
+classdef material_attenuation < handle
     %MATERIAL A class to represent a material and its properties necessary
     % for ray tracing and scattering
 
-    properties
-        get_mu % Function handle to get the linear attenuation coefficient of the material for a given energy
-        id     % Unique identifier of the material, generated from the material name
-    end
-
-    properties (Access=protected)
+    properties (Access=private)
         atomic_numbers % Atomic numbers of the elements in the material
         mass_fractions % Mass fractions of the elements in the material
         density        % Density of the material in g/cm^3
+        mu_from_energy % A function handle to get the linear attenuation coefficient from energy. Only used if use_mex is false
+        use_mex        % A flag to indicate if the MEX implementation of the photon_attenuation package is available
     end
 
     properties (Access=private, Constant)
@@ -51,7 +48,7 @@ classdef get_material
     end
 
     methods
-        function self = get_material(material_name, varargin)
+        function self = material_attenuation(material_name, varargin)
             %MATERIAL Construct a material object
             %   material("material_name") creates a material object with the properties of the given material, if it is available
             %   material("material_name", atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
@@ -79,12 +76,19 @@ classdef get_material
             else
                 error('MATLAB:invalidInput', 'Invalid number of input arguments. Use either material("material_name") or material("material_name", atomic_numbers, mass_fractions, density).');
             end
-            % Create a unique identifier for the material (spend time in creating this, but save time in the future by not having to compare strings)
-            alphabet = 'abcdefghijklmnopqrstuvwxyz'; Map(alphabet) = 1:length(alphabet);
-            self.id = bin2dec(convertCharsToStrings(dec2bin(Map(convertStringsToChars(lower(material_name))))));
+            self.use_mex = ~~exist('photon_attenuation_mex', 'file'); % Use the MEX implementation of the photon_attenuation package if available
+            if ~self.use_mex
+                self.mu_from_energy = get_photon_attenuation(self.atomic_numbers, self.mass_fractions, self.density);
+            end
+        end
 
-            % Set the function handle to get the linear attenuation coefficient
-            self.get_mu = photon_attenuation(self.atomic_numbers, self.mass_fractions, self.density); %Convert energy from MeV to KeV
+        function mu = get_mu(self, energy)
+            % GET_MU Get the linear attenuation coefficient of the material for a given energy
+            if self.use_mex
+                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, energy);
+            else
+                mu = self.mu_from_energy(energy);
+            end
         end
 
         function mfp = get_mean_free_path(self, E)
@@ -93,7 +97,7 @@ classdef get_material
             for i = 1:length(self.atomic_numbers)
                 imfp = imfp + ...
                     (constants.avogadro_number * self.density * self.mass_fractions(i) ...
-                    * get_material.get_cross_section(self.atomic_numbers(i), E) ...
+                    * material_attenuation.get_cross_section(self.atomic_numbers(i), E) ...
                     / self.atomic_masses(self.atomic_numbers(i)));
             end
             mfp = 1 / imfp; % cm
@@ -101,20 +105,23 @@ classdef get_material
     end
 
     methods (Static, Access=private)
-        function cs = get_cross_section(Z, E)
+        function cs = get_cross_section(Z, E) % Once tested change this function to evaluate the cross section for a vector of energies
             %GET_CROSS_SECTION Get the cross section of the material for a given energy (CREDIT: Geant4)
             % The values, formulae and code is taken directly from
             % https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/standard/src/G4KleinNishinaCompton.cc
             if E < 0.1; cs = 0; return; end % Below 100 eV, we are beyond the limit of the cross section table -> 0
             % See https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html
-
-            a = 20.0; b = 230.0; c = 440.0; % Unitless
-            d1= 2.7965e-25; d2=-1.8300e-25; % cm^2 (e-24 for the barn)
-            d3= 6.7527e-24; d4=-1.9798e-23; % cm^2 (e-24 for the barn)
-            e1= 1.9756e-29; e2=-1.0205e-26; % cm^2 (e-24 for the barn)
-            e3=-7.3913e-26; e4= 2.7079e-26; % cm^2 (e-24 for the barn)
-            f1=-3.9178e-31; f2= 6.8241e-29; % cm^2 (e-24 for the barn)
-            f3= 6.0480e-29; f4= 3.0274e-28; % cm^2 (e-24 for the barn)
+            
+            persistent a b c d1 d2 d3 d4 e1 e2 e3 e4 f1 f2 f3 f4
+            if isempty(a) % Initialize the constants if they are not already
+                a = 20.0; b = 230.0; c = 440.0; % Unitless
+                d1= 2.7965e-25; d2=-1.8300e-25; % cm^2 (e-24 for the barn)
+                d3= 6.7527e-24; d4=-1.9798e-23; % cm^2 (e-24 for the barn)
+                e1= 1.9756e-29; e2=-1.0205e-26; % cm^2 (e-24 for the barn)
+                e3=-7.3913e-26; e4= 2.7079e-26; % cm^2 (e-24 for the barn)
+                f1=-3.9178e-31; f2= 6.8241e-29; % cm^2 (e-24 for the barn)
+                f3= 6.0480e-29; f4= 3.0274e-28; % cm^2 (e-24 for the barn)
+            end
             if Z < 1.5; T0 = 40; % Special case for hydrogen (KeV)
             else;       T0 = 15; % KeV
             end

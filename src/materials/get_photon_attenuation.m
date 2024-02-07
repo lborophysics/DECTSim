@@ -73,7 +73,8 @@ function att_fun = get_photon_attenuation(z, fracs, density)
 %--------------------------------------------------------------------------
 %% Hard-wire the table of x-ray mass attenuation coefficients in cm^2/g
 %--------------------------------------------------------------------------
-
+persistent energy mac edges % store the tables in memory
+if isempty(energy) % if the tables are not in memory, load them
 energy = [... % in keV
     1.000E-3, 1.500E-3, 2.000E-3, 3.000E-3, 4.000E-3, 5.000E-3, 6.000E-3, 8.000E-3, 1.000E-2, 1.500E-2, 2.000E-2, 3.000E-2, 4.000E-2, 5.000E-2, 6.000E-2, 8.000E-2, 1.000E-1, 1.500E-1, 2.000E-1, 3.000E-1].*1000;
 mac = [...                                                                                                                                                                                                            
@@ -314,6 +315,7 @@ edges = [ ...
     55, 0.0057143*1000, 6.556E+2, 7.547E+2;...
     55, 0.0359846*1000, 5.863   , 3.143E+1;... % Stop at caesium
     ];
+end
 %% Initialize variables
 elems  = z(:);
 fracs = fracs ./ sum(fracs); % normalize fractions
