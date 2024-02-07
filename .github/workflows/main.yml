@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Get Photon Attenuation Package
         run: wget https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/12092/versions/7/download/zip/PhotonAttenuation.zip
       - name: Retrieve necessary file
