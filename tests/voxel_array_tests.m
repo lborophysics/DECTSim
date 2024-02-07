@@ -4,6 +4,8 @@ classdef voxel_array_tests < matlab.unittest.TestCase
         test_obj2
         test_obj3
         test_obj4
+        material1
+        material2
     end
 
     methods (TestMethodSetup)
@@ -11,14 +13,14 @@ classdef voxel_array_tests < matlab.unittest.TestCase
         function setup (tc)
             centre = [0; 0; 0];
             object_dims = [10; 10; 10];
-            material1 = get_material("water");
-            material1.get_mu = @(i, j, k, e) i + j + k + e; % Define a simple function for testing
-            material2 = get_material("water");
-            material2.get_mu = @(i, j, k, e) i - j - k + e; % Define a simple function for testing
-            tc.test_obj1 = voxel_array(centre, object_dims, 1, material1);
-            tc.test_obj2 = voxel_array(centre, object_dims, 0.5, material1);
-            tc.test_obj3 = voxel_array(centre, object_dims, 1, material2);
-            tc.test_obj4 = voxel_array([5; 4; 0.5], object_dims, 1, material1);
+            tc.material1 = material_attenuation("water");
+            vobj1 = voxel_object(@(i,j,k) i==i, tc.material1); % Define a simple function for testing
+            tc.material2 = material_attenuation("air");
+            vobj2 = voxel_object(@(i,j,k) i==i, tc.material2); % Define a simple function for testing
+            tc.test_obj1 = voxel_array(centre, object_dims, 1, vobj1);
+            tc.test_obj2 = voxel_array(centre, object_dims, 0.5, vobj1);
+            tc.test_obj3 = voxel_array(centre, object_dims, 1, vobj2);
+            tc.test_obj4 = voxel_array([5; 4; 0.5], object_dims, 1, vobj1);
         end
     end
 
@@ -26,27 +28,25 @@ classdef voxel_array_tests < matlab.unittest.TestCase
         % Test methods
         function test_attributes(tc)
             % Verify attributes
-            water = get_material("water"); water_id = water.id;
             tc.verifyEqual(tc.test_obj1.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj1.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj1.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj1.voxel_obj.id, water_id);
-            tc.verifyEqual(tc.test_obj1.voxel_obj.get_mu(1, 1, 1, 0), 3);
+            tc.verifyEqual(tc.test_obj1.get_mu(1, 1, 1, 1), tc.material1.get_mu(1));
 
             tc.verifyEqual(tc.test_obj2.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj2.num_planes, [21; 21; 21]);
             tc.verifyEqual(tc.test_obj2.dimensions, [0.5; 0.5; 0.5]);
-            tc.verifyEqual(tc.test_obj2.voxel_obj.get_mu(1, 2, 3, 4), 10);
+            tc.verifyEqual(tc.test_obj2.get_mu(1, 2, 3, 40), tc.material1.get_mu(40));
 
             tc.verifyEqual(tc.test_obj3.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj3.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj3.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj3.voxel_obj.get_mu(1, 2, 3, -3), -7);
+            tc.verifyEqual(tc.test_obj3.get_mu(1, 2, 3, 7), tc.material2.get_mu(7));
 
             tc.verifyEqual(tc.test_obj4.array_position, [0; -1; -4.5]);
             tc.verifyEqual(tc.test_obj4.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj4.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj4.voxel_obj.get_mu(1, 2, 3, 1), 7);            
+            tc.verifyEqual(tc.test_obj4.get_mu(1, 2, 3, 100), tc.material1.get_mu(100));
         end
 
         function test_get_point_position(tc)
@@ -55,25 +55,25 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             tc.verifyEqual(tc.test_obj1.get_point_position([1; 2; 3]), [-5; -4; -3]);
             tc.verifyEqual(tc.test_obj1.get_point_position([11; 10; 9]), [5; 4; 3]);
             tc.verifyEqual(tc.test_obj1.get_points_position(...
-            [1, 1, 11], [1, 2, 10], [1, 3, 9]), [-5, -5, 5; -5, -4, 4; -5, -3, 3;]);
-            
+                [1, 1, 11], [1, 2, 10], [1, 3, 9]), [-5, -5, 5; -5, -4, 4; -5, -3, 3;]);
+
             tc.verifyEqual(tc.test_obj2.get_point_position([1; 1; 1]), [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj2.get_point_position([1; 2; 3]), [-5; -4.5; -4]);
             tc.verifyEqual(tc.test_obj2.get_point_position([21; 20; 19]), [5; 4.5; 4]);
             tc.verifyEqual(tc.test_obj2.get_points_position(...
-            [1, 1, 21], [1, 2, 20], [1, 3, 19]), [-5, -5, 5; -5, -4.5, 4.5; -5, -4, 4;]);
+                [1, 1, 21], [1, 2, 20], [1, 3, 19]), [-5, -5, 5; -5, -4.5, 4.5; -5, -4, 4;]);
 
             tc.verifyEqual(tc.test_obj3.get_point_position([1; 1; 1]), [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj3.get_point_position([1; 2; 3]), [-5; -4; -3]);
             tc.verifyEqual(tc.test_obj3.get_point_position([10; 9; 8]), [4; 3; 2]);
             tc.verifyEqual(tc.test_obj3.get_points_position(...
-            [1, 1, 10], [1, 2, 9], [1, 3, 8]), [-5, -5, 4; -5, -4, 3; -5, -3, 2;]);
+                [1, 1, 10], [1, 2, 9], [1, 3, 8]), [-5, -5, 4; -5, -4, 3; -5, -3, 2;]);
 
             tc.verifyEqual(tc.test_obj4.get_point_position([1; 1; 1]), [0; -1; -4.5]);
             tc.verifyEqual(tc.test_obj4.get_point_position([1; 2; 3]), [0; 0; -2.5]);
             tc.verifyEqual(tc.test_obj4.get_point_position([10; 9; 8]), [9; 7; 2.5]);
             tc.verifyEqual(tc.test_obj4.get_points_position(...
-            [1, 1, 10], [1, 2, 9], [1, 3, 8]), [0, 0, 9; -1, 0, 7; -4.5, -2.5, 2.5;]);
+                [1, 1, 10], [1, 2, 9], [1, 3, 8]), [0, 0, 9; -1, 0, 7; -4.5, -2.5, 2.5;]);
         end
 
         function test_get_single_coord(tc)
@@ -97,25 +97,115 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             tc.verifyError(@() tc.test_obj1.get_single_coord(4, 1), 'assert:failure', 'coord must be between 1 and 3');
         end
 
-        function test_get_mu(tc)
-            for i = 1:3
-                for j = 10:12
-                    for k = 5:7
-                        for e = -1:1:1
-                            ijk1 = tc.test_obj1.get_point_position([i; j; k]) + tc.test_obj1.dimensions/2;
-                            ijk2 = tc.test_obj2.get_point_position([i; j; k]) + tc.test_obj2.dimensions/2;
-                            ijk3 = tc.test_obj3.get_point_position([i; j; k]) + tc.test_obj3.dimensions/2;
-                            ijk4 = tc.test_obj4.get_point_position([i; j; k]) + tc.test_obj4.dimensions/2;
-
-                            tc.verifyEqual(tc.test_obj1.get_mu(i, j, k, e), ijk1(1) + ijk1(2) + ijk1(3) + e);
-                            tc.verifyEqual(tc.test_obj2.get_mu(i, j, k, e), ijk2(1) + ijk2(2) + ijk2(3) + e);
-                            tc.verifyEqual(tc.test_obj3.get_mu(i, j, k, e), ijk3(1) - ijk3(2) - ijk3(3) + e);
-                            tc.verifyEqual(tc.test_obj4.get_mu(i, j, k, e), ijk4(1) + ijk4(2) + ijk4(3) + e);
-                        end
-                    end
+        function test_collection(tc)
+            mat1 = material_attenuation("water");
+            mat1_att = mat1.get_mu(1);
+            big_box = voxel_box([0,0,0], 10, mat1);
+            mat2 = material_attenuation("bone");
+            mat2_att = mat2.get_mu(1);
+            med_box = voxel_box([0,0,0], 6, mat2);
+            mat3 = material_attenuation("air");
+            mat3_att = mat3.get_mu(1);
+            small_box = voxel_box([0,0,0], 2, mat3);
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
+            get_mu = @(x,y,z,e) my_collection.get_mu(x + 5,y + 5,z + 5, e); % coord to index -> + 5
+            for x = -5:5
+                if abs(x) <= 1
+                    tc.verifyEqual(get_mu(x, 0, 0, 1), mat3_att)
+                elseif abs(x) <= 3
+                    tc.verifyEqual(get_mu(x, 0, 0, 1), mat2_att)
+                else
+                    tc.verifyEqual(get_mu(x, 0, 0, 1), mat1_att)
+                end
+            end
+            for y = -5:5
+                if abs(y) <= 1
+                    tc.verifyEqual(get_mu(0, y, 0, 1), mat3_att)
+                elseif abs(y) <= 3
+                    tc.verifyEqual(get_mu(0, y, 0, 1), mat2_att)
+                else
+                    tc.verifyEqual(get_mu(0, y, 0, 1), mat1_att)
                 end
             end
         end
+
+        function test_get_dicts(tc)
+            centre = [0; 0; 0];
+            object_dims = [10; 10; 10];
+            water = voxel_box([0,0,0], 10, material_attenuation("water"));
+            air =  voxel_box([0,0,0], 6, material_attenuation("air")); 
+            bone =  voxel_box([0,0,0], 2, material_attenuation("bone"));
+
+            obj1 = voxel_array(centre, object_dims, 1, air, water, bone);
+            obj2 = voxel_array(centre, object_dims, 0.5, bone, air, water);
+
+            arr_exp1 = [air.get_mu(12) water.get_mu(12) bone.get_mu(12) air.get_mu(12)];
+            arr_exp2 = [bone.get_mu(24) air.get_mu(24) water.get_mu(24) air.get_mu(24)];
+
+            tc.verifyEqual(obj1.get_mu_dict(12), arr_exp1);
+            tc.verifyEqual(obj2.get_mu_dict(24), arr_exp2);
+
+            arr_exp1 = [...
+                air.material.get_mean_free_path(12) ...
+                water.material.get_mean_free_path(12) ...
+                bone.material.get_mean_free_path(12) ...
+                air.material.get_mean_free_path(12)];
+
+            arr_exp2 = [...
+                bone.material.get_mean_free_path(24) ...
+                air.material.get_mean_free_path(24) ...
+                water.material.get_mean_free_path(24) ...
+                air.material.get_mean_free_path(24)];
+            
+            tc.verifyEqual(obj1.get_mfp_dict(12), arr_exp1);
+            tc.verifyEqual(obj2.get_mfp_dict(24), arr_exp2);
+        end
+
+        function test_saved_dicts(tc)
+            mat1 = material_attenuation("water");
+            mat2 = material_attenuation("bone");
+            mat3 = material_attenuation("air");
+
+            mat1_att = mat1.get_mu(13); mat1_mfp = mat1.get_mean_free_path(59);
+            mat2_att = mat2.get_mu(13); mat2_mfp = mat2.get_mean_free_path(59);
+            mat3_att = mat3.get_mu(13); mat3_mfp = mat3.get_mean_free_path(59);
+
+            big_box   = voxel_box([0,0,0], 10, mat1);
+            med_box   = voxel_box([0,0,0], 6 , mat2);            
+            small_box = voxel_box([0,0,0], 2 , mat3);
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
+            
+            mu_arr = my_collection.get_mu_dict(13);
+            mfp_arr = my_collection.get_mfp_dict(59);
+            get_mu = @(x,y,z) my_collection.get_saved_mu(x + 5,y + 5,z + 5, mu_arr); % coord to index -> + 5
+            get_mfp = @(x,y,z) my_collection.get_saved_mfp(x + 5,y + 5,z + 5, mfp_arr); % coord to index -> + 5
+
+            for x = -5:5
+                if abs(x) <= 1
+                    tc.verifyEqual(get_mu (x, 0, 0), mat3_att)
+                    tc.verifyEqual(get_mfp(x, 0, 0), mat3_mfp)
+                elseif abs(x) <= 3
+                    tc.verifyEqual(get_mu (x, 0, 0), mat2_att)
+                    tc.verifyEqual(get_mfp(x, 0, 0), mat2_mfp)
+                else
+                    tc.verifyEqual(get_mu (x, 0, 0), mat1_att)
+                    tc.verifyEqual(get_mfp(x, 0, 0), mat1_mfp)
+                end
+            end
+            for y = -5:5
+                if abs(y) <= 1
+                    tc.verifyEqual(get_mu (0, y, 0), mat3_att)
+                    tc.verifyEqual(get_mfp(0, y, 0), mat3_mfp)
+                elseif abs(y) <= 3
+                    tc.verifyEqual(get_mu (0, y, 0), mat2_att)
+                    tc.verifyEqual(get_mfp(0, y, 0), mat2_mfp)
+                else
+                    tc.verifyEqual(get_mu (0, y, 0), mat1_att)
+                    tc.verifyEqual(get_mfp(0, y, 0), mat1_mfp)
+                end
+            end
+        end
+        
     end
 
 end

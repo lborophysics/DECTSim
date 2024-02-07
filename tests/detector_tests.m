@@ -18,14 +18,14 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(detector.pixel_angle, pi/180);
             tc.verifyEqual(detector.pixel_height, 0.1);
 
-            detector = detector.rotate();
+            detector.rotate();
             tc.verifyEqual(detector.init_source_pos, [0; 4.5; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.source_position, [-4.5; 0; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_angle, pi/180);
             tc.verifyEqual(detector.pixel_height, 0.1);
 
             detector = curved_detector(9, [pi/20, 0.1], [111, 212 + 1e-13]);
-            detector = detector.rotate();
+            detector.rotate();
             tc.verifyEqual(detector.source_position, 4.5*rotz(pi/2 + pi/180)*[1; 0; 0], 'AbsTol', 1e-15);
 
             % detector = curved_detector(11, 11, pi/30, pi/4); % using detector width
@@ -35,9 +35,15 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(detector.pixel_angle, pi/30, 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_height, 0.31);
             
-            detector = detector.rotate();
+            detector.rotate();
             tc.verifyEqual(detector.init_source_pos, [0; 5.5; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.source_position, rotz(pi/4)*[0; 5.5; 0], 'AbsTol', 1e-15); 
+            tc.verifyEqual(detector.pixel_angle, pi/30, 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.pixel_height, 0.31);
+
+            detector.reset();
+            tc.verifyEqual(detector.source_position, [0; 5.5; 0], 'AbsTol', 1e-15);
+            tc.verifyEqual(detector.init_source_pos, detector.source_position, 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_angle, pi/30, 'AbsTol', 1e-15);
             tc.verifyEqual(detector.pixel_height, 0.31);
         end
@@ -48,13 +54,13 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(detector.init_centre, detector.centre);
             tc.verifyEqual(detector.pixel_dims, [0.11 0.1]);
 
-            detector = detector.rotate();
+            detector.rotate();
             tc.verifyEqual(detector.centre, [2.5; 0; 0], 'AbsTol', 1e-15);
             tc.verifyEqual(detector.init_centre, [0; -2.5; 0]);
             tc.verifyEqual(detector.pixel_dims, [0.11 0.1]);
 
             detector = parallel_detector(5, [11, 7], [100, 50+1e-14]);
-            detector = detector.rotate();
+            detector.rotate();
             tc.verifyEqual(detector.centre, rotz(pi/180)*[0; -2.5; 0], 'AbsTol', 1e-15);
             
             detector = parallel_detector(7, [0.028, 0.044], [500, 250], 4); 
@@ -62,10 +68,15 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(detector.init_centre, detector.centre);
             tc.verifyEqual(detector.pixel_dims, [0.028, 0.044]); 
             
-            detector = detector.rotate();
+            detector.rotate();
             tc.verifyEqual(detector.centre, [ 1/sqrt(2); -1/sqrt(2); 0]*3.5, 'AbsTol', 1e-15);
             tc.verifyEqual(detector.init_centre, [0; -3.5; 0]);
             tc.verifyEqual(detector.pixel_dims, [0.028, 0.044]);
+
+            detector.reset();
+            tc.verifyEqual(detector.centre, [0; -3.5; 0]);
+            tc.verifyEqual(detector.init_centre, detector.centre);
+            tc.verifyEqual(detector.pixel_dims, [0.028, 0.044]); 
         end
 
         function test_curved_ray_gen(tc)
@@ -117,17 +128,18 @@ classdef detector_tests < matlab.unittest.TestCase
         
         function test_generate_image(tc)
             detector = parallel_detector(10, [1, 1], [5, 1], 4);
-            mat = get_material("water"); mat.get_mu = @(e) 1;
+            mat = material_attenuation("water"); 
             my_box = voxel_box([0;0;0], [3;3;3], mat);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
+            att = mat.get_mu(30);
             sq2 = sqrt(2);
             
             image = squeeze(detector.generate_image(array));
             tc.verifyEqual(size(image), [5, 4]);
-            tc.verifyEqual(image(:, 1), [0;3;3;3;0], 'AbsTol', 1e-15);
-            tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4], 'AbsTol', 2e-15);
-            tc.verifyEqual(image(:, 3), [0;3;3;3;0], 'AbsTol', 1e-15);
-            tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4], 'AbsTol', 3e-15);
+            tc.verifyEqual(image(:, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 2e-15);
+            tc.verifyEqual(image(:, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
             
             detector_2d = parallel_detector(10, [0.15, 0.1], [50, 10], 4);
             image = detector_2d.generate_image(array);
@@ -137,29 +149,59 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_generate_image_p(tc)
             detector = parallel_detector(10, [1, 1], [5, 1], 4);
-            my_mat = get_material("water"); my_mat.get_mu = @(e) 1;
-            my_box = voxel_box([0;0;0], [3;3;3], my_mat);
+            mat = material_attenuation("water");
+            my_box = voxel_box([0;0;0], [3;3;3], mat);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
+            att = mat.get_mu(30);
             sq2 = sqrt(2);
             
             image = squeeze(detector.generate_image_p(array));
             tc.verifyEqual(size(image), [5, 4]);
-            tc.verifyEqual(image(:, 1), [0;3;3;3;0], 'AbsTol', 1e-15);
-            tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4], 'AbsTol', 2e-15);
-            tc.verifyEqual(image(:, 3), [0;3;3;3;0], 'AbsTol', 1e-15);
-            tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4], 'AbsTol', 3e-15);
+            tc.verifyEqual(image(:, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 2e-15);
+            tc.verifyEqual(image(:, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
         end
 
         function test_curved_generate_image_p(tc)
             dist_to_detector = 10;
             num_rotations = 16;
             detector = curved_detector(dist_to_detector, [pi/500, 0.01], [25, 10], num_rotations);
-            my_mat = get_material("water"); my_mat.get_mu = @(e) 1;
+            my_mat = material_attenuation("water");
             my_box = voxel_box([0;0;0], [3;3;3], my_mat);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             image = detector.generate_image(array);
             image_p = detector.generate_image_p(array);
             tc.verifyEqual(image_p, image, 'RelTol', 1e-14)
         end
+
+        function test_hit_para_pixel(tc)
+            detector = parallel_detector(2, [0.1, 0.35], [110, 20], 10);
+            ray_generator = detector.get_ray_generator();
+            for i = 50:60
+                for j = 5:15
+                    gen_ray = ray_generator(i, j);
+                    tc.verifyEqual(detector.hit_pixel(gen_ray, detector.detector_vec), [i, j]);
+                end
+            end
+
+            detector.rotate();
+            ray_generator = detector.get_ray_generator();
+            for i = 50:60
+                for j = 5:15
+                    gen_ray = ray_generator(i, j);
+                    tc.verifyEqual(detector.hit_pixel(gen_ray, detector.detector_vec), [i, j]);
+                end
+            end
+        end
+
+        function test_air_scan(tc)
+            detector = parallel_detector(2, [0.1, 0.35], [110, 20], 10);
+            air = material_attenuation("air");
+            scan = detector.air_scan();
+            exp = zeros(110, 20, 10) + detector.detector_response(air.get_mu(30)*2);
+            tc.verifyEqual(scan, exp, 'RelTol', 1e-15);
+        end
+
     end
 end
