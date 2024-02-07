@@ -22,7 +22,7 @@ jobs:
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
         with:
-          products: image_toolbox
+          products: Image_Processing_Toolbox
       - name: Run tests and generate artifacts
         uses: matlab-actions/run-tests@v2
         with:
