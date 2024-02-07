@@ -91,22 +91,17 @@ classdef material_attenuation < handle
             end
         end
 
-        function mfp = get_mean_free_path(self, E)
-            % GET_MEAN_FREE_PATH Get the mean free path of the material for a given energy
-            imfp = 0;
-            for i = 1:length(self.atomic_numbers)
-                imfp = imfp + ...
-                    (constants.avogadro_number * self.density * self.mass_fractions(i) ...
-                    * material_attenuation.get_cross_section(self.atomic_numbers(i), E) ...
-                    / self.atomic_masses(self.atomic_numbers(i)));
-            end
-            mfp = 1 / imfp; % cm
+        function mfp = mean_free_path(self, E)
+            % MEAN_FREE_PATH Get the mean free path of the material for a given energy
+            mfp = 1 / (constants.N_A * self.density * sum(self.mass_fractions .* ...
+                material_attenuation.cross_section(self.atomic_numbers, E) ./ ...
+                self.atomic_masses(self.atomic_numbers)));
         end
     end
 
-    methods (Static, Access=private)
-        function cs = get_cross_section(Z, E) % Once tested change this function to evaluate the cross section for a vector of energies
-            %GET_CROSS_SECTION Get the cross section of the material for a given energy (CREDIT: Geant4)
+    methods (Static)
+        function cs = cross_section(Z, E) % Once tested change this function to evaluate the cross section for a vector of energies
+            % CROSS_SECTION Get the cross section of the material for a given energy (CREDIT: Geant4)
             % The values, formulae and code is taken directly from
             % https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/standard/src/G4KleinNishinaCompton.cc
             if E < 0.1; cs = 0; return; end % Below 100 eV, we are beyond the limit of the cross section table -> 0
@@ -122,25 +117,24 @@ classdef material_attenuation < handle
                 f1=-3.9178e-31; f2= 6.8241e-29; % cm^2 (e-24 for the barn)
                 f3= 6.0480e-29; f4= 3.0274e-28; % cm^2 (e-24 for the barn)
             end
-            if Z < 1.5; T0 = 40; % Special case for hydrogen (KeV)
-            else;       T0 = 15; % KeV
-            end
+            T0(Z < 1.5) = 40; % Special case for hydrogen (KeV)
+            T0(Z > 1.5) = 15; % KeV
+            
+            X = max(E, T0) ./ constants.em_ee; % Unitless
+            p1Z = Z.*(d1 + e1.*Z + f1.*Z.*Z); p2Z = Z.*(d2 + e2.*Z + f2.*Z.*Z); % cm^2
+            p3Z = Z.*(d3 + e3.*Z + f3.*Z.*Z); p4Z = Z.*(d4 + e4.*Z + f4.*Z.*Z); % cm^2
 
-            X = max(E, T0) / constants.em_ee; % Unitless
-            p1Z = Z*(d1 + e1*Z + f1*Z*Z); p2Z = Z*(d2 + e2*Z + f2*Z*Z); % cm^2
-            p3Z = Z*(d3 + e3*Z + f3*Z*Z); p4Z = Z*(d4 + e4*Z + f4*Z*Z); % cm^2
-
-            cs = p1Z*log(1.+2.*X)/X + (p2Z + p3Z*X + p4Z*X*X)/(1. + a*X + b*X*X + c*X*X*X); % cm^2
+            cs = p1Z.*log(1.+2.*X)./X + (p2Z + p3Z.*X + p4Z.*X.*X)./(1. + a.*X + b.*X.*X + c.*X.*X.*X); % cm^2
 
             if E < T0
-                X = (T0+1) / constants.em_ee; % Unitless
-                sigma = p1Z*log(1.+2.*X)/X + (p2Z + p3Z*X + p4Z*X*X)/(1. + a*X + b*X*X + c*X*X*X); % cm^2
-                c1 = -T0*(sigma-cs)/cs; % Unitless
-                if Z > 1.5; c2 = 0.375-0.0556*log(Z); %Unitless
+                X = (T0+1) ./ constants.em_ee; % Unitless
+                sigma = p1Z.*log(1.+2.*X)./X + (p2Z + p3Z.*X + p4Z.*X.*X)./(1. + a.*X + b.*X.*X + c.*X.*X.*X); % cm^2
+                c1 = -T0.*(sigma-cs)./cs; % Unitless
+                if Z > 1.5; c2 = 0.375-0.0556.*log(Z); %Unitless
                 else;       c2 = 0.150;               %Unitless
                 end
-                y = log(E/T0); % Unitless
-                cs = cs * exp(-y*(c1+c2*y)); % cm^2
+                y = log(E./T0); % Unitless
+                cs = cs .* exp(-y.*(c1+c2.*y)); % cm^2
             end
         end
     end

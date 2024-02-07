@@ -60,11 +60,11 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mu_arr = get_mu_dict(self, energy)
             % Create a dictionary of mu values for each material
-            mu_arr = zeros(1, self.nobj + 1);
+            mu_arr(self.nobj + 1) = self.air.get_mu(energy);
+            % mu_arr = zeros(1, self.nobj + 1);
             for n = 1:self.nobj
                 mu_arr(n) = self.voxel_objs{n}.get_mu(energy);
             end
-            mu_arr(self.nobj + 1) = self.air.get_mu(energy);
         end
 
         function mu = get_saved_mu(self, i, j, k, dict)
@@ -81,11 +81,11 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mfp_arr = get_mfp_dict(self, energy)
             % Create a dictionary of mfp values for each material
-            mfp_arr = zeros(1, self.nobj + 1);
+            mfp_arr(self.nobj + 1) = self.air.mean_free_path(energy);
+            % mfp_arr = zeros(1, self.nobj + 1);
             for n = 1:self.nobj
-                mfp_arr(n) = self.voxel_objs{n}.material.get_mean_free_path(energy);
+                mfp_arr(n) = self.voxel_objs{n}.material.mean_free_path(energy);
             end
-            mfp_arr(self.nobj + 1) = self.air.get_mean_free_path(energy);
         end
 
         function mfp = get_saved_mfp(self, i, j, k, dict)
