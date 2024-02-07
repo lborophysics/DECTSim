@@ -12,6 +12,7 @@ function att = photon_attenuation(z, fracs, density, nrj)
 %   z - atomic number Z in [1, 100] range, or array of Z numbers
 %   fracs - mass fractions of each element in the material, should sum to 1
 %   density - density of the material in g/cm^3
+%   nrj - Energy in keV
 %
 % Output :
 %   att_fun - A function handle for the for the attenuation coefficients
