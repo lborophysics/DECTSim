@@ -1,22 +1,21 @@
 % Voxel array constants
-vox_arr_center = zeros(3, 1); 
-phantom_radius = 30;% In the x-y plane 
+vox_arr_center = zeros(3, 1);
+phantom_radius = 30;% In the x-y plane
 phantom_width = 50; % In the z direction
 voxel_size = 0.1; % 1 mm
 
 % Create voxel array
-water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material("water"));
+water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
 num_materials = 4;
 rot_mat_pos = rotz(2*pi/num_materials);
 init_mat_pos = [0; phantom_radius/2; 0];
-bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material("bone"));
-blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material("blood"));
-lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material("lung"));
-muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material("muscle"));
+bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("bone"));
+blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
+lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("lung"));
+muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
 
-phantom = voxel_collection(water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
-
-voxels = voxel_array(vox_arr_center, zeros(3, 1)+phantom_radius*2, voxel_size, phantom);
+voxels = voxel_array(vox_arr_center, zeros(3, 1)+phantom_radius*2, voxel_size, ...
+    water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
 
 % Detector constants
 dist_to_detector = 105; % cm
