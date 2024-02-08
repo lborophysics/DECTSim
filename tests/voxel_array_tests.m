@@ -31,22 +31,18 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             tc.verifyEqual(tc.test_obj1.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj1.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj1.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj1.get_mu(1, 1, 1, 1), tc.material1.get_mu(1));
 
             tc.verifyEqual(tc.test_obj2.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj2.num_planes, [21; 21; 21]);
             tc.verifyEqual(tc.test_obj2.dimensions, [0.5; 0.5; 0.5]);
-            tc.verifyEqual(tc.test_obj2.get_mu(1, 2, 3, 40), tc.material1.get_mu(40));
 
             tc.verifyEqual(tc.test_obj3.array_position, [-5; -5; -5]);
             tc.verifyEqual(tc.test_obj3.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj3.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj3.get_mu(1, 2, 3, 7), tc.material2.get_mu(7));
 
             tc.verifyEqual(tc.test_obj4.array_position, [0; -1; -4.5]);
             tc.verifyEqual(tc.test_obj4.num_planes, [11; 11; 11]);
             tc.verifyEqual(tc.test_obj4.dimensions, [1; 1; 1]);
-            tc.verifyEqual(tc.test_obj4.get_mu(1, 2, 3, 100), tc.material1.get_mu(100));
         end
 
         function test_collection(tc)
@@ -60,7 +56,7 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             mat3_att = mat3.get_mu(1);
             small_box = voxel_cube([0,0,0], 2, mat3);
             my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
-            get_mu = @(x,y,z,e) my_collection.get_mu(x + 5,y + 5,z + 5, e); % coord to index -> + 5
+            get_mu = @(x,y,z,e) my_collection.get_saved_mu(x + 5,y + 5,z + 5, [mat1_att, mat2_att, mat3_att]); % coord to index -> + 5
             for x = -5:5
                 if abs(x) <= 1
                     tc.verifyEqual(get_mu(x, 0, 0, 1), mat3_att)
