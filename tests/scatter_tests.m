@@ -30,30 +30,29 @@ classdef scatter_tests < matlab.unittest.TestCase
                     tol = 0.11; % https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html#id276
                 else
                     tol = 0.06; % https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html#id276
-                    htol = tol;
                 end
-                cs = material_attenuation.cross_section(Z(2), E(i));
+                cs = cross_section(Z(2), E(i));
                 tc.verifyEqual(cs, carbon_cs(i), 'RelTol', tol);
                 
                 mfp = carbon.mean_free_path(E(i));
                 c_exp = 12.011 / (carbon_cs(i)*constants.N_A);
                 tc.verifyEqual(mfp, c_exp, 'RelTol', tol);
 
-                cs = material_attenuation.cross_section(Z(3), E(i));
+                cs = cross_section(Z(3), E(i));
                 tc.verifyEqual(cs, silicon_cs(i), 'RelTol', tol);
 
                 mfp = silicon.mean_free_path(E(i));
                 s_exp = 28.085 / (silicon_cs(i)*constants.N_A*0.4);
                 tc.verifyEqual(mfp, s_exp, 'RelTol', tol);
 
-                cs = material_attenuation.cross_section(Z(4), E(i));
+                cs = cross_section(Z(4), E(i));
                 tc.verifyEqual(cs, iron_cs(i), 'RelTol', tol);
 
                 mfp = iron.mean_free_path(E(i));
                 i_exp = 55.845 / (iron_cs(i)*constants.N_A*0.3);
                 tc.verifyEqual(mfp, i_exp, 'RelTol', tol);
 
-                cs = material_attenuation.cross_section(Z(5), E(i));
+                cs = cross_section(Z(5), E(i));
                 tc.verifyEqual(cs, iodine_cs(i), 'RelTol', tol);
 
                 mfp = iodine.mean_free_path(E(i));
@@ -61,12 +60,12 @@ classdef scatter_tests < matlab.unittest.TestCase
                 tc.verifyEqual(mfp, io_exp, 'RelTol', tol);
                 
                 if i > 1 % This is the far end of the fit (lowest z and energy) so it is the worst - so bad testing would have pointlessly high errors
-                    cs = material_attenuation.cross_section(Z(1), E(i));
-                    tc.verifyEqual(cs, hydrogen_cs(i), 'RelTol', htol);
+                    cs = cross_section(Z(1), E(i));
+                    tc.verifyEqual(cs, hydrogen_cs(i), 'RelTol', tol);
                     
                     mfp = hydrogen.mean_free_path(E(i));
                     h_exp = 1.008 / (hydrogen_cs(i)*constants.N_A);
-                    tc.verifyEqual(mfp, h_exp, 'RelTol', htol);
+                    tc.verifyEqual(mfp, h_exp, 'RelTol', tol);
 
                     cs = comined.mean_free_path(E(i));
                     comb_exp = 1/(0.7*(0.1/(h_exp) + 0.3/(c_exp) + 0.2/(s_exp*0.4) + 0.3/(i_exp*0.3) + 0.1/(io_exp)));
