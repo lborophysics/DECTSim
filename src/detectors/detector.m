@@ -73,8 +73,8 @@ classdef (Abstract) detector < handle
 
         function check_voxels(self, voxels)
             % Check that the voxels are all within the detector
-            init_plane = voxels.get_point_position([1; 1; 1]);
-            last_plane = voxels.get_point_position(voxels.num_planes);
+            init_plane = voxels.array_position;
+            last_plane = init_plane + (voxels.num_planes - 1) .* voxels.dimensions;
             assert(init_plane(1)^2 + init_plane(2)^2 <= (self.dist_to_detector/2)^2, ...
                 'Voxels array is not entirely within the detector');
             assert(last_plane(1)^2 + last_plane(2)^2 <= (self.dist_to_detector/2)^2, ...

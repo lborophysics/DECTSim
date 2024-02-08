@@ -32,23 +32,9 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.voxel_objs = varargin;
         end
 
-        function position = get_point_position(self, indices)
-            position = self.array_position + (indices - 1) .* self.dimensions;
-        end
-
-        function position = get_points_position(self, i, j, k)
-            position = self.array_position + ([i;j;k] - 1) .* self.dimensions;
-        end
-
-        function plane = get_single_coord(self, coord, index)
-            assert(coord <= 3 && coord >= 1, 'assert:failure', 'coord must be between 1 and 3')
-            %assert(index <= self.num_planes(coord) && index >= 1, 'index must be between 1 and N(coord)')
-            plane = self.array_position(coord) + (index - 1) * self.dimensions(coord);
-        end
-
          function mu = get_mu(self, i, j, k, energy)
             % Convert indices to position at centre of voxel
-            position = self.get_point_position([i; j; k]) + self.dimensions ./ 2;
+            position = self.array_position + ([i;j;k] - 0.5) .* self.dimensions;
 
             % Get mu at position
             mu = zeros(1, length(i));
@@ -69,7 +55,7 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mu = get_saved_mu(self, i, j, k, dict)
             % Convert indices to position at centre of voxel
-            position = self.get_point_position([i; j; k]) + self.dimensions ./ 2;
+            position = self.array_position + ([i;j;k] - 0.5) .* self.dimensions;
 
             % Get mu at position
             mu = zeros(1, length(i)); % + dict(self.nobj + 1); % Default to air
@@ -90,7 +76,7 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mfp = get_saved_mfp(self, i, j, k, dict)
             % Convert indices to position at centre of voxel
-            position = self.get_point_position([i; j; k]) + self.dimensions ./ 2;
+            position = self.array_position + ([i;j;k] - 0.5) .* self.dimensions;
 
             % Get material at position
             mfp = zeros(1, length(i)) + dict(self.nobj + 1); % Default to air

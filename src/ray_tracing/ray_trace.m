@@ -1,4 +1,6 @@
-function [lengths, indices] = ray_trace(ray_start, v1_to_v2, init_plane, last_plane, v_dims, num_planes)
+function [lengths, indices] = ray_trace(ray_start, v1_to_v2, init_plane, v_dims, num_planes)
+    
+    last_plane = init_plane + (num_planes - 1) .* v_dims;
     a1 = (init_plane - ray_start) ./ v1_to_v2;
     an = (last_plane - ray_start) ./ v1_to_v2;
 
