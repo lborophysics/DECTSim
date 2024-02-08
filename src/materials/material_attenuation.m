@@ -1,4 +1,4 @@
-classdef material_attenuation < handle
+classdef material_attenuation
     %MATERIAL A class to represent a material and its properties necessary
     % for ray tracing and scattering
 
