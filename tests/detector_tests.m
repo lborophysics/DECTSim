@@ -129,7 +129,7 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_generate_image(tc)
             detector = parallel_detector(10, [1, 1], [5, 1], 4);
             mat = material_attenuation("water"); 
-            my_box = voxel_box([0;0;0], [3;3;3], mat);
+            my_box = voxel_cube([0;0;0], [3;3;3], mat);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             att = mat.get_mu(30);
             sq2 = sqrt(2);
@@ -150,7 +150,7 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_generate_image_p(tc)
             detector = parallel_detector(10, [1, 1], [5, 1], 4);
             mat = material_attenuation("water");
-            my_box = voxel_box([0;0;0], [3;3;3], mat);
+            my_box = voxel_cube([0;0;0], [3;3;3], mat);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             att = mat.get_mu(30);
             sq2 = sqrt(2);
@@ -168,7 +168,7 @@ classdef detector_tests < matlab.unittest.TestCase
             num_rotations = 16;
             detector = curved_detector(dist_to_detector, [pi/500, 0.01], [25, 10], num_rotations);
             my_mat = material_attenuation("water");
-            my_box = voxel_box([0;0;0], [3;3;3], my_mat);
+            my_box = voxel_cube([0;0;0], [3;3;3], my_mat);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             image = detector.generate_image(array);
             image_p = detector.generate_image_p(array);

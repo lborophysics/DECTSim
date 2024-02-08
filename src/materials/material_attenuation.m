@@ -53,8 +53,9 @@ classdef material_attenuation
     methods
         function self = material_attenuation(material_name, varargin)
             %MATERIAL Construct a material object
-            %   material("material_name") creates a material object with the properties of the given material, if it is available
-            %   material("material_name", atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
+            %   mat = material("material_name") creates a material object with the properties of the given material, if it is available
+            %   
+            %   mat = material("material_name", atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
             assert(isstring(material_name), 'assert:failure', 'The material name must be a string.');
             if nargin == 1
                 material_index = find(self.known_materials == lower(material_name));

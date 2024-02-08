@@ -52,13 +52,13 @@ classdef voxel_array_tests < matlab.unittest.TestCase
         function test_collection(tc)
             mat1 = material_attenuation("water");
             mat1_att = mat1.get_mu(1);
-            big_box = voxel_box([0,0,0], 10, mat1);
+            big_box = voxel_cube([0,0,0], 10, mat1);
             mat2 = material_attenuation("bone");
             mat2_att = mat2.get_mu(1);
-            med_box = voxel_box([0,0,0], 6, mat2);
+            med_box = voxel_cube([0,0,0], 6, mat2);
             mat3 = material_attenuation("air");
             mat3_att = mat3.get_mu(1);
-            small_box = voxel_box([0,0,0], 2, mat3);
+            small_box = voxel_cube([0,0,0], 2, mat3);
             my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
             get_mu = @(x,y,z,e) my_collection.get_mu(x + 5,y + 5,z + 5, e); % coord to index -> + 5
             for x = -5:5
@@ -84,9 +84,9 @@ classdef voxel_array_tests < matlab.unittest.TestCase
         function test_get_dicts(tc)
             centre = [0; 0; 0];
             object_dims = [10; 10; 10];
-            water = voxel_box([0,0,0], 10, material_attenuation("water"));
-            air =  voxel_box([0,0,0], 6, material_attenuation("air")); 
-            bone =  voxel_box([0,0,0], 2, material_attenuation("bone"));
+            water = voxel_cube([0,0,0], 10, material_attenuation("water"));
+            air =  voxel_cube([0,0,0], 6, material_attenuation("air")); 
+            bone =  voxel_cube([0,0,0], 2, material_attenuation("bone"));
 
             obj1 = voxel_array(centre, object_dims, 1, air, water, bone);
             obj2 = voxel_array(centre, object_dims, 0.5, bone, air, water);
@@ -122,9 +122,9 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             mat2_att = mat2.get_mu(13); mat2_mfp = mat2.mean_free_path(59);
             mat3_att = mat3.get_mu(13); mat3_mfp = mat3.mean_free_path(59);
 
-            big_box   = voxel_box([0,0,0], 10, mat1);
-            med_box   = voxel_box([0,0,0], 6 , mat2);            
-            small_box = voxel_box([0,0,0], 2 , mat3);
+            big_box   = voxel_cube([0,0,0], 10, mat1);
+            med_box   = voxel_cube([0,0,0], 6 , mat2);            
+            small_box = voxel_cube([0,0,0], 2 , mat3);
             my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
             
             mu_arr = my_collection.get_mu_dict(13);

@@ -11,7 +11,7 @@ classdef ray_tests < matlab.unittest.TestCase
     methods
         function gen_get_intersections(tc, ray)
             water = material_attenuation("water"); 
-            my_box = voxel_box([0;0;0], [3;3;3], water);
+            my_box = voxel_cube([0;0;0], [3;3;3], water);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             threes = zeros(3, 5) + 3;
 
@@ -86,7 +86,7 @@ classdef ray_tests < matlab.unittest.TestCase
 
         function test_calculate_mu(tc)
             water = material_attenuation("water");
-            my_box = voxel_box([0;0;0], [3;3;3], water);
+            my_box = voxel_cube([0;0;0], [3;3;3], water);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, my_box);
             water_attenuation = water.get_mu(30); % Default value of ray
             % voxel_array.air
