@@ -97,16 +97,13 @@ classdef scatter_tests < matlab.unittest.TestCase
                         x_ray1 = scatter_ray([0; 0; 0], v, 1, e1);
                         x_ray2 = scatter_ray([0; 0; 0], v, 1, e2);
 
-                        x_ray1 = x_ray1.scatter();
-                        x_ray2 = x_ray2.scatter();
-
-                        d1 = x_ray1.direction;
-                        d2 = x_ray2.direction;
+                        [d1, e1s] = x_ray1.scatter();
+                        [d2, e2s] = x_ray2.scatter();
 
                         angle_dist1(i) = atan2(norm(cross(v,d1)), dot(v,d1));
                         angle_dist2(i) = atan2(norm(cross(v,d2)), dot(v,d2));
-                        energy_dist1(i) = x_ray1.energy;
-                        energy_dist2(i) = x_ray2.energy;
+                        energy_dist1(i) = e1s;
+                        energy_dist2(i) = e2s;
 
                     end
                     % Check that the energy angle relationship is correct
@@ -135,6 +132,8 @@ classdef scatter_tests < matlab.unittest.TestCase
                     tc.verifyTrue(any(angle_dist2 > pi/2))
                 end
             end
+
+
         end            
     end
 end

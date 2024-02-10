@@ -91,8 +91,7 @@ classdef detector_tests < matlab.unittest.TestCase
                     my_ray = ray([0; 4.5; 0], rot_by_pixel^(i-1) * unit_vector, 9);
                     gen_ray = ray_generator(i, j);
                     tc.verifyEqual(gen_ray.start_point, my_ray.start_point);
-                    tc.verifyEqual(gen_ray.direction, (my_ray.direction + [0;0;z_pos(j)]) ./ sqrt(1 + z_pos(j).^ 2), 'RelTol', 1e-13);
-                    tc.verifyEqual(gen_ray.end_point, my_ray.end_point + [0;0;z_pos(j)*9], 'RelTol', 1e-13);
+                    tc.verifyEqual(gen_ray.v1_to_v2, my_ray.v1_to_v2 + [0;0;z_pos(j)*9], 'RelTol', 1e-13);
                 end
             end
         end
@@ -110,8 +109,7 @@ classdef detector_tests < matlab.unittest.TestCase
                     my_ray = ray(start + y_increment*(i-1) + z_increment*(j-1), unit_vector, 2);
                     gen_ray = ray_generator(i, j);
                     tc.verifyEqual(gen_ray.start_point, my_ray.start_point, 'AbsTol', 7e-15);
-                    tc.verifyEqual(gen_ray.direction, my_ray.direction);
-                    tc.verifyEqual(gen_ray.end_point, my_ray.end_point, 'AbsTol', 7e-15);
+                    tc.verifyEqual(gen_ray.v1_to_v2, my_ray.v1_to_v2);
                 end
             end
         end

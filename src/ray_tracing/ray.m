@@ -1,15 +1,8 @@
-classdef ray < handle
+classdef ray
     properties (SetAccess=protected)
         start_point (3, 1) double % 3D point
-        end_point   (3, 1) double % 3D point
-        direction   (3, 1) double % unit vector
-
+        v1_to_v2    (3, 1) double % Vector from start_point to end_point
         energy             double % energy of the ray in KeV
-    end
-
-    properties (Access=private)
-        dist_to_detector double % distance to the detector
-        v1_to_v2  (3, 1) double % Vector from start_point to end_point
     end
 
     properties (Access=private, Constant)
@@ -25,10 +18,7 @@ classdef ray < handle
                 energy             double = 30 %KeV
             end
             self.start_point      = start_point;
-            self.direction        = direction;
-            self.dist_to_detector = dist_to_detector;
             self.v1_to_v2         = direction .* dist_to_detector;
-            self.end_point        = start_point + direction .* dist_to_detector;
 
             self.energy = energy;
         end
@@ -65,28 +55,8 @@ classdef ray < handle
             if isempty(lengths) % No intersections
                 mu = 0;
             else
-                mu = sum(lengths .* voxels.get_saved_mu(indices(1, :), indices(2, :), indices(3, :), mu_dict));
+                mu = sum(lengths .* voxels.get_saved_mu(indices, mu_dict));
             end
-        end
-
-        function update_parameters(self, new_start_point, new_direction)
-            arguments
-                self            ray
-                new_start_point (3, 1) double
-                new_direction   (3, 1) double
-            end
-            self.start_point = new_start_point;
-            self.direction   = new_direction;
-            self.end_point   = new_start_point + new_direction .* self.dist_to_detector;
-        end
-
-        function move_start_point(self, new_start_point)
-            arguments
-                self            ray
-                new_start_point (3, 1) double
-            end
-            self.start_point = new_start_point;
-            self.end_point = new_start_point + self.direction .* self.dist_to_detector;
         end
     end
 end

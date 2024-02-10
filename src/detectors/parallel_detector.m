@@ -107,8 +107,9 @@ classdef parallel_detector < detector
 
             function [pixel_value, pixel_hit, scattered] = scatter_generator(y_pixel, z_pixel, voxels)
                 xray = static_ray_generator(y_pixel, z_pixel);
-                [xray, mu] = xray.calculate_mu(voxels);
-                scattered = xray.scatter_event > 0;
+                xray = xray.calculate_mu(voxels);
+                
+                mu = xray.mu; scattered = xray.scatter_event > 0;
                 
                 if scattered; pixel_hit = self.hit_pixel(xray, current_dv);
                 else;         pixel_hit = [y_pixel, z_pixel];
@@ -121,8 +122,8 @@ classdef parallel_detector < detector
             % Get the pixel which the xray hits
             corner = self.centre - detector_vec .* self.pixel_dims(1) * self.ny_pixels/2 ...
                                  - [0;0;1]      .* self.pixel_dims(2) * self.nz_pixels/2;
-            
-            ray_xy    = xray.direction(1:2); det_xy = detector_vec(1:2);
+            direction = xray.v1_to_v2 ./ norm(xray.v1_to_v2);
+            ray_xy    = direction(1:2); det_xy = detector_vec(1:2);
             ray_start = xray.start_point;
 
             %Check the xy line intersects with the detector vector a.b = |a||b|cos(theta) (parallel -> cos(theta) = 1)
@@ -139,7 +140,7 @@ classdef parallel_detector < detector
             % Get point on the detector vector where the ray intersects in xz plane
             ry = det_xy(2) * (ray_start(1) - corner(1)) + det_xy(1) * (corner(2) - ray_start(2)) / ...
                 (ray_xy(2) * det_xy(1) - ray_xy(1) * det_xy(2));
-            ray_hit_point = ray_start + xray.direction * ry;
+            ray_hit_point = ray_start + direction .* ry;
             pz = floor((ray_hit_point(3) - corner(3)) / self.pixel_dims(2)) + 1;
             if pz < 1 || pz > self.nz_pixels; pixel_hit = false; return; end
             
