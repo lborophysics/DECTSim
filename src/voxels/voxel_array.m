@@ -41,12 +41,12 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             end
         end
 
-        function mu = get_saved_mu(self, i, j, k, dict)
+        function mu = get_saved_mu(self, indices, dict)
             % Convert indices to position at centre of voxel
-            position = self.array_position + ([i;j;k] - 0.5) .* self.dimensions;
+            position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get mu at position
-            mu = zeros(1, length(i)); % + dict(self.nobj + 1); % Default to air
+            mu = zeros(1, size(indices, 2)); % + dict(self.nobj + 1); % Default to air
             for n = 1:self.nobj
                 mu(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
                     dict(n);
@@ -62,12 +62,12 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             end
         end
 
-        function mfp = get_saved_mfp(self, i, j, k, dict)
+        function mfp = get_saved_mfp(self, indices, dict)
             % Convert indices to position at centre of voxel
-            position = self.array_position + ([i;j;k] - 0.5) .* self.dimensions;
+            position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get material at position
-            mfp = zeros(1, length(i)) + dict(self.nobj + 1); % Default to air
+            mfp = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
             for n = 1:self.nobj
                 mfp(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = ...
                     dict(n);
