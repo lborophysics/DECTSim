@@ -2,7 +2,7 @@ function att_fun = get_photon_attenuation(z, fracs, density)
 %PhotonAttenuationQ NIST attenuation cooeficiant tables
 % for photon interaction with elements.
 %
-% att_fun = photon_attenuation(z, fracs)
+% att_fun = get_photon_attenuation(z, fracs)
 % Function providing the attenuation of various elements,
 % based on NIST report 5632, by % J. Hubbell and S.M. Seltzer.
 % This is a quick version of the function with
@@ -359,9 +359,9 @@ att_fun = @get_attenuation;
     function att = get_attenuation(nrj)
         att = 0;
         if nrj < 0.9|| nrj > 300
-            warning('photon_attenuation:wrongEnergy',...
-                'photon_attenuation function: energy is outside of the recomended range from 1 keV to 1 MeV');
-        end
+            warning('get_photon_attenuation:wrongEnergy',...
+                'get_photon_attenuation function: energy is outside of the recomended range from 1 KeV to 300 KeV. Results may be inaccurate.');
+            end
         nrj = log(nrj);
         % Do interpolation
         for ei = 1:nelem
