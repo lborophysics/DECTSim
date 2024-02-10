@@ -73,6 +73,68 @@ classdef scatter_tests < matlab.unittest.TestCase
                 end
             end
         end
-    end
 
+        function test_angle_distribution(tc)
+            % Test the energy distribution of the scattered photons          
+            energies = [10, 30, 60, 100, 300, 600, 1000];
+            vectors = [
+                [1 0 0]
+                [0 1 0]
+                [0 0 1]
+            ];
+            
+            for ei = 1:length(energies)-2
+                for vi = 1:height(vectors)
+                    e1 = energies(ei);
+                    e2 = energies(ei+2);
+                    v = vectors(vi, :);
+                    num_rays = 5e3;
+                    angle_dist1 = zeros(1, num_rays);
+                    angle_dist2 = zeros(1, num_rays);
+                    energy_dist1 = zeros(1, num_rays);
+                    energy_dist2 = zeros(1, num_rays);
+                    for i = 1:num_rays
+                        x_ray1 = scatter_ray([0; 0; 0], v, 1, e1);
+                        x_ray2 = scatter_ray([0; 0; 0], v, 1, e2);
+
+                        x_ray1 = x_ray1.scatter();
+                        x_ray2 = x_ray2.scatter();
+
+                        d1 = x_ray1.direction;
+                        d2 = x_ray2.direction;
+
+                        angle_dist1(i) = atan2(norm(cross(v,d1)), dot(v,d1));
+                        angle_dist2(i) = atan2(norm(cross(v,d2)), dot(v,d2));
+                        energy_dist1(i) = x_ray1.energy;
+                        energy_dist2(i) = x_ray2.energy;
+
+                    end
+                    % Check that the energy angle relationship is correct
+                    tc.verifyEqual(energy_dist1,...
+                        (constants.em_ee .* e1) ./ ...
+                        (constants.em_ee + e1 .* (1 - cos(angle_dist1))), ...
+                        "RelTol", 0.1); % 1%
+
+                    tc.verifyEqual(energy_dist2,...
+                        (constants.em_ee .* e2) ./ ...
+                        (constants.em_ee + e2 .* (1 - cos(angle_dist2))), ...
+                        "RelTol", 0.1); % 1%
+                    
+                    % Check that as the energy increases the angle of scatter decreases
+                    tc.verifyTrue(mean(angle_dist1) > mean(angle_dist2))
+                    tc.verifyTrue(all(angle_dist1 > 0))
+                    tc.verifyTrue(all(angle_dist2 > 0))
+
+                    tc.verifyTrue(all(angle_dist1 < pi))
+                    tc.verifyTrue(all(angle_dist2 < pi))
+                    
+                    tc.verifyTrue(any(angle_dist1 < pi/2))
+                    tc.verifyTrue(any(angle_dist2 < pi/2))
+                    
+                    tc.verifyTrue(any(angle_dist1 > pi/2))
+                    tc.verifyTrue(any(angle_dist2 > pi/2))
+                end
+            end
+        end            
+    end
 end

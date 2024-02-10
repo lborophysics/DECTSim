@@ -1,24 +1,19 @@
 classdef scatter_ray < ray
     properties (SetAccess = private)
-        num_scatter_events double     % A number indicating the maximum number of scatter events
         n_mfp              double     % A number indicating the number of mean free paths until the next scatter event
         mu                 double = 0 % A number indicating the attenuation coefficient of the ray
         scatter_event      double = 0 % A number indicating the current scatter event
     end
     
     methods
-        function self = scatter_ray(start_point, direction, dist_to_detector, energy, num_scatter_events)
+        function self = scatter_ray(start_point, direction, dist_to_detector, energy)%, num_scatter_events)
             arguments
                 start_point        double
                 direction          double
                 dist_to_detector   double
                 energy             double = 30 % The energy of the ray in keV
-                num_scatter_events double = 1
             end
-            self@ray(start_point, direction, dist_to_detector, energy);
-            assert(num_scatter_events > 0, "The number of scatter events must be greater than 0, use ray class if no scattering is required.");
-            
-            self.num_scatter_events = num_scatter_events;
+            self@ray(start_point, direction, dist_to_detector, energy);           
             self.n_mfp = -log(rand); % Control with rng(seed) for reproducibility
         end
 
@@ -60,9 +55,6 @@ classdef scatter_ray < ray
                     [ls, idxs] = self.get_intersections(voxels);
                     if isempty(ls); mu = 0; return; end % If there are no intersections, return 0, as the scattered not does not reach the detector
 
-                    % Stop scattering if the number of scatter events is reached
-                    if self.scatter_event >= self.num_scatter_events; break; end 
-                    
                     % Create a new number of mean free paths until the next scatter event and reset length index
                     self.n_mfp = -log(rand); i = 0;
 
@@ -80,39 +72,60 @@ classdef scatter_ray < ray
             end
         end
 
-        function scatter(self) % Not sure if this needs to be separate?
+        function self = scatter(self) % Not sure if this needs to be separate?
             % Scatter the ray
-            E_i = self.energy; % Initial energy
-            e_0 = constants.em_ee / (constants.em_ee + E_i); % Initial energy fraction
+            E_0 = self.energy; % Initial energy
+            e_0 = constants.em_ee / (constants.em_ee + 2*E_0); % Initial energy fraction
             e_02 = e_0^2; % Initial energy fraction squared
             twolog1_e_0 = 2*log(1/e_0); 
             insuitable = true; % A flag to indicate if the new direction is suitable
             while insuitable
                 if rand < twolog1_e_0/(twolog1_e_0 - e_02 + 1)
-                    e = power(e_0, rand);
+                    e = e_0^rand;
                 else
                     e = sqrt(e_02 + (1 - e_02) * rand);
                 end
-                t = (constants.em_ee * (1 - e) / (E_i * e));
+                t = (constants.em_ee * (1 - e) / (E_0 * e));
                 cos_theta = 1 - t;
                 sin2_theta = t * (2 - t);
-                insuitable = 1 - (e/(1 + e^2))*sin2_theta >= rand;
+                insuitable = 1 - (e*sin2_theta)/(1 + e^2) >= rand;
             end
             sin_theta = sqrt(sin2_theta);
             phi = 2 * pi * rand;
 
+            change_frame = false; % This is to prevent gimbal lock from z-axis rotation
+            if max(abs(self.direction)) == abs(self.direction(3))
+                 change_frame = true;
+                 self.direction = roty(pi/2) * self.direction;
+            end
+
             self.direction = rotateUz(self.direction, sin_theta, cos_theta, phi);
-            self.energy = E_i * constants.em_ee / (constants.em_ee + E_i * (1 - cos_theta));
+
+            if change_frame; self.direction = roty(-pi/2) * self.direction; end
+
+            self.energy = ((constants.em_ee * E_0) / (constants.em_ee + E_0 * (1 - cos_theta)));
             self.scatter_event = self.scatter_event + 1;
         end
     end
 end
 
-
 %{
 Now I have a scatter function, I need to determine, how to change the length of the ray, 
 and how to check if the ray has intersected with the detector. I will likely need to have a scatter detector class.
 %}
+
+function R = roty(angle)
+    arguments
+        angle (1,1) double
+    end
+    % Computes the y-rotation matrix for a given angle in radians
+    % Input:
+    %   angle - the angle of rotation in radians
+    % Output:
+    %   R - the corresponding y-rotation matrix
+    
+    R = [cos(angle), 0, sin(angle); 0, 1, 0; -sin(angle), 0, cos(angle)];
+end    
 
 
 function u = rotateUz(u, sin_theta, cos_theta, phi)
