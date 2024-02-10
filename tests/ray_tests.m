@@ -164,6 +164,9 @@ classdef ray_tests < matlab.unittest.TestCase
                     tc.assertEqual(nrs.end_point, start + dist_to_detector * direction);
                 end
             end
+            r = ray([0;0;0], [1;0;0], 10);
+            rs = scatter_ray([0;0;0], [1;0;0], 10);
+            tc.assertEqual(r.energy, rs.energy); % Check the default energy is the same
         end
 
     end
