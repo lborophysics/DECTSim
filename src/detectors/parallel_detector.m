@@ -30,7 +30,7 @@ classdef parallel_detector < detector
                 n_pixels          (1, 2) double
                 num_rotations            double = 180
                 scatter_type             string = "none"
-                scatter_factor           double = 0
+                scatter_factor           double = 1
             end
             self@detector(dist_to_detector, num_rotations, n_pixels, pi, scatter_type, scatter_factor);
             self.pixel_dims = pixel_dims;

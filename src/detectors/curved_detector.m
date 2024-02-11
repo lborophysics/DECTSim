@@ -28,7 +28,7 @@ classdef curved_detector < detector
                 n_pixels         (1, 2) double
                 num_rotations    double = 360
                 scatter_type     string = "none"
-                scatter_factor   double = 0
+                scatter_factor   double = 1
             end
             self@detector(dist_to_detector, num_rotations, n_pixels, 2*pi, scatter_type, scatter_factor);
             self.pixel_angle =  pixel_dims(1) / dist_to_detector;

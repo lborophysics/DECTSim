@@ -242,10 +242,11 @@ classdef detector_tests < matlab.unittest.TestCase
             end
         end
 
-        function test_scatter_image(tc) 
+        function test_scatter_image(tc)
+            % This test should probably include a test for correct scatter factor (not that it has no effect when no scatter is present)
             % Check that with no scattering, the scatter image is the same as the regular image
             detector = parallel_detector(10, [1, 1], [5, 1], 4);
-            air = material_attenuation("air"); 
+            air = material_attenuation("air");
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, voxel_object(@(i, j, k) i==i, air));
             
             image = detector.generate_image_p(array);
@@ -258,6 +259,13 @@ classdef detector_tests < matlab.unittest.TestCase
             detector = parallel_detector(10, [1, 1], [5, 1], 4, "slow");
             scatter_image = detector.generate_image_p(array);
             tc.verifyEqual(image.*2, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+            
+            detector = parallel_detector(10, [1, 1], [5, 1], 4, "slow", 2);
+            scatter_image = detector.generate_image_p(array);
+            tc.verifyEqual(image.*2, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+
+            scatter = detector.slow_scatter(array); % Now scatter factor is 2
+            tc.verifyEqual(image, scatter, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
 
         function test_air_scan(tc)
