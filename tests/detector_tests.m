@@ -114,6 +114,38 @@ classdef detector_tests < matlab.unittest.TestCase
             end
         end
 
+        function test_para_pixel_gen_scatter(tc)
+            detector = parallel_detector(2, [0.01, 0.01], [110, 20], 1);
+            pix_gen_scatter = detector.get_pixel_generator(1, @scatter_ray);
+            pix_gen = detector.get_pixel_generator(1);
+            graphite = material_attenuation("graphite", 12, 1, 2.26);
+            array = voxel_array(zeros(3, 1), [5; 5; 5], 1, voxel_object(@(i, j, k) i==i, graphite));
+
+
+            for i = 50:60
+                for j = 5:15
+                    [pixel_value, pixel_hit, scattered] = pix_gen_scatter(i, j, array);
+                    [pixel_value_2] = pix_gen(i, j, array);
+                    if scattered && any(pixel_hit) && all([i, j] == pixel_hit) 
+                        % Unlikely case: Scattered, but small angle so still hits pixel
+                        tc.verifyEqual(pixel_value, pixel_value_2, 'RelTol', 1e-5);
+                    elseif scattered && any(pixel_hit)
+                        % Scattered, but still hits pixel
+                        tc.verifyNotEqual(pixel_value, pixel_hit);
+                    elseif scattered
+                        % Scattered, but doesn't hit pixel
+                        tc.verifyEqual(pixel_value, inf);
+                    else
+                        % Doesn't scatter
+                        tc.verifyEqual(pixel_value, pixel_value_2, 'RelTol', 1e-5);
+                    end         
+                end
+            end
+
+            func = @(a, b, c) "Not a ray";
+            tc.verifyError(@() detector.get_pixel_generator(1, func), "parallel_detector:InvalidRayType");
+        end
+
         function test_get_scan_angles(tc)
             for num_rotations = 2:10
                 detector = parallel_detector(2, [11, 1], [110, 1], num_rotations);
@@ -179,25 +211,60 @@ classdef detector_tests < matlab.unittest.TestCase
             for i = 50:60
                 for j = 5:15
                     gen_ray = ray_generator(i, j);
-                    tc.verifyEqual(detector.hit_pixel(gen_ray, detector.detector_vec), [i, j]);
+                    [pixel, hit] = detector.hit_pixel(gen_ray, detector.detector_vec);
+                    tc.verifyEqual(pixel, [i, j]);
+                    tc.verifyTrue(hit);
                 end
             end
+
+            pixel_centre = detector.centre +  detector.detector_vec .* ...
+                           (-(111)/2) .* 0.1 + [0;0;0.35] .* (-(21)/2);
+            source_position = pixel_centre + detector.to_source_vec .* 2;
+            xray = ray(source_position, -detector.to_source_vec, 2); % should miss
+            [pixel, hit] = detector.hit_pixel(xray, detector.detector_vec);
+            tc.verifyEqual(pixel, [0, 0]);
+            tc.verifyFalse(hit);
+
+            xray = ray(source_position, rotz(pi/2) * -detector.to_source_vec, 2); % should not intersect
+            [pixel, hit] = detector.hit_pixel(xray, detector.detector_vec);
+            tc.verifyEqual(pixel, [0, 0]);
+            tc.verifyFalse(hit);
 
             detector.rotate();
             ray_generator = detector.get_ray_generator();
             for i = 50:60
                 for j = 5:15
                     gen_ray = ray_generator(i, j);
-                    tc.verifyEqual(detector.hit_pixel(gen_ray, detector.detector_vec), [i, j]);
+                    [pixel, hit] = detector.hit_pixel(gen_ray, detector.detector_vec);
+                    tc.verifyEqual(pixel, [i, j]);
+                    tc.verifyTrue(hit);
                 end
             end
+        end
+
+        function test_scatter_image(tc) 
+            % Check that with no scattering, the scatter image is the same as the regular image
+            detector = parallel_detector(10, [1, 1], [5, 1], 4);
+            air = material_attenuation("air"); 
+            array = voxel_array(zeros(3, 1), [5; 5; 5], 1, voxel_object(@(i, j, k) i==i, air));
+            
+            image = detector.generate_image_p(array);
+            scatter = detector.slow_scatter(array);
+            tc.verifyEqual(image, scatter, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+
+            scatter = detector.slow_scatter_p(array);
+            tc.verifyEqual(image, scatter, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+
+            detector = parallel_detector(10, [1, 1], [5, 1], 4, "slow");
+            scatter_image = detector.generate_image_p(array);
+            tc.verifyEqual(image.*2, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
 
         function test_air_scan(tc)
             detector = parallel_detector(2, [0.1, 0.35], [110, 20], 10);
             air = material_attenuation("air");
             scan = detector.air_scan();
-            exp = zeros(110, 20, 10) + detector.detector_response(air.get_mu(30)*2);
+            exp = zeros(110, 20, 10) + air.get_mu(30)*2;
             tc.verifyEqual(scan, exp, 'RelTol', 1e-15);
         end
 

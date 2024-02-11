@@ -1,5 +1,5 @@
 classdef (Abstract) detector < handle
-    properties (Access=protected) % Do all these need to be stored? Could be calculated on the fly?
+    properties (SetAccess=protected) % Do all these need to be stored? Could be calculated on the fly?
         dist_to_detector   (1, 1) double % Distance from source to detector
         ny_pixels          (1, 1) double % Number of pixels in the y direction
         nz_pixels          (1, 1) double % Number of pixels in the z direction (consolidate these into a single array?)
@@ -15,7 +15,7 @@ classdef (Abstract) detector < handle
         scatter_kernel = get_scatter_kernel();
     end
 
-    properties
+    properties(SetAccess=private)
         scatter_factor (1, 1) double % Factor to multiply the scatter by
         scatter_type   (1, 1) double % Type of scatter to use
     end
@@ -61,7 +61,8 @@ classdef (Abstract) detector < handle
             if     scatter_type == "none";  scatter_type = 0;
             elseif scatter_type == "fast";  scatter_type = 1;
             elseif scatter_type == "slow";  scatter_type = 2;
-            else; error('The scatter_type string must be "none", "slow" or "fast", got %s', scatter_type);
+            else; error('detector:scatter_type', ...
+                'The scatter_type string must be "none", "slow" or "fast", got %s', scatter_type);
             end
             self.scatter_type = scatter_type;
 
@@ -93,13 +94,16 @@ classdef (Abstract) detector < handle
 
                         mu = ray.calculate_mu(voxels);
 
-                        image(k, j, i) = self.detector_response(mu);
+                        image(k, j, i) = mu;
                     end
                 end
                 self.rotate();
             end
             scatter = self.do_scatter(image, voxels);
-            image = -reallog(image + scatter);
+            % The following line is equivalent to image + scatter, 
+            % but is there as in the future we likely will adapt the 
+            % detector response.
+            image = -reallog(self.detector_response(image + scatter));
         end
 
         function image = generate_image_p(self, voxels)
@@ -115,7 +119,10 @@ classdef (Abstract) detector < handle
                 end
             end
             scatter = self.do_scatter(image, voxels);
-            image = -reallog(image + scatter);
+            % The following line is equivalent to image + scatter, 
+            % but is there as in the future we likely will adapt the 
+            % detector response.
+            image = -reallog(self.detector_response(image + scatter));
         end
 
         function scatter = do_scatter(self, image, voxels)
@@ -140,7 +147,7 @@ classdef (Abstract) detector < handle
                 for j = 1:self.ny_pixels
                     ray = ray_generator(j, k);
                     mu = ray.calculate_mu(array);
-                    image_at_angle(j, k) = self.detector_response(mu);
+                    image_at_angle(j, k) = mu;
                 end
             end
             for i = 1:self.num_rotations
@@ -154,7 +161,8 @@ classdef (Abstract) detector < handle
             scatter = zeros(size(image));
             skernel = self.scatter_kernel;
             sfactor = self.scatter_factor;
-            air = self.air_scan();
+            air = self.detector_response(self.air_scan());
+            image = self.detector_response(image); % I need the intensities, not the attenuation
             for i = 1:self.num_rotations
                 % Create a 2D image, with padding of the size of the kernel
                 slice = image(:, :, i);
@@ -170,28 +178,25 @@ classdef (Abstract) detector < handle
             % Do some Monte Carlo simulation of scatter
             ny = self.ny_pixels; nz = self.nz_pixels;
             scatter = zeros(ny, nz, self.num_rotations);
-            num_samples = 1;
-            for n = 1:num_samples
-                for k = 1:self.num_rotations
-                    pixel_calc = self.get_pixel_generator(k, @scatter_ray);
-                    scatter_idxs = zeros(ny, nz, 2); scatter_vals = zeros(ny, nz);
-                    for j = 1:nz
-                        parfor i = 1:ny
-                            [pval, pixel, ~] = feval(pixel_calc, i, j, voxels);
-                            if all(pixel) % Collect the scatter values for adding later
-                                scatter_idxs(i, j, :) = pixel;
-                                scatter_vals(i, j) = pval;
-                            end
+            for k = 1:self.num_rotations
+                pixel_calc = self.get_pixel_generator(k, @scatter_ray);
+                scatter_idxs = zeros(ny, nz, 2); scatter_vals = zeros(ny, nz);
+                for j = 1:nz
+                    parfor i = 1:ny
+                        [pval, pixel, ~] = feval(pixel_calc, i, j, voxels);
+                        if  pval < inf % Collect the scatter values for adding later
+                            scatter_idxs(i, j, :) = pixel;
+                            scatter_vals(i, j) = pval;
                         end
                     end
+                end
 
-                    % Add the scatter to the image
-                    for j = 1:nz
-                        for i = 1:ny
-                            if scatter_vals(i, j) > 0
-                                scatter(scatter_idxs(i, j, 1), scatter_idxs(i, j, 2), k) = ...
-                                scatter(scatter_idxs(i, j, 1), scatter_idxs(i, j, 2), k) + scatter_vals(i, j);
-                            end
+                % Add the scatter to the image
+                for j = 1:nz
+                    for i = 1:ny
+                        if scatter_vals(i, j) > 0
+                            scatter(scatter_idxs(i, j, 1), scatter_idxs(i, j, 2), k) = ...
+                            scatter(scatter_idxs(i, j, 1), scatter_idxs(i, j, 2), k) + scatter_vals(i, j);
                         end
                     end
                 end
@@ -207,8 +212,8 @@ classdef (Abstract) detector < handle
                 pixel_calc = self.get_pixel_generator(k, @scatter_ray);
                 for j = 1:nz
                     for i = 1:ny
-                        [pval, pixel, scattered] = pixel_calc(i, j, voxels);
-                        if scattered && all(pixel) % Collect the scatter values 
+                        [pval, pixel, ~] = pixel_calc(i, j, voxels);
+                        if pval < inf % Collect the attenuation values 
                             scatter(pixel(1), pixel(2), k) = scatter(pixel(1), pixel(2), k) + pval;
                         end
                     end
@@ -222,13 +227,9 @@ classdef (Abstract) detector < handle
             scan_angles = scan_angles(1:end-1);
         end
 
-        function pixel = detector_response(~, attenuation)
-            % detector_response  Calculate the detector response for a given attenuation coefficient
-            arguments
-                ~
-                attenuation (1, 1) double
-            end
-            pixel = exp(-attenuation);
+        function image = detector_response(~, attenuation_matrix)
+            % detector_response  Calculate the detector response for the image made up of the attenuation coefficients
+            image = exp(-attenuation_matrix);
         end
     end
 end

@@ -1,6 +1,6 @@
 classdef parallel_detector < detector
    % The ray generator is probably wrong, it needs to have an angle for the z axis, rather than directly above it.
-    properties
+    properties (SetAccess = private)
         init_centre       (3, 1) double           % Initial centre of the detector
         centre            (3, 1) double           % Centre of the detector
         pixel_dims        (1, 2) double           % [width, height] of each pixel
@@ -16,7 +16,7 @@ classdef parallel_detector < detector
                 pixel_centre = centre +  ... 
                             detector_vec .* (y_pixel - (ny_pixels+1)/2) .* pixel_width + ...
                             [0;0;pixel_height] .* (z_pixel - (nz_pixels+1)/2);
-                source_position = pixel_centre + to_source_vec * dist_to_detector;
+                source_position = pixel_centre + to_source_vec .* dist_to_detector;
                 xray = ray(source_position, -to_source_vec, dist_to_detector);
             end
         end
@@ -86,7 +86,6 @@ classdef parallel_detector < detector
             current_dv = rot_mat * self.init_detector_vec;
             current_sv = rot_mat * self.init_to_source_vec;
             current_c  = rot_mat * self.init_centre;
-            detector_response= @self.detector_response;
 
             % Create the function which returns the rays
             static_ray_generator = parallel_detector.get_ray_generator_static(...
@@ -97,29 +96,34 @@ classdef parallel_detector < detector
             ray_type_str = func2str(ray_type); % Get the name of the ray type
             if     ray_type_str == "ray";         pixel_generator = @generator;
             elseif ray_type_str == "scatter_ray"; pixel_generator = @scatter_generator;
-            else; error("Invalid ray type. Must be either 'ray' or 'scatter_ray'.");
+            else; error('parallel_detector:InvalidRayType', "Must be either 'ray' or 'scatter_ray'.");
             end
 
             function pixel_value = generator(y_pixel, z_pixel, voxels)
                 xray = static_ray_generator(y_pixel, z_pixel);
-                pixel_value = detector_response(xray.calculate_mu(voxels));
+                pixel_value = xray.calculate_mu(voxels);
             end
 
-            function [pixel_value, pixel_hit, scattered] = scatter_generator(y_pixel, z_pixel, voxels)
+            function [pixel_value, pixel, scattered] = scatter_generator(y_pixel, z_pixel, voxels)
                 xray = static_ray_generator(y_pixel, z_pixel);
                 xray = xray.calculate_mu(voxels);
                 
                 mu = xray.mu; scattered = xray.scatter_event > 0;
                 
-                if scattered; pixel_hit = self.hit_pixel(xray, current_dv);
-                else;         pixel_hit = [y_pixel, z_pixel];
+                hit = true;
+                if scattered; [pixel, hit] = self.hit_pixel(xray, current_dv);
+                else;          pixel       = [y_pixel, z_pixel];
                 end
-                pixel_value = detector_response(mu);
+
+                if hit; pixel_value = mu;
+                else;   pixel_value = inf;
+                end
             end
         end
 
-        function pixel_hit = hit_pixel(self, xray, detector_vec)
+        function [pixel, hit] = hit_pixel(self, xray, detector_vec)
             % Get the pixel which the xray hits
+            hit = true; pixel = [0, 0];
             corner = self.centre - detector_vec .* self.pixel_dims(1) * self.ny_pixels/2 ...
                                  - [0;0;1]      .* self.pixel_dims(2) * self.nz_pixels/2;
             direction = xray.v1_to_v2 ./ norm(xray.v1_to_v2);
@@ -128,23 +132,23 @@ classdef parallel_detector < detector
 
             %Check the xy line intersects with the detector vector a.b = |a||b|cos(theta) (parallel -> cos(theta) = 1)
             if abs(dot(ray_xy, det_xy) -norm(det_xy)*norm(ray_xy)) < 1e-10
-                pixel_hit = false; return;
+                hit = false; return;
             end
 
             % Get point on the detector vector where the ray intersects in xy plane
             dy = ray_xy(2) * (corner(1) - ray_start(1)) + ray_xy(1) * (ray_start(2) - corner(2)) / ...
                 (ray_xy(1) * det_xy(2) - ray_xy(2) * det_xy(1));
             py = floor(dy / self.pixel_dims(1)) + 1;
-            if py < 1 || py > self.ny_pixels; pixel_hit = false; return; end
+            if py < 1 || py > self.ny_pixels; hit = false; return; end
 
             % Get point on the detector vector where the ray intersects in xz plane
             ry = det_xy(2) * (ray_start(1) - corner(1)) + det_xy(1) * (corner(2) - ray_start(2)) / ...
                 (ray_xy(2) * det_xy(1) - ray_xy(1) * det_xy(2));
             ray_hit_point = ray_start + direction .* ry;
             pz = floor((ray_hit_point(3) - corner(3)) / self.pixel_dims(2)) + 1;
-            if pz < 1 || pz > self.nz_pixels; pixel_hit = false; return; end
+            if pz < 1 || pz > self.nz_pixels; hit = false; return; end
             
-            pixel_hit = [py, pz];
+            pixel = [py, pz];
         end
     end
 end

@@ -82,7 +82,6 @@ classdef curved_detector < detector
             end
             to_source_vec = rot_mat * self.init_to_source_vec;
             source_pos    = rot_mat * self.init_source_pos;
-            detector_response= @self.detector_response;
 
             % Create the function which returns the rays
             pixel_generator = @generator;
@@ -92,7 +91,7 @@ classdef curved_detector < detector
             );
             function pixel_value = generator(y_pixel, z_pixel, voxels)
                 xray = static_ray_generator(y_pixel, z_pixel);
-                pixel_value = detector_response(xray.calculate_mu(voxels));
+                pixel_value = xray.calculate_mu(voxels);
             end
         end
 
