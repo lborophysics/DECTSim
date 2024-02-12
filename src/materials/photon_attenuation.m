@@ -1,8 +1,8 @@
-function att = photon_attenuation(z, fracs, density, nrj)
+function att_fun = photon_attenuation(z)
 %PhotonAttenuationQ NIST attenuation cooeficiant tables
 % for photon interaction with elements.
 %
-% att_fun = photon_attenuation(z, fracs)
+% att_fun = get_photon_attenuation(z, fracs)
 % Function providing the attenuation of various elements,
 % based on NIST report 5632, by % J. Hubbell and S.M. Seltzer.
 % This is a quick version of the function with
@@ -10,13 +10,10 @@ function att = photon_attenuation(z, fracs, density, nrj)
 %
 % Input :
 %   z - atomic number Z in [1, 100] range, or array of Z numbers
-%   fracs - mass fractions of each element in the material, should sum to 1
-%   density - density of the material in g/cm^3
-%   nrj - Energy in keV
 %
 % Output :
 %   att_fun - A function handle for the for the attenuation coefficients
-%   in cm^-1 that takes in energy in KeV and returns the attenuation
+%   in cm^2/g that takes in energy in KeV and returns the attenuation
 %
 % History:
 %  Written by Jarek Tuszynski (SAIC), 2006
@@ -74,7 +71,8 @@ function att = photon_attenuation(z, fracs, density, nrj)
 %--------------------------------------------------------------------------
 %% Hard-wire the table of x-ray mass attenuation coefficients in cm^2/g
 %--------------------------------------------------------------------------
-
+persistent energy mac edges sample_energies % store the tables in memory
+if isempty(energy) % if the tables are not in memory, load them
 energy = [... % in keV
     1.000E-3, 1.500E-3, 2.000E-3, 3.000E-3, 4.000E-3, 5.000E-3, 6.000E-3, 8.000E-3, 1.000E-2, 1.500E-2, 2.000E-2, 3.000E-2, 4.000E-2, 5.000E-2, 6.000E-2, 8.000E-2, 1.000E-1, 1.500E-1, 2.000E-1, 3.000E-1].*1000;
 mac = [...                                                                                                                                                                                                            
@@ -315,24 +313,20 @@ edges = [ ...
     55, 0.0057143*1000, 6.556E+2, 7.547E+2;...
     55, 0.0359846*1000, 5.863   , 3.143E+1;... % Stop at caesium
     ];
+    sample_energies = log(1:0.001:300)';
+end
 %% Initialize variables
 elems  = z(:);
-fracs = fracs ./ sum(fracs); % normalize fractions
+
 nData = size(mac, 1);
 nelem = length(elems);
-att = 0;
-if nrj < 0.9|| nrj > 300
-    warning('photon_attenuation:wrongEnergy',...
-        'photon_attenuation function: energy is outside of the recomended range from 1 KeV to 300 KeV. Results may be inaccurate.');
-end
-nrj = log(nrj);
-
+A = zeros(length(sample_energies), nelem);
 %% Main Loop
 for i = 1:nelem
     elem = round(elems(i));
 
     if (ischar(elem) || any(elem<1) || any(elem>nData))
-        error('Error in PhotonAttenuationQ function: Z number outside [1, 100] range: %d', elem);
+        error(sprintf('Error in PhotonAttenuationQ function: Z number outside [1, 100] range: %f', elem));
     end
     x = energy';
     y = mac (elem, :)';
@@ -350,16 +344,18 @@ for i = 1:nelem
         y  = y(ix, :);
         w  = w(ix, :); % array with 0 for 'grid' points and 1's for absorbtion edge points
         w  = (convn(w, [1; 1; 1],  'same')>0); % neighbors of edges will be marked with 1's too
-        b  = interp1(x, [y, w], nrj,  'linear',  'extrap'); % merge inputs for speed
-        a  = interp1(x,  y,     nrj,  'pchip');                v  = b(:, 2);
+        b  = interp1(x, [y, w], sample_energies,  'linear',  'extrap'); % merge inputs for speed
+        a  = interp1(x,  y,     sample_energies,  'pchip');
+        v  = b(:, 2);
         b  = b(:, 1);
         a  = a.*(1-v) + b.*v; % smoothly merge curves using linear near edges and cubic otherwise
+        A(:, i) = a;
     else % if there are no absorbtion edges than life is easy
-        a = interp1(log(x),  log(y),  nrj,  'pchip');
+        a = interp1(log(x),  log(y),  sample_energies,  'pchip');
+        A(:, i) = a;
     end
-    att = att + exp(a) * fracs(i);    
 end
-att = att * density; %Convert from cm^2/g to cm^-1
+att_fun = griddedInterpolant(sample_energies, A, 'linear');
 end
 
 %{

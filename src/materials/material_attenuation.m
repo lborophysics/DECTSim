@@ -10,10 +10,6 @@ classdef material_attenuation
     end
 
     properties (Access=private, Constant)
-        use_pa_mex = ~~exist('photon_attenuation_mex', 'file');% A flag to indicate if the MEX implementation of the photon_attenuation package is available
-    end
-
-    properties (Access=private, Constant)
         known_materials = {'air','blood','bone','lung','muscle','water'};
         known_densitys = [1.205E-03, 1.06, 1.92, 1.05, 1.05, 1.00];
         known_atomic_numbers = {...
@@ -83,18 +79,17 @@ classdef material_attenuation
             else
                 error('MATLAB:invalidInput', 'Invalid number of input arguments. Use either material("material_name") or material("material_name", atomic_numbers, mass_fractions, density).');
             end
-            if ~self.use_pa_mex
-                self.mu_from_energy = get_photon_attenuation(self.atomic_numbers, self.mass_fractions, self.density);
+            if ~exist('photon_attenuation_mex', 'file')
+                self.mu_from_energy = photon_attenuation(self.atomic_numbers);
+            else
+                self.mu_from_energy = photon_attenuation_mex(self.atomic_numbers);
             end
         end
 
         function mu = get_mu(self, energy)
             % GET_MU Get the linear attenuation coefficient of the material for a given energy
-            if self.use_pa_mex
-                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, energy);
-            else
-                mu = self.mu_from_energy(energy);
-            end
+            mus = self.mu_from_energy(log(energy));
+            mu = sum(exp(mus).*self.mass_fractions) * self.density;
         end
 
         function mfp = mean_free_path(self, E)
