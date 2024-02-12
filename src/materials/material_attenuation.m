@@ -2,11 +2,16 @@ classdef material_attenuation
     %MATERIAL A class to represent a material and its properties necessary
     % for ray tracing and scattering
 
-    properties (Access=private)
+    properties (SetAccess=immutable)
         atomic_numbers % Atomic numbers of the elements in the material
         mass_fractions % Mass fractions of the elements in the material
         density        % Density of the material in g/cm^3
         mu_from_energy % A function handle to get the linear attenuation coefficient from energy. Only used if use_mex is false
+    end
+
+
+    properties (Access=private, Constant, NonCopyable)
+        use_mex = ~~exist('photon_attenuation_mex', 'file');
     end
 
     properties (Access=private, Constant)
@@ -79,17 +84,19 @@ classdef material_attenuation
             else
                 error('MATLAB:invalidInput', 'Invalid number of input arguments. Use either material("material_name") or material("material_name", atomic_numbers, mass_fractions, density).');
             end
-            if ~exist('photon_attenuation_mex', 'file')
-                self.mu_from_energy = photon_attenuation(self.atomic_numbers);
-            else
-                self.mu_from_energy = photon_attenuation_mex(self.atomic_numbers);
+            if ~self.use_mex
+                self.mu_from_energy = get_photon_attenuation(self.atomic_numbers);
             end
         end
 
         function mu = get_mu(self, energy)
             % GET_MU Get the linear attenuation coefficient of the material for a given energy
-            mus = self.mu_from_energy(log(energy));
-            mu = sum(exp(mus).*self.mass_fractions) * self.density;
+            if self.use_mex
+                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, energy);
+            else
+                mus = self.mu_from_energy(log(energy));
+                mu = sum(exp(mus).*self.mass_fractions) * self.density;
+            end
         end
 
         function mfp = mean_free_path(self, E)

@@ -104,8 +104,7 @@ classdef attenuation_tests < matlab.unittest.TestCase
 
             E = [1 10 20 30 50 60 90 100];
             for e = E
-                F = photon_attenuation([6 7 8 18]);
-                mu = sum(exp(F(log(e))) .* [0.000124 0.755268 0.231781 0.012827]) .* 1.205E-03;
+                mu = photon_attenuation([6 7 8 18], [0.000124 0.755268 0.231781 0.012827], 1.205E-03, e);
                 tc.verifyEqual(air_mat.get_mu(e), mu)
             end
         end
