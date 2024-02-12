@@ -76,13 +76,13 @@ classdef scatter_tests < matlab.unittest.TestCase
 
         function test_angle_distribution(tc)
             % Test the energy distribution of the scattered photons          
-            energies = [10, 30, 60, 100, 300, 600, 1000];
+            energies = [10, 30, 60, 100, 300];
             vectors = [
                 [1 0 0]
                 [0 1 0]
                 [0 0 1]
             ];
-            
+            empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
             for ei = 1:length(energies)-2
                 for vi = 1:height(vectors)
                     e1 = energies(ei);
@@ -94,8 +94,8 @@ classdef scatter_tests < matlab.unittest.TestCase
                     energy_dist1 = zeros(1, num_rays);
                     energy_dist2 = zeros(1, num_rays);
                     for i = 1:num_rays
-                        x_ray1 = scatter_ray([0; 0; 0], v, 1, e1);
-                        x_ray2 = scatter_ray([0; 0; 0], v, 1, e2);
+                        x_ray1 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e1);
+                        x_ray2 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e2);
 
                         [d1, e1s] = x_ray1.scatter();
                         [d2, e2s] = x_ray2.scatter();

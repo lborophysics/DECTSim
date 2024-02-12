@@ -6,7 +6,7 @@ classdef curved_detector < detector
         pixel_height       (1, 1) double % The height of each pixel in z
     end
     methods (Access=private, Static)
-        function generator = get_ray_generator_static(ny_pixels, nz_pixels, pixel_angle, pixel_height, dist_to_detector, to_source_vec, source_pos)
+        function generator = get_ray_generator_static(ny_pixels, nz_pixels, pixel_angle, pixel_height, dist_to_detector, to_source_vec, source_pos, voxels)
             generator = @get_ray_attrs; % Create the function which returns the rays
             function [xray] = get_ray_attrs(y_pixel, z_pixel)
                 assert(y_pixel <= ny_pixels && y_pixel > 0 && z_pixel <= nz_pixels && z_pixel > 0, ...
@@ -15,7 +15,7 @@ classdef curved_detector < detector
                 final_length = sqrt(dist_to_detector.^2 + z_shift.^2);
                 pixel_vec = (rotz(pixel_angle * (y_pixel - (ny_pixels+1)/2)) * to_source_vec.*dist_to_detector - ...
                             [0;0;z_shift]) ./ final_length;
-                xray = ray(source_pos, -pixel_vec, final_length);
+                xray = ray(source_pos, -pixel_vec, final_length, voxels);
             end
         end
     end
@@ -52,30 +52,32 @@ classdef curved_detector < detector
             self.source_position = self.init_source_pos;
         end
 
-        function ray_generator = get_ray_generator(self, ray_per_pixel)
+        function ray_generator = get_ray_generator(self, voxels, ray_per_pixel)
             % Create a function which returns the rays which should be fired to hit each pixel.
             % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
             arguments
                 self           curved_detector
+                voxels         voxel_array
                 ray_per_pixel  int32             = 1
             end
-            assert(nargin==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
+            assert(nargin==2, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
 
             % Create the function which returns the rays
             ray_generator = self.get_ray_generator_static(...
                 self.ny_pixels, self.nz_pixels, self.pixel_angle, self.pixel_height, ...
-                self.dist_to_detector, self.to_source_vec, self.source_position...
+                self.dist_to_detector, self.to_source_vec, self.source_position, voxels...
             );
         end
-        function pixel_generator = get_pixel_generator(self, angle_index, ray_per_pixel)
+        function pixel_generator = get_pixel_generator(self, angle_index, voxels, ray_per_pixel)
             % Create a function which returns the rays which should be fired to hit each pixel.
             % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
             arguments
                 self           curved_detector
                 angle_index    double
+                voxels         voxel_array
                 ray_per_pixel  int32             = 1
             end
-            assert(nargin==2, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
+            assert(nargin==3, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
             
             if angle_index == 1; rot_mat = eye(3); 
             else               ; rot_mat = rotz(self.rot_angle * (angle_index - 1));
@@ -87,11 +89,10 @@ classdef curved_detector < detector
             pixel_generator = @generator;
             static_ray_generator = curved_detector.get_ray_generator_static(...
                 self.ny_pixels, self.nz_pixels, self.pixel_angle, self.pixel_height, ...
-                self.dist_to_detector, to_source_vec, source_pos...
+                self.dist_to_detector, to_source_vec, source_pos, voxels...
             );
-            function pixel_value = generator(y_pixel, z_pixel, voxels)
-                xray = static_ray_generator(y_pixel, z_pixel);
-                pixel_value = xray.calculate_mu(voxels);
+            function pixel_value = generator(y_pixel, z_pixel)
+                pixel_value = static_ray_generator(y_pixel, z_pixel).calculate_mu();
             end
         end
 

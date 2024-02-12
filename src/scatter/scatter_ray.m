@@ -5,65 +5,56 @@ classdef scatter_ray < ray
         scatter_event      double = 0 % A number indicating the current scatter event 
         direction   (3, 1) double % 3D direction
         end_point   (3, 1) double % 3D point
+        mfp_dict           % Dictionary of mfp values for each material
     end
-    
+
     methods
-        function self = scatter_ray(start_point, direction, dist_to_detector, energy)
+        function self = scatter_ray(start_point, direction, dist_to_detector, voxels, energy)
             arguments
                 start_point        double
                 direction          double
                 dist_to_detector   double
+                voxels             voxel_array
                 energy             double = 30 % The energy of the ray in keV
             end
-            self@ray(start_point, direction, dist_to_detector, energy);          
+            self@ray(start_point, direction, dist_to_detector, voxels, energy);          
             self.direction = direction;
             self.end_point = start_point + self.v1_to_v2;
 
+            self.mfp_dict = voxels.get_mfp_dict(energy);
             self.n_mfp = -log(rand); % Control with rng(seed) for reproducibility
         end
 
-        function self = calculate_mu (self, voxels) % I have broken symmetry with the ray class -> maybe always return ray?
-            arguments
-                self   ray
-                voxels voxel_array
-            end
-            % Get material mu and mean free path dictionaries
-            mu_dict = voxels.get_mu_dict(self.energy);
-            mfp_dict = voxels.get_mfp_dict(self.energy);
-
-            % Calculate the mu of the ray
-            [ls, idxs] = self.get_intersections(voxels);
-            if isempty(ls); return; end % If there are no intersections, exit
+        function self = calculate_mu (self) % I have broken symmetry with the ray class -> maybe always return ray?
             
-            i = 1; % Initialize the index of the intersection
-            mfps = voxels.get_saved_mfp(idxs, mfp_dict); % Get the mean free path of the first intersection
+            if isempty(self.lengths); return; end % If there are no intersections, exit
+            ls = self.lengths; idxs = self.indices; % Get the lengths and indices of the intersections
+            mfps = self.voxels.get_saved_mfp(idxs, self.mfp_dict); % Get the mean free path of the first intersection
 
             for i = 1:length(ls)
                 self.n_mfp = self.n_mfp - ls(i) / mfps(i); % Update the number of mean free paths until the next scatter event
 
                 if self.n_mfp < 0 % If the number of mean free paths is less than 0, scatter the ray
                     % Calculate the mu of the ray until the end of the current voxel
-                    self.mu = self.mu + sum(ls(1:i) .* voxels.get_saved_mu(idxs(:, 1:i), mu_dict));
+                    self.mu = self.mu + sum(ls(1:i) .* self.voxels.get_saved_mu(idxs(:, 1:i), self.mu_dict));
 
                     % Remove the mu of the current voxel up to the scatter event
-                    self.mu = self.mu + mfps(i) * self.n_mfp * voxels.get_saved_mu(idxs(i), mu_dict);
+                    self.mu = self.mu + mfps(i) * self.n_mfp * self.voxels.get_saved_mu(idxs(i), self.mu_dict);
 
                     % Get the new direction and energy of the ray, and update the start point
-                    [direction, energy] = self.scatter();
+                    [ndirection, energy] = self.scatter();
                     start_point = self.start_point + (sum(ls(1:i)) + self.n_mfp * mfps(i)) .* self.direction; 
                     
                     % Create a new ray with the new direction, energy, and start point
-                    new_ray = scatter_ray(start_point, direction, sum(ls), energy);
+                    new_ray = scatter_ray(start_point, ndirection, sum(ls), self.voxels, energy);
                     new_ray.mu = self.mu; % Set the mu of the new ray to the mu of the old ray
                     new_ray.scatter_event = self.scatter_event + 1; % Update the scatter event of the new ray
-                    self = new_ray.calculate_mu(voxels); % Get the mu of the new ray
+                    self = new_ray.calculate_mu(); % Get the mu of the new ray
                     return % Return the mu of the new ray
                 end
-
-                i = i + 1; % Move to the next intersection
             end
 
-            self.mu = self.mu + sum(ls .* voxels.get_saved_mu(idxs, mu_dict));  % This case only occurs if the ray does not scatter
+            self.mu = self.mu + sum(ls .* self.voxels.get_saved_mu(idxs, self.mu_dict));  % This case only occurs if the ray does not scatter
         end
 
         function [direction, energy] = scatter(self) % Not sure if this needs to be separate?
@@ -100,6 +91,10 @@ classdef scatter_ray < ray
             if change_frame; direction = roty(-pi/2) * direction; end
 
             energy = ((constants.em_ee * E_0) / (constants.em_ee + E_0 * (1 - cos_theta)));
+        end
+
+        function self = randomise_n_mfp(self)
+            self.n_mfp = -log(rand);
         end
     end
 end

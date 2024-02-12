@@ -81,14 +81,15 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_curved_ray_gen(tc)
             detector = curved_detector(9, [9*pi/60, 0.4], [60, 10], 4);
-            ray_generator = detector.get_ray_generator();
+            empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
+            ray_generator = detector.get_ray_generator(empty_voxels);
 
             rot_by_pixel = rotz(pi/60);
             unit_vector = rotz(pi/120) * [-1; 0; 0];
             z_pos = @(i) (-2 + 0.2 + (0.4 .* (i-1)))/9;
             for i = 30:40
                 for j = 1:10
-                    my_ray = ray([0; 4.5; 0], rot_by_pixel^(i-1) * unit_vector, 9);
+                    my_ray = ray([0; 4.5; 0], rot_by_pixel^(i-1) * unit_vector, 9, empty_voxels);
                     gen_ray = ray_generator(i, j);
                     tc.verifyEqual(gen_ray.start_point, my_ray.start_point);
                     tc.verifyEqual(gen_ray.v1_to_v2, my_ray.v1_to_v2 + [0;0;z_pos(j)*9], 'RelTol', 1e-13);
@@ -99,14 +100,15 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_para_ray_gen(tc)
             unit_vector = [0; -1; 0];
             detector = parallel_detector(2, [0.1, 0.35], [110, 20], 1);
-            ray_generator = detector.get_ray_generator();
+            empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
+            ray_generator = detector.get_ray_generator(empty_voxels);
 
             y_increment = [1; 0; 0] * 0.1;
             z_increment = [0; 0; 7] / 20;
             start = [-5.45; 1; -3.325];
             for i = 50:60
                 for j = 5:15
-                    my_ray = ray(start + y_increment*(i-1) + z_increment*(j-1), unit_vector, 2);
+                    my_ray = ray(start + y_increment*(i-1) + z_increment*(j-1), unit_vector, 2, empty_voxels);
                     gen_ray = ray_generator(i, j);
                     tc.verifyEqual(gen_ray.start_point, my_ray.start_point, 'AbsTol', 7e-15);
                     tc.verifyEqual(gen_ray.v1_to_v2, my_ray.v1_to_v2);
@@ -116,34 +118,34 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_para_pixel_gen_scatter(tc)
             detector = parallel_detector(2, [0.01, 0.01], [110, 20], 1);
-            pix_gen_scatter = detector.get_pixel_generator(1, @scatter_ray);
-            pix_gen = detector.get_pixel_generator(1);
             graphite = material_attenuation("graphite", 12, 1, 2.26);
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, voxel_object(@(i, j, k) i==i, graphite));
+            pix_gen_scatter = detector.get_pixel_generator(1, array, @scatter_ray);
+            pix_gen = detector.get_pixel_generator(1, array);
 
 
             for i = 50:60
                 for j = 5:15
-                    [pixel_value, pixel_hit, scattered] = pix_gen_scatter(i, j, array);
-                    [pixel_value_2] = pix_gen(i, j, array);
+                    [scatter_pval, pixel_hit, scattered] = pix_gen_scatter(i, j);
+                    [pval] = pix_gen(i, j);
                     if scattered && any(pixel_hit) && all([i, j] == pixel_hit) 
                         % Unlikely case: Scattered, but small angle so still hits pixel
-                        tc.verifyEqual(pixel_value, pixel_value_2, 'RelTol', 1e-5);
+                        tc.verifyEqual(scatter_pval, pval, 'RelTol', 1e-5);
                     elseif scattered && any(pixel_hit)
                         % Scattered, but still hits pixel
-                        tc.verifyNotEqual(pixel_value, pixel_hit);
+                        tc.verifyNotEqual(scatter_pval, pixel_hit);
                     elseif scattered
                         % Scattered, but doesn't hit pixel
-                        tc.verifyEqual(pixel_value, inf);
+                        tc.verifyTrue(isnan(scatter_pval))
                     else
                         % Doesn't scatter
-                        tc.verifyEqual(pixel_value, pixel_value_2, 'RelTol', 1e-5);
+                        tc.verifyEqual(scatter_pval, pval, 'RelTol', 1e-5);
                     end         
                 end
             end
 
             func = @(a, b, c) "Not a ray";
-            tc.verifyError(@() detector.get_pixel_generator(1, func), "parallel_detector:InvalidRayType");
+            tc.verifyError(@() detector.get_pixel_generator(1, array, func), "parallel_detector:InvalidRayType");
         end
 
         function test_get_scan_angles(tc)
@@ -207,7 +209,8 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_hit_para_pixel(tc)
             detector = parallel_detector(2, [0.1, 0.35], [110, 20], 10);
-            ray_generator = detector.get_ray_generator();
+            empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
+            ray_generator = detector.get_ray_generator(empty_voxels);
             for i = 50:60
                 for j = 5:15
                     gen_ray = ray_generator(i, j);
@@ -220,18 +223,18 @@ classdef detector_tests < matlab.unittest.TestCase
             pixel_centre = detector.centre +  detector.detector_vec .* ...
                            (-(111)/2) .* 0.1 + [0;0;0.35] .* (-(21)/2);
             source_position = pixel_centre + detector.to_source_vec .* 2;
-            xray = ray(source_position, -detector.to_source_vec, 2); % should miss
+            xray = ray(source_position, -detector.to_source_vec, 2, empty_voxels); % should miss
             [pixel, hit] = detector.hit_pixel(xray, detector.detector_vec);
             tc.verifyEqual(pixel, [0, 0]);
             tc.verifyFalse(hit);
 
-            xray = ray(source_position, rotz(pi/2) * -detector.to_source_vec, 2); % should not intersect
+            xray = ray(source_position, rotz(pi/2) * -detector.to_source_vec, 2, empty_voxels); % should not intersect
             [pixel, hit] = detector.hit_pixel(xray, detector.detector_vec);
             tc.verifyEqual(pixel, [0, 0]);
             tc.verifyFalse(hit);
 
             detector.rotate();
-            ray_generator = detector.get_ray_generator();
+            ray_generator = detector.get_ray_generator(empty_voxels);
             for i = 50:60
                 for j = 5:15
                     gen_ray = ray_generator(i, j);
@@ -258,11 +261,11 @@ classdef detector_tests < matlab.unittest.TestCase
 
             detector = parallel_detector(10, [1, 1], [5, 1], 4, "slow");
             scatter_image = detector.generate_image_p(array);
-            tc.verifyEqual(image.*2, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+            tc.verifyEqual(image, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
             
             detector = parallel_detector(10, [1, 1], [5, 1], 4, "slow", 2);
             scatter_image = detector.generate_image_p(array);
-            tc.verifyEqual(image.*2, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+            tc.verifyEqual(image, scatter_image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
 
             scatter = detector.slow_scatter(array); % Now scatter factor is 2
             tc.verifyEqual(image, scatter, 'RelTol', 1e-15, 'AbsTol', 1e-15);

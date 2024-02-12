@@ -8,7 +8,7 @@ classdef parallel_detector < detector
         detector_vec      (3, 1) double = [1;0;0] % Vector from left to right corner of detector
     end
     methods (Access=private, Static)
-        function generator = get_ray_generator_static(ray, ny_pixels, nz_pixels, centre, detector_vec, pixel_width, pixel_height, dist_to_detector, to_source_vec)
+        function generator = get_ray_generator_static(ray, ny_pixels, nz_pixels, centre, detector_vec, pixel_width, pixel_height, dist_to_detector, to_source_vec, voxels)
             generator = @get_ray_attrs; % Create the function which returns the rays
             function [xray] = get_ray_attrs(y_pixel, z_pixel)
                 assert(y_pixel <= ny_pixels && y_pixel > 0 && z_pixel <= nz_pixels && z_pixel > 0, ...
@@ -17,7 +17,7 @@ classdef parallel_detector < detector
                             detector_vec .* (y_pixel - (ny_pixels+1)/2) .* pixel_width + ...
                             [0;0;pixel_height] .* (z_pixel - (nz_pixels+1)/2);
                 source_position = pixel_centre + to_source_vec .* dist_to_detector;
-                xray = ray(source_position, -to_source_vec, dist_to_detector);
+                xray = ray(source_position, -to_source_vec, dist_to_detector, voxels);
             end
         end
     end
@@ -54,31 +54,34 @@ classdef parallel_detector < detector
             self.centre        = self.init_centre;
         end
 
-        function ray_generator = get_ray_generator(self, ray_type, ray_per_pixel)
+        function ray_generator = get_ray_generator(self, voxels, ray_type, ray_per_pixel)
             % Create a function which returns the rays which should be fired to hit each pixel.
             % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
             arguments
                 self           parallel_detector
+                voxels         voxel_array
                 ray_type                         = @ray
                 ray_per_pixel  int32             = 1
             end
-            assert(nargin<3, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
+            assert(nargin<4, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
             % Create the function which returns the rays
             ray_generator = parallel_detector.get_ray_generator_static(...
                 ray_type, self.ny_pixels, self.nz_pixels, self.centre, self.detector_vec, ...
-                self.pixel_dims(1), self.pixel_dims(2), self.dist_to_detector, self.to_source_vec...
+                self.pixel_dims(1), self.pixel_dims(2), self.dist_to_detector, ...
+                self.to_source_vec, voxels...
             );
         end
-        function pixel_generator = get_pixel_generator(self, angle_index, ray_type, ray_per_pixel)
+        function pixel_generator = get_pixel_generator(self, angle_index, voxels, ray_type, ray_per_pixel)
             % Create a function which returns the rays which should be fired to hit each pixel.
             % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
             arguments
                 self           parallel_detector
                 angle_index    double
+                voxels         voxel_array
                 ray_type                         = @ray
                 ray_per_pixel  int32             = 1
             end
-            assert(nargin<4, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
+            assert(nargin<5, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
             
             if angle_index == 1; rot_mat = eye(3);
             else               ; rot_mat = rotz(self.rot_angle * (angle_index - 1));
@@ -90,7 +93,8 @@ classdef parallel_detector < detector
             % Create the function which returns the rays
             static_ray_generator = parallel_detector.get_ray_generator_static(...
                 ray_type, self.ny_pixels, self.nz_pixels, current_c, current_dv, ...
-                self.pixel_dims(1), self.pixel_dims(2), self.dist_to_detector, current_sv...
+                self.pixel_dims(1), self.pixel_dims(2), self.dist_to_detector, ...
+                current_sv, voxels...
             );
 
             ray_type_str = func2str(ray_type); % Get the name of the ray type
@@ -99,24 +103,32 @@ classdef parallel_detector < detector
             else; error('parallel_detector:InvalidRayType', "Must be either 'ray' or 'scatter_ray'.");
             end
 
-            function pixel_value = generator(y_pixel, z_pixel, voxels)
+            function pixel_value = generator(y_pixel, z_pixel)
                 xray = static_ray_generator(y_pixel, z_pixel);
-                pixel_value = xray.calculate_mu(voxels);
+                pixel_value = xray.calculate_mu();
             end
 
-            function [pixel_value, pixel, scattered] = scatter_generator(y_pixel, z_pixel, voxels)
+            function [pixel_values, pixels, scattered] = scatter_generator(y_pixel, z_pixel)
                 xray = static_ray_generator(y_pixel, z_pixel);
-                xray = xray.calculate_mu(voxels);
-                
-                mu = xray.mu; scattered = xray.scatter_event > 0;
-                
-                hit = true;
-                if scattered; [pixel, hit] = self.hit_pixel(xray, current_dv);
-                else;          pixel       = [y_pixel, z_pixel];
-                end
+                pixel_values = zeros(self.scatter_factor, 1);
+                pixels = zeros(self.scatter_factor, 2);
+                scattered = zeros(self.scatter_factor, 1);
 
-                if hit; pixel_value = mu;
-                else;   pixel_value = inf;
+                for i = 1:self.scatter_factor
+                    new_ray = xray.calculate_mu();
+                    
+                    this_scatter = new_ray.scatter_event > 0;
+                    
+                    hit = true;
+                    if this_scatter; [pixel, hit] = self.hit_pixel(new_ray, current_dv);
+                    else;             pixel       = [y_pixel, z_pixel];
+                    end
+                    pixels(i, :) = pixel;
+                    scattered(i) = this_scatter;
+                    if hit; pixel_values(i) = new_ray.mu; 
+                    else;   pixel_values(i) = NaN;
+                    end
+                    % xray = xray.randomise_n_mfp();
                 end
             end
         end

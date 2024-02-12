@@ -24,8 +24,8 @@ classdef (Abstract) detector < handle
         rotate(self)
         reset(self)
         hit_pixel(self, ray)
-        get_ray_generator(self, ray_type, ray_per_pixel)
-        get_pixel_generator(self, angle_index, ray_type, ray_per_pixel)
+        get_ray_generator(self, voxels, ray_type, ray_per_pixel)
+        get_pixel_generator(self, angle_index, voxels, ray_type, ray_per_pixel)
     end
 
     methods
@@ -87,12 +87,12 @@ classdef (Abstract) detector < handle
             self.check_voxels(voxels);
             image = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             for i = 1:self.num_rotations
-                ray_generator = self.get_ray_generator();
+                ray_generator = self.get_ray_generator(voxels);
                 for j = 1:self.nz_pixels
                     for k = 1:self.ny_pixels
                         ray = ray_generator(k, j);
 
-                        mu = ray.calculate_mu(voxels);
+                        mu = ray.calculate_mu();
 
                         image(k, j, i) = mu;
                     end
@@ -111,10 +111,10 @@ classdef (Abstract) detector < handle
             image = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
             get_pixel_generator = @self.get_pixel_generator;
             for k = 1:self.num_rotations
-                pixel_calc = get_pixel_generator(k);
+                pixel_calc = get_pixel_generator(k, voxels);
                 for j = 1:self.nz_pixels
                     parfor i = 1:self.ny_pixels
-                        image(i, j, k) = feval(pixel_calc, i, j, voxels);
+                        image(i, j, k) = feval(pixel_calc, i, j);
                     end
                 end
             end
@@ -131,7 +131,7 @@ classdef (Abstract) detector < handle
             elseif self.scatter_type == 1 % Fast scatter
                 scatter = self.conv_scatter(image);
             elseif self.scatter_type == 2 % Slow scatter
-                scatter = self.slow_scatter_p(voxels);
+                scatter = (self.slow_scatter_p(voxels)-image) / 2;
             end
         end
 
@@ -141,12 +141,12 @@ classdef (Abstract) detector < handle
             air = voxel_object(@(i,j,k) i==i, material_attenuation("air"));
             array = voxel_array(zeros(3, 1), zeros(3,1)+1e6, dtd/10, air);
             scan = zeros(self.ny_pixels, self.nz_pixels, self.num_rotations);
-            ray_generator = self.get_ray_generator();
+            ray_generator = self.get_ray_generator(array);
             image_at_angle = zeros(self.ny_pixels, self.nz_pixels);
             for k = 1:self.nz_pixels
                 for j = 1:self.ny_pixels
                     ray = ray_generator(j, k);
-                    mu = ray.calculate_mu(array);
+                    mu = ray.calculate_mu();
                     image_at_angle(j, k) = mu;
                 end
             end
@@ -178,26 +178,25 @@ classdef (Abstract) detector < handle
             % Do some Monte Carlo simulation of scatter
             ny = self.ny_pixels; nz = self.nz_pixels;
             scatter = zeros(ny, nz, self.num_rotations);
-            for sample = 1:self.scatter_factor
-                for k = 1:self.num_rotations
-                    pixel_calc = self.get_pixel_generator(k, @scatter_ray);
-                    scatter_idxs = zeros(ny, nz, 2); scatter_vals = zeros(ny, nz);
-                    for j = 1:nz
-                        parfor i = 1:ny
-                            [pval, pixel, ~] = feval(pixel_calc, i, j, voxels);
-                            if  pval < inf % Collect the scatter values for adding later
-                                scatter_idxs(i, j, :) = pixel;
-                                scatter_vals(i, j) = pval;
-                            end
-                        end
+            for k = 1:self.num_rotations
+                pixel_calc = self.get_pixel_generator(k, voxels, @scatter_ray);
+                scatter_idxs = zeros(ny, nz, self.scatter_factor, 2); 
+                scatter_vals = zeros(ny, nz, self.scatter_factor);
+                for j = 1:nz
+                    parfor i = 1:ny
+                        [pval, pixel, ~] = feval(pixel_calc, i, j);
+                        scatter_idxs(i, j, :, :) = pixel;
+                        scatter_vals(i, j, :) = pval;
                     end
+                end
 
-                    % Add the scatter to the image
+                % Add the scatter to the image
+                for sf = 1:self.scatter_factor
                     for j = 1:nz
                         for i = 1:ny
-                            if scatter_vals(i, j) > 0
-                                scatter(scatter_idxs(i, j, 1), scatter_idxs(i, j, 2), k) = ...
-                                scatter(scatter_idxs(i, j, 1), scatter_idxs(i, j, 2), k) + scatter_vals(i, j);
+                            if ~isnan(scatter_vals(i, j, sf))
+                                scatter(scatter_idxs(i, j, sf, 1), scatter_idxs(i, j, sf, 2), k) = ...
+                                scatter(scatter_idxs(i, j, sf, 1), scatter_idxs(i, j, sf, 2), k) + scatter_vals(i, j, sf);
                             end
                         end
                     end
@@ -211,14 +210,15 @@ classdef (Abstract) detector < handle
             self.reset(); % Reset the detector to the initial position
             ny = self.ny_pixels; nz = self.nz_pixels;
             scatter = zeros(ny, nz, self.num_rotations);
-            for sample = 1:self.scatter_factor
-                for k = 1:self.num_rotations
-                    pixel_calc = self.get_pixel_generator(k, @scatter_ray);
-                    for j = 1:nz
-                        for i = 1:ny
-                            [pval, pixel, ~] = pixel_calc(i, j, voxels);
-                            if pval < inf % Collect the attenuation values 
-                                scatter(pixel(1), pixel(2), k) = scatter(pixel(1), pixel(2), k) + pval;
+            for k = 1:self.num_rotations
+                pixel_calc = self.get_pixel_generator(k, voxels, @scatter_ray);
+                for j = 1:nz
+                    for i = 1:ny
+                        [pval, pixel, ~] = pixel_calc(i, j);
+                        for sf = 1:self.scatter_factor
+                            if ~isnan(pval(sf))
+                                scatter(pixel(sf, 1), pixel(sf, 2), k) =  ...
+                                scatter(pixel(sf, 1), pixel(sf, 2), k) + pval(sf);
                             end
                         end
                     end
