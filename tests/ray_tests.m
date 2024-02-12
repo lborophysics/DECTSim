@@ -156,9 +156,6 @@ classdef ray_tests < matlab.unittest.TestCase
 
                     scattered_ray = ray(nrs.start_point, nrs.direction, dist_to_detector, tc.lead_array, nrs.energy);
                     scatter_mu = scattered_ray.calculate_mu();
-                    uptoscatter_mu
-                    scatter_mu
-                    total_mu
                     tc.assertEqual(total_mu, scatter_mu + uptoscatter_mu, 'RelTol', 1e-14, 'AbsTol', 1e-14);
 
                     tc.assertNotEqual(nrs.n_mfp, rs.n_mfp); % n_mfp should have changed
