@@ -1,4 +1,4 @@
-function att_fun = photon_attenuation(z)
+function att_fun = get_photon_attenuation(z)
 %PhotonAttenuationQ NIST attenuation cooeficiant tables
 % for photon interaction with elements.
 %

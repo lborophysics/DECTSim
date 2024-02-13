@@ -1,13 +1,15 @@
 classdef ray
-    properties (SetAccess=protected)
+    properties (SetAccess=immutable)
         start_point (3, 1) double % 3D point
         v1_to_v2    (3, 1) double % Vector from start_point to end_point
-        energy             double % energy of the ray in KeV
-
-        voxels             voxel_array % The voxel array the ray will be traced through
-        mu_dict            % Dictionary of mu values for each material
         lengths            % Length of the ray in each voxel
         indices            % Indices of the voxels the ray intersects
+    end
+
+    properties (SetAccess=protected)
+        energy             double % energy of the ray in KeV
+        voxels             voxel_array % The voxel array the ray will be traced through
+        mu_dict            % Dictionary of mu values for each material
     end
 
     properties (Access=private, Constant)
