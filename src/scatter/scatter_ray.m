@@ -27,34 +27,46 @@ classdef scatter_ray < ray
 
         function self = calculate_mu (self) % I have broken symmetry with the ray class -> maybe always return ray?
             
-            if isempty(self.lengths); return; end % If there are no intersections, exit
-            ls = self.lengths; idxs = self.indices; % Get the lengths and indices of the intersections
-            mfps = self.voxels.get_saved_mfp(idxs, self.mfp_dict); % Get the mean free path of the first intersection
+            % If there are no intersections, exit
+            if isempty(self.lengths); return; end
 
-            for i = 1:length(ls)
-                self.n_mfp = self.n_mfp - ls(i) / mfps(i); % Update the number of mean free paths until the next scatter event
+            % Get the lengths and indices of the intersections
+            ls = self.lengths; idxs = self.indices; 
+            
+            % Get the mean free path of the first intersection
+            mfps = self.voxels.get_saved_mfp(idxs, self.mfp_dict); 
+            
+            % Check if the ray scatters at all
+            ray_nmfp = self.n_mfp - cumsum(ls ./ mfps);
+            check_nmfp = ray_nmfp < 0;
+            
+            if any(check_nmfp) % If the ray scatters
+                % Get the index of the scatter event
+                i = find(check_nmfp, 1, "first");
+                
+                % Calculate the mu of the ray until the end of the current voxel
+                mu_to_scatter = self.voxels.get_saved_mu(idxs(:, 1:i), self.mu_dict);
+                self.mu = self.mu + sum(ls(1:i) .* mu_to_scatter);
 
-                if self.n_mfp < 0 % If the number of mean free paths is less than 0, scatter the ray
-                    % Calculate the mu of the ray until the end of the current voxel
-                    self.mu = self.mu + sum(ls(1:i) .* self.voxels.get_saved_mu(idxs(:, 1:i), self.mu_dict));
+                % Remove the mu of the current voxel up to the scatter event
+                self.mu = self.mu + mfps(i) * ray_nmfp(i) * mu_to_scatter(i);
 
-                    % Remove the mu of the current voxel up to the scatter event
-                    self.mu = self.mu + mfps(i) * self.n_mfp * self.voxels.get_saved_mu(idxs(i), self.mu_dict);
+                % Get the new direction and energy of the ray, and update the start point
+                [ndirection, energy] = self.scatter();
+                start_point = self.start_point + (sum(ls(1:i)) + ray_nmfp(i) * mfps(i)) .* self.direction; 
+                
+                % Create a new ray with the new direction, energy, and start point
+                new_ray = scatter_ray(start_point, ndirection, sum(ls), self.voxels, energy);
+                
+                % Set the mu of the new ray to the mu of the old ray and update the scatter event
+                new_ray.mu = self.mu; 
+                new_ray.scatter_event = self.scatter_event + 1;
 
-                    % Get the new direction and energy of the ray, and update the start point
-                    [ndirection, energy] = self.scatter();
-                    start_point = self.start_point + (sum(ls(1:i)) + self.n_mfp * mfps(i)) .* self.direction; 
-                    
-                    % Create a new ray with the new direction, energy, and start point
-                    new_ray = scatter_ray(start_point, ndirection, sum(ls), self.voxels, energy);
-                    new_ray.mu = self.mu; % Set the mu of the new ray to the mu of the old ray
-                    new_ray.scatter_event = self.scatter_event + 1; % Update the scatter event of the new ray
-                    self = new_ray.calculate_mu(); % Get the mu of the new ray
-                    return % Return the mu of the new ray
-                end
+                % Now repeat the process for the new ray
+                self = new_ray.calculate_mu();
+            else
+                self.mu = self.mu + sum(ls .* self.voxels.get_saved_mu(idxs, self.mu_dict));  % This case only occurs if the ray does not scatter
             end
-
-            self.mu = self.mu + sum(ls .* self.voxels.get_saved_mu(idxs, self.mu_dict));  % This case only occurs if the ray does not scatter
         end
 
         function [direction, energy] = scatter(self) % Not sure if this needs to be separate?
