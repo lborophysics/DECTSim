@@ -128,7 +128,7 @@ classdef parallel_detector < detector
                     if hit; pixel_values(i) = new_ray.mu; 
                     else;   pixel_values(i) = NaN;
                     end
-                    % xray = xray.randomise_n_mfp();
+                    xray = xray.randomise_n_mfp();
                 end
             end
         end
