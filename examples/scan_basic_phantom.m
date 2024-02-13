@@ -24,7 +24,9 @@ num_pixels = [900 1];
 num_rotations = 180;
 
 my_detector = parallel_detector(dist_to_detector, pixel_size, num_pixels, num_rotations);
+tic
 sinogram = squeeze(my_detector.generate_image_p(voxels));
+toc
 
 imwrite(mat2gray(sinogram), "sinograph_cylinder.png")
 
@@ -32,16 +34,28 @@ scan_angles = my_detector.get_scan_angles();
 [R, ~] = iradon(sinogram, scan_angles);%, "linear", "None");
 
 imwrite(mat2gray(R), "cylinder.png")
-scatter_factor = 1;
-scatter_detector = parallel_detector(dist_to_detector, pixel_size, num_pixels, num_rotations, scatter_factor); 
-scatter_sinogram = squeeze(scatter_detector.generate_image_p(voxels));
+% seconds = 9.75 * scatter_factor + 40 ( i.e. an extra 10 seconds for every
+% factor)
+scatter_detector = parallel_detector(dist_to_detector, pixel_size, num_pixels, num_rotations, "fast", 1);
 
-imwrite(mat2gray(scatter_sinogram), "scatter_sinograph_cylinder.png")
+tic
+scatter_sinogram = squeeze(scatter_detector.generate_image_p(voxels));
+toc
+
+if scatter_detector.scatter_type == 1
+    sinograph_save_str = "scatter_sinograph_cylinder_fast.png";
+    image_save_str = "scatter_sinograph_cylinder_fast.png";
+elseif scatter_detector.scatter_type == 2
+    sinograph_save_str = "scatter_sinograph_cylinder_slow.png";
+    image_save_str = "scatter_sinograph_cylinder_slow.png";
+end
+
+imwrite(mat2gray(scatter_sinogram), sinograph_save_str)
 diff = scatter_sinogram - sinogram;
-imwrite(mat2gray(diff), "diff_sinograph_cylinder.png")
+imwrite(mat2gray(diff), strcat("diff_", sinograph_save_str))
 
 [scatter_R, H] = iradon(scatter_sinogram, scan_angles);%, "linear", "None");
 
-imwrite(mat2gray(scatter_R), "scatter_cylinder.png")
+imwrite(mat2gray(scatter_R), image_save_str)
 diff_R = scatter_R - R;
-imwrite(mat2gray(diff_R), "diff_cylinder.png")
+imwrite(mat2gray(diff_R), strcat("diff_", image_save_str))
