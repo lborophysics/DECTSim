@@ -211,8 +211,8 @@ classdef detector_tests < matlab.unittest.TestCase
             detector = parallel_detector(2, [0.1, 0.35], [110, 20], 10);
             empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
             ray_generator = detector.get_ray_generator(empty_voxels);
-            for i = 50:60
-                for j = 5:15
+            for i = 1:110
+                for j = 1:20
                     gen_ray = ray_generator(i, j);
                     [pixel, hit] = detector.hit_pixel(gen_ray, detector.detector_vec);
                     tc.verifyEqual(pixel, [i, j]);
@@ -235,8 +235,8 @@ classdef detector_tests < matlab.unittest.TestCase
 
             detector.rotate();
             ray_generator = detector.get_ray_generator(empty_voxels);
-            for i = 50:60
-                for j = 5:15
+            for i = 1:110
+                for j = 1:20
                     gen_ray = ray_generator(i, j);
                     [pixel, hit] = detector.hit_pixel(gen_ray, detector.detector_vec);
                     tc.verifyEqual(pixel, [i, j]);
