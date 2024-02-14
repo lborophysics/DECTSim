@@ -110,25 +110,31 @@ classdef parallel_detector < detector
 
             function [pixel_values, pixels, scattered] = scatter_generator(y_pixel, z_pixel)
                 xray = static_ray_generator(y_pixel, z_pixel);
-                pixel_values = zeros(self.scatter_factor, 1);
-                pixels = zeros(self.scatter_factor, 2);
-                scattered = zeros(self.scatter_factor, 1);
-
-                for i = 1:self.scatter_factor
-                    new_ray = xray.calculate_mu();
-                    
-                    this_scatter = new_ray.scatter_event > 0;
-                    
-                    hit = true;
-                    if this_scatter; [pixel, hit] = self.hit_pixel(new_ray, current_dv);
-                    else;             pixel       = [y_pixel, z_pixel];
+                if isempty(xray.lengths)
+                    pixel_values = NaN(self.scatter_factor, 1);
+                    pixels = repmat([y_pixel, z_pixel], self.scatter_factor, 1);
+                    scattered = false(self.scatter_factor, 1);
+                else
+                    pixel_values = zeros(self.scatter_factor, 1);
+                    pixels = zeros(self.scatter_factor, 2);
+                    scattered = zeros(self.scatter_factor, 1);
+                    for i = 1:self.scatter_factor
+                        new_ray = xray.calculate_mu();
+                        
+                        this_scatter = new_ray.scatter_event > 0;
+                        scattered(i) = this_scatter;
+                        
+                        hit = true;
+                        if this_scatter; [pixel, hit] = self.hit_pixel(new_ray, current_dv);
+                        else;             pixel       = [y_pixel, z_pixel];
+                        end
+                        pixels(i, :) = pixel;
+                        
+                        if hit; pixel_values(i) = new_ray.mu; 
+                        else;   pixel_values(i) = NaN;
+                        end
+                        xray = xray.randomise_n_mfp();
                     end
-                    pixels(i, :) = pixel;
-                    scattered(i) = this_scatter;
-                    if hit; pixel_values(i) = new_ray.mu; 
-                    else;   pixel_values(i) = NaN;
-                    end
-                    xray = xray.randomise_n_mfp();
                 end
             end
         end
