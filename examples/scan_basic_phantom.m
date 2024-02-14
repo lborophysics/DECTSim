@@ -1,4 +1,5 @@
 % Voxel array constants
+rng(0);
 vox_arr_center = zeros(3, 1);
 phantom_radius = 30;% In the x-y plane
 phantom_width = 50; % In the z direction
@@ -10,12 +11,15 @@ num_materials = 4;
 rot_mat_pos = rotz(2*pi/num_materials);
 init_mat_pos = [0; phantom_radius/2; 0];
 bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("bone"));
-blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
-lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("lung"));
+init_mat_pos = rot_mat_pos * init_mat_pos;
+blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("fat"));
+init_mat_pos = rot_mat_pos * init_mat_pos;
+lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
+init_mat_pos = rot_mat_pos * init_mat_pos;
 muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
 
-voxels = voxel_array(vox_arr_center, zeros(3, 1)+phantom_radius*2, voxel_size, ...
-    water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
+voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
+    voxel_size, water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
 
 % Detector constants
 dist_to_detector = 105; % cm
@@ -44,14 +48,15 @@ toc
 
 if scatter_detector.scatter_type == 1
     sinograph_save_str = "scatter_sinograph_cylinder_fast.png";
-    image_save_str = "scatter_sinograph_cylinder_fast.png";
+    image_save_str = "scatter_cylinder_fast.png";
 elseif scatter_detector.scatter_type == 2
     sinograph_save_str = "scatter_sinograph_cylinder_slow.png";
-    image_save_str = "scatter_sinograph_cylinder_slow.png";
+    image_save_str = "scatter_cylinder_slow.png";
 end
 
 imwrite(mat2gray(scatter_sinogram), sinograph_save_str)
 diff = scatter_sinogram - sinogram;
+
 imwrite(mat2gray(diff), strcat("diff_", sinograph_save_str))
 
 [scatter_R, H] = iradon(scatter_sinogram, scan_angles);%, "linear", "None");
