@@ -73,13 +73,13 @@ classdef voxel_shapes_tests < matlab.unittest.TestCase
 
         function box(tc)
             water = material_attenuation("water");
-            my_box = voxel_box([0,0,0], 100, water);
+            my_box = voxel_cube([0,0,0], 100, water);
             box_fun = tc.get_get_mu(my_box);
             res = box_fun(-100:0.5:100, -100:0.5:100, -100:0.5:100, 10);
             exp = cat(2,zeros(1, 100), zeros(1, 201)+water.get_mu(10), zeros(1, 100)); %101 includes 0
             tc.verifyEqual(res, exp)
 
-            my_box = voxel_box([100, 100, 100], [200, 200, 100], water);
+            my_box = voxel_cube([100, 100, 100], [200, 200, 100], water);
             box_fun = tc.get_get_mu(my_box);
             res = box_fun(-100:300, -100:300, 50:0.25:150, 2);
             exp = cat(2,zeros(1, 100), zeros(1, 201) + water.get_mu(2), zeros(1, 100)); %101 includes 0

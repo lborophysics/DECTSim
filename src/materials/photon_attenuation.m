@@ -323,7 +323,7 @@ nelem = length(elems);
 att = 0;
 if nrj < 0.9|| nrj > 300
     warning('photon_attenuation:wrongEnergy',...
-        'photon_attenuation function: energy is outside of the recomended range from 1 keV to 1 MeV');
+        'photon_attenuation function: energy is outside of the recomended range from 1 KeV to 300 KeV. Results may be inaccurate.');
 end
 nrj = log(nrj);
 
