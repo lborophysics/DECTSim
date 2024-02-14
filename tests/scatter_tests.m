@@ -81,13 +81,17 @@ classdef scatter_tests < matlab.unittest.TestCase
                 [1 0 0]
                 [0 1 0]
                 [0 0 1]
+                [1 0 1]
+                [0 1 1]
+                [1 1 0]
+                [1 1 1]
             ];
             empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
             for ei = 1:length(energies)-2
                 for vi = 1:height(vectors)
                     e1 = energies(ei);
                     e2 = energies(ei+2);
-                    v = vectors(vi, :);
+                    v = vectors(vi, :) / norm(vectors(vi, :));
                     num_rays = 5e3;
                     angle_dist1 = zeros(1, num_rays);
                     angle_dist2 = zeros(1, num_rays);
@@ -97,15 +101,16 @@ classdef scatter_tests < matlab.unittest.TestCase
                         x_ray1 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e1);
                         x_ray2 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e2);
 
-                        [d1, e1s] = x_ray1.scatter();
-                        [d2, e2s] = x_ray2.scatter();
+                        [d1, e1_scttrd] = x_ray1.scatter();
+                        [d2, e2_scttrd] = x_ray2.scatter();
 
-                        angle_dist1(i) = atan2(norm(cross(v,d1)), dot(v,d1));
-                        angle_dist2(i) = atan2(norm(cross(v,d2)), dot(v,d2));
-                        energy_dist1(i) = e1s;
-                        energy_dist2(i) = e2s;
+                        angle_dist1(i) = acos(dot(v, d1));
+                        angle_dist2(i) = acos(dot(v, d2));
+                        energy_dist1(i) = e1_scttrd;
+                        energy_dist2(i) = e2_scttrd;
 
                     end
+
                     % Check that the energy angle relationship is correct
                     tc.verifyEqual(energy_dist1,...
                         (constants.em_ee .* e1) ./ ...
@@ -116,7 +121,8 @@ classdef scatter_tests < matlab.unittest.TestCase
                         (constants.em_ee .* e2) ./ ...
                         (constants.em_ee + e2 .* (1 - cos(angle_dist2))), ...
                         "RelTol", 0.1); % 1%
-                    
+
+
                     % Check that as the energy increases the angle of scatter decreases
                     tc.verifyTrue(mean(angle_dist1) > mean(angle_dist2))
                     tc.verifyTrue(all(angle_dist1 > 0))
