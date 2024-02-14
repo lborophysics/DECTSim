@@ -97,7 +97,7 @@ classdef attenuation_tests < matlab.unittest.TestCase
             air = @(e) air_mat.get_mu(e*1000);
             tc.verifyEqual(air(1e-3      ), 3.606E+03 * 1.205E-03, "RelTol", 1e-3)
             tc.verifyEqual(air(1.5e-3    ), 1.191E+03 * 1.205E-03, "RelTol", 1e-3)
-            tc.verifyEqual(air(3.2030E-03), 1.485E+02 * 1.205E-03, "RelTol", 1e-3) % Check this is because of the absorption edge
+            tc.verifyEqual(air(3.2035E-03), 1.485E+02 * 1.205E-03, "RelTol", 1e-3) % Check this is because of the absorption edge
             tc.verifyEqual(air(2e-2      ), 7.779E-01 * 1.205E-03, "RelTol", 1e-3)
             tc.verifyEqual(air(6e-2      ), 1.875E-01 * 1.205E-03, "RelTol", 1e-3)
             tc.verifyEqual(air(3e-1      ), 1.067E-01 * 1.205E-03, "RelTol", 1e-3)

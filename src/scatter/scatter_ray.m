@@ -34,7 +34,7 @@ classdef scatter_ray < ray
             ls = self.lengths; idxs = self.indices; 
             
             % Get the mean free path of the first intersection
-            mfps = self.voxels.get_saved_mfp(idxs, self.mfp_dict); 
+            mfps = self.voxels.get_saved_mfp(idxs, self.mfp_dict);
             
             % Check if the ray scatters at all
             ray_nmfp = self.n_mfp - cumsum(ls ./ mfps);
