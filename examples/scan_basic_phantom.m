@@ -1,9 +1,14 @@
+rng(100);
+
+% Create source and sensor
+my_source = single_energy(30);
+my_sensor = ideal_sensor([0; 100], 100);
+
 % Voxel array constants
-rng(0);
 vox_arr_center = zeros(3, 1);
-phantom_radius = 30;% In the x-y plane
+phantom_radius = 30/2;% In the x-y plane
 phantom_width = 50; % In the z direction
-voxel_size = 0.1; % 1 mm
+voxel_size = 0.1/2; % 1 mm
 
 % Create voxel array
 water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
@@ -25,9 +30,11 @@ voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_widt
 dist_to_detector = 105; % cm
 pixel_size = [0.1 0.1]; % cm (so pixel size = 1mm)
 num_pixels = [900 1];
-num_rotations = 180;
+num_rotations = 90;
 
-my_detector = parallel_detector(dist_to_detector, pixel_size, num_pixels, num_rotations);
+my_detector = parallel_detector(my_source, my_sensor, dist_to_detector, ...
+    pixel_size, num_pixels, num_rotations);
+
 tic
 sinogram = squeeze(my_detector.generate_image_p(voxels));
 toc
@@ -40,7 +47,8 @@ scan_angles = my_detector.get_scan_angles();
 imwrite(mat2gray(R), "cylinder.png")
 % seconds = 9.75 * scatter_factor + 40 ( i.e. an extra 10 seconds for every
 % factor)
-scatter_detector = parallel_detector(dist_to_detector, pixel_size, num_pixels, num_rotations, "fast", 1);
+scatter_detector = parallel_detector(my_source, my_sensor, dist_to_detector, ...
+    pixel_size, num_pixels, num_rotations, "slow", 10); 
 
 tic
 scatter_sinogram = squeeze(scatter_detector.generate_image_p(voxels));

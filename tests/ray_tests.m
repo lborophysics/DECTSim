@@ -132,10 +132,10 @@ classdef ray_tests < matlab.unittest.TestCase
                 total_mu = nrs.mu;
                 if nrs.scatter_event == 1 % Check if it scattered once
 
-                    mfp_dict = tc.lead_array.get_mfp_dict(energy);
+                    mfp_dict = tc.lead_array.get_mfp_arr(energy);
                     mfp = tc.lead_array.get_saved_mfp(indices, mfp_dict);
 
-                    mu_dict = tc.lead_array.get_mu_dict(energy);
+                    mu_dict = tc.lead_array.get_mu_arr(energy);
 
                     ray_n_mfp = lengths ./ mfp;
                     ray_mu = lengths .* tc.lead_array.get_saved_mu(indices, mu_dict);

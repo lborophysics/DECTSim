@@ -90,8 +90,8 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             arr_exp1 = [air.get_mu(12) water.get_mu(12) bone.get_mu(12) air.get_mu(12)];
             arr_exp2 = [bone.get_mu(24) air.get_mu(24) water.get_mu(24) air.get_mu(24)];
 
-            tc.verifyEqual(obj1.get_mu_dict(12), arr_exp1);
-            tc.verifyEqual(obj2.get_mu_dict(24), arr_exp2);
+            tc.verifyEqual(obj1.get_mu_arr(12), arr_exp1);
+            tc.verifyEqual(obj2.get_mu_arr(24), arr_exp2);
 
             arr_exp1 = [...
                 air.material.mean_free_path(12) ...
@@ -105,8 +105,8 @@ classdef voxel_array_tests < matlab.unittest.TestCase
                 water.material.mean_free_path(24) ...
                 air.material.mean_free_path(24)];
             
-            tc.verifyEqual(obj1.get_mfp_dict(12), arr_exp1);
-            tc.verifyEqual(obj2.get_mfp_dict(24), arr_exp2);
+            tc.verifyEqual(obj1.get_mfp_arr(12), arr_exp1);
+            tc.verifyEqual(obj2.get_mfp_arr(24), arr_exp2);
         end
 
         function test_saved_dicts(tc)
@@ -123,8 +123,8 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             small_box = voxel_cube([0,0,0], 2 , mat3);
             my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
             
-            mu_arr = my_collection.get_mu_dict(13);
-            mfp_arr = my_collection.get_mfp_dict(59);
+            mu_arr = my_collection.get_mu_arr(13);
+            mfp_arr = my_collection.get_mfp_arr(59);
             get_mu = @(x,y,z) my_collection.get_saved_mu([x + 5;y + 5;z + 5], mu_arr); % coord to index -> + 5
             get_mfp = @(x,y,z) my_collection.get_saved_mfp([x + 5;y + 5;z + 5], mfp_arr); % coord to index -> + 5
 

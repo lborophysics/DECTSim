@@ -10,6 +10,7 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
     properties (Constant, NonCopyable)
         air = material_attenuation("air");
+        mu_dict = containers.Map();
     end
 
     methods
@@ -32,12 +33,23 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.voxel_objs = varargin;
         end
 
-        function mu_arr = get_mu_dict(self, energy)
+        function self = precalculate_mus(self, energies)
             % Create a dictionary of mu values for each material
-            mu_arr(self.nobj + 1) = self.air.get_mu(energy);
-            % mu_arr = zeros(1, self.nobj + 1);
-            for n = 1:self.nobj
-                mu_arr(n) = self.voxel_objs{n}.get_mu(energy);
+            for energy = energies
+                self.mu_dict(num2str(energy)) = self.get_mu_arr(energy);
+            end
+        end
+
+        function mu_arr = get_mu_arr(self, energy)
+            % Create a dictionary of mu values for each material
+            if isKey(self.mu_dict, num2str(energy))
+                mu_arr = self.mu_dict(num2str(energy));
+            else
+                mu_arr(self.nobj + 1) = self.air.get_mu(energy);
+                % mu_arr = zeros(1, self.nobj + 1);
+                for n = 1:self.nobj
+                    mu_arr(n) = self.voxel_objs{n}.get_mu(energy);
+                end
             end
         end
 
@@ -46,14 +58,14 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get mu at position
-            mu = zeros(1, size(indices, 2)); % + dict(self.nobj + 1); % Default to air
+            mu = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
             for n = 1:self.nobj
                 mu(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
                     dict(n);
             end
         end
 
-        function mfp_arr = get_mfp_dict(self, energy)
+        function mfp_arr = get_mfp_arr(self, energy)
             % Create a dictionary of mfp values for each material
             mfp_arr(self.nobj + 1) = self.air.mean_free_path(energy);
             % mfp_arr = zeros(1, self.nobj + 1);

@@ -32,7 +32,7 @@ classdef ray
 
             % Using the assumption that the ray's energy is constant
             % Create a dictionary of the values of mu for each material
-            self.mu_dict = voxels.get_mu_dict(energy);
+            self.mu_dict = voxels.get_mu_arr(energy);
             [self.lengths, self.indices] = self.get_intersections(voxels);
             self.voxels = voxels;
         end
@@ -65,6 +65,11 @@ classdef ray
             else
                 mu = sum(self.lengths .* self.voxels.get_saved_mu(self.indices, self.mu_dict));
             end
+        end
+
+        function self = update_energy(self, new_energy)
+            self.energy = new_energy;
+            self.mu_dict = self.voxels.get_mu_arr(new_energy);
         end
     end
 end

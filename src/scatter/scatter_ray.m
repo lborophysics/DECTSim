@@ -21,14 +21,17 @@ classdef scatter_ray < ray
             self.direction = direction;
             self.end_point = start_point + self.v1_to_v2;
 
-            self.mfp_dict = voxels.get_mfp_dict(energy);
+            self.mfp_dict = voxels.get_mfp_arr(energy);
             self.n_mfp = -log(rand); % Control with rng(seed) for reproducibility
         end
 
         function self = calculate_mu (self) % I have broken symmetry with the ray class -> maybe always return ray?
             
             % If there are no intersections, exit
-            if isempty(self.lengths); return; end
+            if isempty(self.lengths)
+                if self.scatter_event > 0; self.mu = NaN; end
+                return
+            end
 
             % Get the lengths and indices of the intersections
             ls = self.lengths; idxs = self.indices; 
@@ -46,20 +49,18 @@ classdef scatter_ray < ray
                 
                 % Calculate the mu of the ray until the end of the current voxel
                 mu_to_scatter = self.voxels.get_saved_mu(idxs(:, 1:i), self.mu_dict);
-                self.mu = self.mu + sum(ls(1:i) .* mu_to_scatter);
-
-                % Remove the mu of the current voxel up to the scatter event
-                self.mu = self.mu + mfps(i) * ray_nmfp(i) * mu_to_scatter(i);
+                self.mu = self.mu + sum(ls(1:i) .* mu_to_scatter) + ...
+                    (mfps(i) * ray_nmfp(i)) * mu_to_scatter(i); % Remove the mu of the current voxel up to the scatter event
 
                 % Get the new direction and energy of the ray, and update the start point
+                nstart_point = self.start_point + (sum(ls(1:i)) + ray_nmfp(i) * mfps(i)) .* self.direction; 
                 [ndirection, energy] = self.scatter();
-                start_point = self.start_point + (sum(ls(1:i)) + ray_nmfp(i) * mfps(i)) .* self.direction; 
                 
                 % Create a new ray with the new direction, energy, and start point
-                new_ray = scatter_ray(start_point, ndirection, sum(ls), self.voxels, energy);
+                new_ray = scatter_ray(nstart_point, ndirection, norm(self.v1_to_v2), self.voxels, energy);
                 
                 % Set the mu of the new ray to the mu of the old ray and update the scatter event
-                new_ray.mu = self.mu; 
+                new_ray.mu = self.mu;
                 new_ray.scatter_event = self.scatter_event + 1;
 
                 % Now repeat the process for the new ray
