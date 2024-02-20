@@ -11,10 +11,10 @@ classdef curved_detector < detector_array
             % Create a function which returns the rays which should be fired to hit each pixel.
             % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
             arguments
-                self           parallel_detector
+                self           curved_detector
                 detect_geom    gantry
-                angle_index    double
-                ray_per_pixel  int32             = 1
+                angle_index    double {mustBePositive, mustBeInteger}    
+                ray_per_pixel  int32  {mustBePositive, mustBeInteger} = 1
             end
             assert(nargin<4, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
                         

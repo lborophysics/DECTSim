@@ -1,4 +1,4 @@
-function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj, sfactor)
+function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, sfactor)
     %monte_carlo_scatter Monte Carlo simulation of scatter signal
     % 
     % Parameters:
@@ -62,10 +62,10 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
         'Phantom is not entirely within the detector');
 
 
-    scatter = zeros(num_bins, npy, npz, num_rotations);
+    scatter_count = zeros(num_bins, npy, npz, num_rotations);
     for k = 1:num_rotations
         % Do the linear indexing of scatter
-        ray_generator = d_array.ray_at_angle(gantry, angle);
+        ray_generator = d_array.ray_at_angle(gantry, k);
         scatter_idxs = zeros(npy, npz, sfactor, 2); 
         scatter_vals = NaN  (npy, npz, sfactor);
         energies     = zeros(npy, npz, sfactor);    
@@ -75,8 +75,8 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
                 [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_length, ...
                     vox_init, vox_dims, vox_nplanes);
                 cached_calc_mu = @(n_mfp, nrj, mu_arr, mfp_arr) ...
-                    calculate_mu(n_mfp, ls, idxs, ray_start, ray_dir, ray_length, ...
-                    nrj, NaN, 0, mu_arr, mfp_arr, voxels, ray_tracing);
+                    calculate_scatter(n_mfp, ls, idxs, ray_start, ray_dir, ...
+                    ray_length, nrj, NaN, 0, mu_arr, mfp_arr, voxels, ray_tracing);
                 
                 for sf = 1:sfactor
                     for ei = 1:length(energy_list)
@@ -118,61 +118,13 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
                         z_index = scatter_idxs(y_pix, z_pix, sf, 2);
                         bin = sensor_unit.get_energy_bin(energies(y_pix, z_pix, sf));
 
-                        scatter(bin, y_index, z_index, k) = ...
-                        scatter(bin, y_index, z_index, k) + ...
+                        scatter_count(bin, y_index, z_index, k) = ...
+                        scatter_count(bin, y_index, z_index, k) + ...
                             scatter_vals(y_pix, z_pix, sf);
                     end
                 end
             end
 
         end
-    end
-    scatter_signal = sensor_unit.get_signal(scatter);
-end
-
-function [ray_start, ray_dir, mu, nrj, scattered] = calculate_mu (n_mfp, ls, idxs, ray_start,...
-     ray_dir, ray_len, nrj, prev_mu, num_scatter, mu_arr, mfp_arr, voxels, ray_tracing)
-            
-    % If there are no intersections, exit
-    scattered = false;
-    if isempty(ls); mu = prev_mu; return; end
-    
-    if  num_scatter == 0; mu = 0;
-    else                ; mu = prev_mu;
-    end
-
-    % Get the mean free path of the first intersection
-    mfps = voxels.get_saved_mfp(idxs, mfp_arr);
-    
-    % Check if the ray scatters at all
-    ray_nmfp = n_mfp - cumsum(ls ./ mfps);
-    check_nmfp = ray_nmfp < 0;
-    
-    if any(check_nmfp) % If the ray scatters
-        % Get the index of the scatter event
-        i = find(check_nmfp, 1, "first");
-        
-        % Calculate the mu of the ray until the end of the current voxel
-        mu_to_scatter = voxels.get_saved_mu(idxs(:, 1:i), mu_arr);
-        mu = mu + sum(ls(1:i) .* mu_to_scatter) + ...
-            (mfps(i) * ray_nmfp(i)) * mu_to_scatter(i); % Remove the mu of the current voxel up to the scatter event
-
-        % Get the new direction and energy of the ray, and update the start point
-        ray_start = ray_start + (sum(ls(1:i)) + ray_nmfp(i) * mfps(i)) .* ray_dir; 
-        [ray_dir, nrj] = random_scatter(ray_dir, nrj);
-        
-        % Create a new ray with the new direction, energy, and start point
-        [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_len, ...
-            voxels.array_position, voxels.dimensions, voxels.num_planes);
-
-        mu_arr = voxels.get_mu_arr(nrj);
-        mfp_arr = voxels.get_mfp_arr(nrj);
-        
-        % Now repeat the process for the new ray
-        [ray_start, ray_dir, mu, nrj, ~] = calculate_mu(-log(rand), ls, idxs, ...
-            ray_start, ray_dir, ray_len, nrj, mu, num_scatter + 1, mu_arr, mfp_arr, voxels);
-        scattered = true;
-    else
-        mu = mu + sum(ls .* voxels.get_saved_mu(idxs, mu_arr));  % This case only occurs if the ray does not scatter
     end
 end

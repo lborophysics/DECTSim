@@ -24,7 +24,7 @@ init_mat_pos = rot_mat_pos * init_mat_pos;
 muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
 
 voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
-    voxel_size, water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
+    voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 
 % Detector constants
 dist_to_detector = 105; % cm
@@ -34,7 +34,6 @@ num_rotations = 90;
 
 my_detector = parallel_detector(my_source, my_sensor, dist_to_detector, ...
     pixel_size, num_pixels, num_rotations);
-
 tic
 sinogram = squeeze(my_detector.generate_image_p(voxels));
 toc

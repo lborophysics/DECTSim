@@ -109,16 +109,17 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     end
     
     % Calculate the scatter signal
-    if scatter_type == 0 
+    if scatter_type == 1
         scatter_signal = 0;
-    elseif scatter_type == 1 % Fast scatter
-        scatter_signal = ...
+    elseif scatter_type == 2 % Fast scatter
+        scatter_count = ...
             convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
-    elseif scatter_type == 2 % Slow scatter
-        scatter_signal = ...
+            scatter_signal = sensor_unit.get_signal(scatter_count);
+    else
+        scatter_count = ...
             monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
+        scatter_signal = sensor_unit.get_signal(scatter_count);
     end
-
     % Convert the photon count to a signal
     primary_signal = sensor_unit.get_signal(photon_count);
 

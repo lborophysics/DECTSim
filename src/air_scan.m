@@ -11,7 +11,7 @@ function photon_count = air_scan(xray_source, detector_obj)
 
     % Check the inputs
     arguments
-        xray_source  {mustBeA(xray_source, 'source')}
+        xray_source  {mustBeA(xray_source , 'source'  )}
         detector_obj {mustBeA(detector_obj, 'detector')}
     end
 

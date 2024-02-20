@@ -15,11 +15,9 @@ classdef (Abstract) detector_array
     methods
         function self = detector_array(pixel_dims, n_pixels)
             arguments
-                pixel_dims      (1, 2) double
-                n_pixels        (1, 2) double
+                pixel_dims      (1, 2) double {mustBePositive}
+                n_pixels        (1, 2) double {mustBePositive, mustBeInteger}
             end
-            assert(all(pixel_dims > 0), 'pixel_dims must be positive')
-            assert(all(n_pixels > 0) && all(mod(n_pixels, 1) == 0), 'n_pixels must be positive integers')
             self.pixel_dims = pixel_dims;
             self.n_pixels = n_pixels;
         end

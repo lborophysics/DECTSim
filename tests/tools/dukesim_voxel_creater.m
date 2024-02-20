@@ -18,7 +18,7 @@ init_mat_pos = rot_mat_pos * init_mat_pos;
 muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_mimic(5));
 
 voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], voxel_size, ...
-    water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
+    {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 x_and_y = phantom_radius*2/voxel_size;
 x_and_y_str = num2str(x_and_y);
 mu_dict = voxels.get_mu_dict(1);

@@ -7,7 +7,7 @@ classdef material_mimic
         function self = material_mimic(mu)
             self.mu = mu;
         end
-        function mu = get_mu(self, e)
+        function mu = get_mu(self, ~)
             mu = self.mu;
         end
     end
