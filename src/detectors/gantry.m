@@ -13,7 +13,7 @@ classdef gantry < handle
         total_rotation     (1, 1) double % The maximum rotation of the detector around the object
     end
     methods
-        function self = detector(dist_to_detector, num_rotations, total_rotation)
+        function self = gantry(dist_to_detector, num_rotations, total_rotation)
             % detector  Construct a detector object
             arguments
                 dist_to_detector (1, 1) double
@@ -21,6 +21,10 @@ classdef gantry < handle
                 total_rotation   (1, 1) double
             end
             % Detector Geometry
+            assert(dist_to_detector > 0, 'Distance to detector must be greater than 0');
+            assert(num_rotations > 0 && mod(num_rotations, 1) == 0, 'Number of rotations must be a positive integer');
+            assert(total_rotation > 0 && total_rotation < 2*pi, 'Total rotation must be between 0 and 2*pi');
+            
             self.dist_to_detector = dist_to_detector;
             self.total_rotation   = total_rotation;
             

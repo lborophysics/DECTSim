@@ -56,7 +56,7 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             mat3_att = mat3.get_mu(1);
             small_box = voxel_cube([0,0,0], 2, mat3);
             my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
-            get_mu = @(x,y,z,e) my_collection.get_saved_mu([x + 5;y + 5;z + 5], [mat1_att, mat2_att, mat3_att]); % coord to index -> + 5
+            get_mu = @(x,y,z,e) my_collection.get_saved_mu([x + 5;y + 5;z + 5], [mat1_att, mat2_att, mat3_att, inf]); % coord to index -> + 5
             for x = -5:5
                 if abs(x) <= 1
                     tc.verifyEqual(get_mu(x, 0, 0, 1), mat3_att)

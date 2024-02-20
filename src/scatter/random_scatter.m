@@ -1,4 +1,4 @@
-function [direction, energy] = random_scatter(E_0, direction)
+function [direction, energy] = random_scatter(direction, E_0)
     % This function generates a random scatter event for a particle with 
     % initial energy "E_0" and direction "direction". The function returns the
     % new direction and the energy of the scattered particle.

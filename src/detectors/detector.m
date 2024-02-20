@@ -7,17 +7,17 @@ classdef detector
     properties(SetAccess=private)
         gantry
         detector_array
-        sensor_unit
+        sensor
     end
 
     methods
-        function self = detector(gantry, detector_array, sensor_unit)
+        function self = detector(gantry, detector_array, sensor)
             assert(isa(gantry, 'gantry'), 'gantry must be a gantry object');
             assert(isa(detector_array, 'detector_array'), 'detector_array must be a detector_array object');
-            assert(isa(sensor_unit, 'sensor'), 'sensor_unit must be a sensor_unit object');
+            assert(isa(sensor, 'sensor'), 'sensor must be a sensor object');
             self.gantry = gantry;
             self.detector_array = detector_array;
-            self.sensor_unit = sensor_unit;
+            self.sensor = sensor;
         end
     end
 end

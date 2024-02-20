@@ -86,23 +86,19 @@ classdef scatter_tests < matlab.unittest.TestCase
                 [1 1 0]
                 [1 1 1]
             ];
-            empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
             for ei = 1:length(energies)-2
                 for vi = 1:height(vectors)
                     e1 = energies(ei);
                     e2 = energies(ei+2);
-                    v = vectors(vi, :) / norm(vectors(vi, :));
+                    v = vectors(vi, :)' / norm(vectors(vi, :));
                     num_rays = 5e3;
                     angle_dist1 = zeros(1, num_rays);
                     angle_dist2 = zeros(1, num_rays);
                     energy_dist1 = zeros(1, num_rays);
                     energy_dist2 = zeros(1, num_rays);
                     for i = 1:num_rays
-                        x_ray1 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e1);
-                        x_ray2 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e2);
-
-                        [d1, e1_scttrd] = x_ray1.scatter();
-                        [d2, e2_scttrd] = x_ray2.scatter();
+                        [d1, e1_scttrd] = random_scatter(v, e1);
+                        [d2, e2_scttrd] = random_scatter(v, e2);
 
                         angle_dist1(i) = acos(dot(v, d1));
                         angle_dist2(i) = acos(dot(v, d2));

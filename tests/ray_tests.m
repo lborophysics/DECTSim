@@ -24,44 +24,41 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.lead_array = voxel_array(zeros(3, 1), [5; 5; 5], 1, abox);
         end
     end
-
-    methods
-        function gen_get_intersections(tc, ray)
+    methods (Test)
+        % Test methods
+        function test_siddon_ray(tc)
             threes = zeros(3, 5) + 3;
 
-            r = ray([-6;0;0], [1;0;0], 12, tc.water_array);
-            [lengths, indices] = r.get_intersections(tc.water_array);
+            voxels = tc.water_array;
+            cached_ray_trace = @(start, v1to2) ray_trace(start, v1to2, ...
+                voxels.array_position, voxels.dimensions, voxels.num_planes);
+            [lengths, indices] = cached_ray_trace([-6;0;0], [1;0;0].*12);
             exp = threes; exp(1, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            r = ray([0;-6;0], [0;1;0], 12, tc.water_array);
-            [lengths, indices] = r.get_intersections(tc.water_array);
+            [lengths, indices] = cached_ray_trace([0;-6;0], [0;1;0].*12);
             exp = threes; exp(2, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            r = ray([0;0;-6], [0;0;1], 12, tc.water_array);
-            [lengths, indices] = r.get_intersections(tc.water_array);
+           [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*12);
             exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            r = ray([-6;-6;0], [1;1;0], 20, tc.water_array);
-            [lengths, indices] = r.get_intersections(tc.water_array);
+            [lengths, indices] = cached_ray_trace([-6;-6;0], [1;1;0].*20);
             exp = threes; exp(2, :) = [1, 2, 3, 4, 5]; exp(1, :) = [1, 2, 3, 4, 5];
             s2 = sqrt(2);
             tc.assertEqual(lengths, [s2, s2, s2, s2, s2], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            r = ray([0;0;-6], [0;0;1], 12, tc.water_array);
-            lengths = r.lengths; indices = r.indices;
+            [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*12);
             exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            r = ray([6;6;6], [-1;-1;-1], 22, tc.water_array); % 3D diagonal backwards
-            [lengths, indices] = r.get_intersections(tc.water_array);
+            [lengths, indices] = cached_ray_trace([6;6;6], [-1;-1;-1].*22);
             exp = [
                 5, 4, 3, 2, 1;
                 5, 4, 3, 2, 1;
@@ -71,49 +68,9 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(lengths, [s3, s3, s3, s3, s3], 'AbsTol', 5e-15);
             tc.assertEqual(indices, exp);
 
-            r = ray([6;6;6], [1;1;1], 22, tc.water_array); % 3D diagonal away
-            [lengths, indices] = r.get_intersections(tc.water_array);
+            [lengths, indices] = cached_ray_trace([6;6;6], [1;1;1].*22);
             tc.assertEqual(lengths, []);
             tc.assertEqual(indices, []);
-        end
-    end
-
-    methods (Test)
-        % Test methods
-        function test_ray_init(tc)
-            r = ray([0;0;0], [1;0;0], 10, tc.water_array);
-            tc.assertEqual(r.start_point, [0;0;0]);
-            tc.assertEqual(r.v1_to_v2, [10;0;0]);
-            tc.assertEqual(r.energy, 30); % default energy - may change later
-
-            r2 = ray([0;-5;0], [0;1;0], 10, tc.water_array, 100);
-            tc.assertEqual(r2.start_point, [0;-5;0]);
-            tc.assertEqual(r2.v1_to_v2, [0;10;0]);
-            tc.assertEqual(r2.energy, 100);
-        end
-
-        function test_siddon_ray(tc)
-            tc.gen_get_intersections(@ray);
-        end
-
-        function test_calculate_mu(tc)
-            water_attenuation = tc.water.get_mu(30); % Default value of ray
-            lead_attenuation = tc.lead.get_mu(30); % Default value of ray
-
-            r = ray([-6;0;0], [1;0;0], 12, tc.water_array);
-            tc.assertEqual(r.calculate_mu(), 3*water_attenuation, "RelTol", 3e-16);
-
-            r = ray([0;-6;0], [0;1;0], 12, tc.water_array);
-            tc.assertEqual(r.calculate_mu(), 3*water_attenuation, "RelTol", 3e-16);
-
-            r = ray([0;0;-6], [0;0;1], 12, tc.water_array);
-            tc.assertEqual(r.calculate_mu(), 3*water_attenuation, "RelTol", 3e-16);
-
-            r = ray([6;6;6], [-1;-1;-1], 22, tc.lead_array); % 3D diagonal backwards
-            tc.assertEqual(r.calculate_mu(), 3*sqrt(3)*lead_attenuation, "RelTol", 4e-16);
-
-            r = ray([6;6;6], [1;1;1], 22, tc.water_array); % 3D diagonal away
-            tc.assertEqual(r.calculate_mu(), 0);
         end
 
         function test_scatter_ray(tc)

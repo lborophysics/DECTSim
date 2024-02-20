@@ -38,3 +38,6 @@ coverage_results/
 
 # Documentation build folder
 docs/build/
+
+# Dukesim folder (used locally for testing)
+dukesim/

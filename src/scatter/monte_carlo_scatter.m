@@ -31,8 +31,8 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
     num_rotations = gantry.num_rotations;
     d2detector = gantry.dist_to_detector;
         
-    npy = d_array.ny_pixels; 
-    npz = d_array.nz_pixels; 
+    npy = d_array.n_pixels(1); 
+    npz = d_array.n_pixels(2); 
     
     num_bins = sensor_unit.num_bins;
     energies_at_bin = @(bin) xray_source.get_energies(sensor_unit.get_range(bin));
@@ -51,8 +51,8 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
         energy_list = [energy_list, energies];
         intensity_list = [intensity_list, intensities];
     end
-    mu_arr = voxels.precalculate_mus(energy_list);
-    mfp_arr = voxels.precalculate_mfps(energy_list);
+    mu_dict = voxels.precalculate_mus(energy_list);
+    mfp_dict = voxels.precalculate_mfps(energy_list);
 
 
     % Check that the voxels are entirely within the detector
@@ -74,14 +74,19 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
                 [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
                 [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_length, ...
                     vox_init, vox_dims, vox_nplanes);
+                cached_calc_mu = @(n_mfp, nrj, mu_arr, mfp_arr) ...
+                    calculate_mu(n_mfp, ls, idxs, ray_start, ray_dir, ray_length, ...
+                    nrj, NaN, 0, mu_arr, mfp_arr, voxels, ray_tracing);
+                
                 for sf = 1:sfactor
                     for ei = 1:length(energy_list)
                         energy = energy_list(ei);
                         intensity = intensity_list(ei)/sfactor;
+                        mu_arr = mu_dict(num2str(energy));
+                        mfp_arr = mfp_dict(num2str(energy));
+                        
                         [new_ray_start, new_ray_dir, mu, nrj, scattered] =  ...
-                            calculate_mu(-log(rand), ls, idxs, ray_start, ...
-                            ray_dir, ray_length, energy, NaN, 0, mu_arr, ...
-                            mfp_arr, voxels, ray_tracing);
+                            cached_calc_mu(-log(rand), energy, mu_arr, mfp_arr);
 
                         energies(y_pix, z_pix, sf) = nrj;
 
@@ -122,6 +127,7 @@ function scatter_signal = monte_carlo_scatter(xray_source, voxels, detector_obj,
 
         end
     end
+    scatter_signal = sensor_unit.get_signal(scatter);
 end
 
 function [ray_start, ray_dir, mu, nrj, scattered] = calculate_mu (n_mfp, ls, idxs, ray_start,...

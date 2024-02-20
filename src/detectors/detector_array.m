@@ -18,6 +18,8 @@ classdef (Abstract) detector_array
                 pixel_dims      (1, 2) double
                 n_pixels        (1, 2) double
             end
+            assert(all(pixel_dims > 0), 'pixel_dims must be positive')
+            assert(all(n_pixels > 0) && all(mod(n_pixels, 1) == 0), 'n_pixels must be positive integers')
             self.pixel_dims = pixel_dims;
             self.n_pixels = n_pixels;
         end

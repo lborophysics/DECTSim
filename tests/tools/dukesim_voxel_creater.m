@@ -1,7 +1,7 @@
 % Voxel array constants
 vox_arr_center = zeros(3, 1);
-phantom_radius = 300;% In the x-y plane
-phantom_width = 250; % In the z direction
+phantom_radius = 50;% In the x-y plane
+phantom_width = 30; % In the z direction
 voxel_size = 0.5;
 
 % Create voxel array

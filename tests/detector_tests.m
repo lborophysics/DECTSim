@@ -298,14 +298,5 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(scatter, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
 
-        function test_air_scan(tc)
-            detector = parallel_detector(tc.ray_source, tc.sensor_unit, ...
-                2, [0.1, 0.35], [110, 20], 10);
-            air = material_attenuation("air");
-            scan = squeeze(sum(detector.air_scan(), 3));
-            expected = zeros(110, 20, 10) + exp(-air.get_mu(30)*2);
-            tc.verifyEqual(scan, expected, 'RelTol', 1e-15);
-        end
-
     end
 end

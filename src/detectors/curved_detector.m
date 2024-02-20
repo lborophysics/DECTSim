@@ -27,8 +27,8 @@ classdef curved_detector < detector_array
             source_pos    = to_source_vec .* d2detector/2;
             
             % Get the pixel information
-            pixel_angle  = pixel_dims(1) / d2detector;
-            pixel_height = pixel_dims(2);
+            pixel_angle  = self.pixel_dims(1) / d2detector;
+            pixel_height = self.pixel_dims(2);
             ny_pixels    = self.n_pixels(1);
             nz_pixels    = self.n_pixels(2);
             
@@ -37,7 +37,7 @@ classdef curved_detector < detector_array
             function [ray_start, ray_dir, ray_length] = generator(y_pixel, z_pixel)
                 z_shift = pixel_height * (z_pixel - (nz_pixels+1)/2);
                 final_length = sqrt(d2detector.^2 + z_shift.^2);
-                pixel_vec = (rotz(pixel_angle * (y_pixel - (ny_pixels+1)/2)) * to_source_vec.*dist_to_detector - ...
+                pixel_vec = (rotz(pixel_angle * (y_pixel - (ny_pixels+1)/2)) * to_source_vec.*d2detector - ...
                             [0;0;z_shift]) ./ final_length;
                 
                 ray_start  = source_pos;

@@ -45,11 +45,18 @@ classdef parallel_detector < detector_array
             end
         end
 
-        function [pixel, hit] = hit_pixel(self, ray_v1to2, ray_start, detector_vec)
+        function [pixel, hit] = hit_pixel(self, ray_start, ray_v1to2, detect_geom, angle_index)
+            % Get the detector geometry
+            rot_mat       = detect_geom.get_rot_mat(angle_index);
+            to_source_vec = rot_mat * detect_geom.to_source_vec;
+            detector_vec  = rotz(-pi/2) * to_source_vec; % perpendicular to the source vector
+            centre        = to_source_vec .* -detect_geom.dist_to_detector/2;
+
             % Get the pixel which the xray hits
             hit = true; pixel = [0, 0];
-            corner = self.centre - detector_vec .* self.pixel_dims(1) * self.ny_pixels/2 ...
-                                 - [0;0;1]      .* self.pixel_dims(2) * self.nz_pixels/2;
+            corner = centre - detector_vec .* self.pixel_dims(1) * self.n_pixels(1)/2 ...
+                                 - [0;0;1] .* self.pixel_dims(2) * self.n_pixels(2)/2;
+                                 
             direction = ray_v1to2 ./ norm(ray_v1to2);
             ray_xy    = direction(1:2); det_xy = detector_vec(1:2);
 
@@ -62,14 +69,14 @@ classdef parallel_detector < detector_array
             dy = ray_xy(2) * (corner(1) - ray_start(1)) + ray_xy(1) * (ray_start(2) - corner(2)) / ...
                 (ray_xy(1) * det_xy(2) - ray_xy(2) * det_xy(1));
             py = floor(dy / self.pixel_dims(1)) + 1;
-            if py < 1 || py > self.ny_pixels; hit = false; return; end
+            if py < 1 || py > self.n_pixels(1); hit = false; return; end
 
             % Get point on the detector vector where the ray intersects in xz plane
             ry = det_xy(2) * (ray_start(1) - corner(1)) + det_xy(1) * (corner(2) - ray_start(2)) / ...
                 (ray_xy(2) * det_xy(1) - ray_xy(1) * det_xy(2));
             ray_hit_point = ray_start + direction .* ry;
             pz = floor((ray_hit_point(3) - corner(3)) / self.pixel_dims(2)) + 1;
-            if pz < 1 || pz > self.nz_pixels; hit = false; return; end
+            if pz < 1 || pz > self.n_pixels(2); hit = false; return; end
             
             pixel = [py, pz];
         end

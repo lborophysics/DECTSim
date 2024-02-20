@@ -21,8 +21,8 @@ function photon_count = air_scan(xray_source, detector_obj)
     d_array     = detector_obj.detector_array;
     
     num_rotations = gantry.num_rotations;
-    npy = d_array.ny_pixels; 
-    npz = d_array.nz_pixels; 
+    npy = d_array.n_pixels(1); 
+    npz = d_array.n_pixels(2); 
     num_bins = sensor_unit.num_bins;
 
     single_rotation = zeros(num_bins, npy, npz);

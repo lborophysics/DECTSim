@@ -9,7 +9,6 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
     properties (Constant, NonCopyable)
         air = material_attenuation("air");
-        mu_dict = containers.Map();       % Not actually constant, but the reference is
     end
 
     methods
@@ -32,23 +31,28 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.voxel_objs = varargin;
         end
 
-        function self = precalculate_mus(self, energies)
+        function mu_dict = precalculate_mus(self, energies)
             % Create a dictionary of mu values for each material
+            mu_dict = containers.Map();       % Not actually constant, but the reference is
             for energy = energies
-                self.mu_dict(num2str(energy)) = self.get_mu_arr(energy);
+                mu_dict(num2str(energy)) = self.get_mu_arr(energy);
+            end
+        end
+
+        function mfp_dict = precalculate_mfps(self, energies)
+            % Create a dictionary of mfp values for each material
+            mfp_dict = containers.Map();       % Not actually constant, but the reference is
+            for energy = energies
+                mfp_dict(num2str(energy)) = self.get_mfp_arr(energy);
             end
         end
 
         function mu_arr = get_mu_arr(self, energy)
             % Create a dictionary of mu values for each material
-            if isKey(self.mu_dict, num2str(energy))
-                mu_arr = self.mu_dict(num2str(energy));
-            else
-                mu_arr(self.nobj + 1) = self.air.get_mu(energy);
-                % mu_arr = zeros(1, self.nobj + 1);
-                for n = 1:self.nobj
-                    mu_arr(n) = self.voxel_objs{n}.get_mu(energy);
-                end
+            mu_arr(self.nobj + 1) = self.air.get_mu(energy);
+            % mu_arr = zeros(1, self.nobj + 1);
+            for n = 1:self.nobj
+                mu_arr(n) = self.voxel_objs{n}.get_mu(energy);
             end
         end
 

@@ -1,9 +1,9 @@
-function sinogram = compute_sinogram(source, phantom, detector, scatter)
+function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter, sfactor)
     % Compute the sinogram of the phantom, given the source and detector, and
     % optionally, the scatter model.
     %
     % Parameters:
-    %  - source: the source object, this returns a sample of the source spectrum
+    %  - xray_source: the source object, this returns a sample of the source spectrum
     %            giving energy and intensities of the photons. Made up of the following:
     %            - spectrum: the energy spectrum of the source
     %            - collimation: adjusts the source spectrum to account for the collimation
@@ -12,7 +12,7 @@ function sinogram = compute_sinogram(source, phantom, detector, scatter)
     %             - How the world is divided into voxels, for ray tracing
     %             - What material is in each voxel
     %             - Determine the attenuation and mean free path of the materials
-    %  - detector: the detector object, which includes the following:
+    %  - detector_obj: the detector object, which includes the foll`owing:
     %              - Gantry: How the detector is positioned and moves
     %              - Ray generation: Determines where the rays are directed from the source
     %              - Sensor: Determines how the rays are detected
@@ -21,87 +21,109 @@ function sinogram = compute_sinogram(source, phantom, detector, scatter)
     %            - 'none': no scatter is used
     %            - 'fast': the convolution scatter model is used
     %            - 'slow': the Monte Carlo scatter model is used
-    assert(nargin >= 3, 'Not enough arguments, need at least source, phantom and detector');
-    if nargin < 4; scatter = "none"; end
-
-    % Check the inputs
-    assert(isa(source, 'source'), 'source must be a source object');
-    assert(isa(phantom, 'phantom'), 'phantom must be a phantom object');
-    assert(isa(detector, 'detector'), 'detector must be a detector object');
-    assert(ischar(scatter), 'scatter must be a string');
-
-    % Retrieve sub-objects of all the objects
-    voxels = phantom.voxels;
-    assert(isa(voxels, 'voxel_array'), 'The phantom must have a voxel array');
-    sensor_unit = detector.sensor;
-    assert(isa(sensor_unit, 'sensor'), 'The detector must have a sensor');
-    gantry = detector.gantry;
-    assert(isa(gantry, 'gantry'), 'The detector must have a gantry');
-    d_array = gantry.detector_array;
-    assert(isa(d_array, 'detector_array'), 'The gantry must have a detector array');
-
+    %  - sfactor: For the Monte Carlo scatter model, the number of scatter
+    %                    events to simulate for each photon. For the convolution
+    %                    scatter model, it is the strength of the scatter.  If
+    %                    not provided, the default value is 1.
+    %
+    % Returns:
+    %  - sinogram: the sinogram of the phantom, given the source and detector
+    %              and optionally, the scatter model
+    arguments
+        xray_source    {mustBeA(xray_source, 'source')}
+        phantom        {mustBeA(phantom, 'voxel_array')}
+        detector_obj   {mustBeA(detector_obj, 'detector')}
+        scatter string {mustBeMember(scatter, ["none", "fast", "slow"])} = "none" 
+        sfactor double = 1
+    end
 
     % Determine the scatter model
-    scatter = lower(scatter);
-    if     scatter == "none"; scatter_type = 0;
-    elseif scatter == "fast"; scatter_type = 1; scatter_kernel = get_scatter_kernel();
-    elseif scatter == "slow"; scatter_type = 2;
-    else; error('detector:scatter', ...
-        'The scatter string must be "none", "slow" or "fast", got %s', scatter);
+    scatter_type = find(["none", "fast", "slow"] == scatter);
+    
+    % Identify which compiled functions are available to use
+    if ~~exist('ray_trace_mex', 'file'); ray_tracing = @ray_trace_mex;
+    else                               ; ray_tracing = @ray_trace;
     end
     
-    % Retrieve the energies and intensities of the source
+    % Retrieve sub-objects of all the objects
+    sensor_unit = detector_obj.sensor;
+    gantry      = detector_obj.gantry;
+    d_array     = detector_obj.detector_array;
+    
+    
+    % Retrieve information within the sub-objects
+    num_rotations = gantry.num_rotations;
+    d2detector = gantry.dist_to_detector;
+        
+    npy = d_array.n_pixels(1); 
+    npz = d_array.n_pixels(2); 
+    
+    num_bins = sensor_unit.num_bins;
+    energies_at_bin = @(bin) xray_source.get_energies(sensor_unit.get_range(bin));
+
+    vox_init = phantom.array_position;
+    vox_dims = phantom.dimensions;
+    vox_nplanes = phantom.num_planes;
+    vox_last = vox_init + (vox_nplanes - 1) .* vox_dims;
+    get_saved_mu = @phantom.get_saved_mu;
+
+
+    % Retrieve the energies and intensities of the source, then precalculate the
+    % mus of the voxels with the energies
     energy_list = []; intensity_list = [];
-    for bin = 1:sensor_unit.num_bins
-        [energies, intensities] = source.get_energies(sensor_unit.get_range(bin));
+    for bin = 1:num_bins
+        [energies, intensities] = energies_at_bin(bin);
         energy_list = [energy_list, energies];
         intensity_list = [intensity_list, intensities];
     end
+    mu_dict = phantom.precalculate_mus(energy_list);
 
-    init_plane = voxels.array_position;
-    last_plane = init_plane + (voxels.num_planes - 1) .* voxels.dimensions;
-    assert(init_plane(1)^2 + init_plane(2)^2 <= (gantry.dist_to_detector/2)^2, ...
-        'Voxels array is not entirely within the detector');
-    assert(last_plane(1)^2 + last_plane(2)^2 <= (gantry.dist_to_detector/2)^2, ...
-        'Voxels array is not entirely within the detector');
 
-    voxels = voxels.precalculate_mus(energy_list);
-
-    for i = 1:gantry.num_rotations
-        rays_at_angle = 
-end
-
-function [pixel_values, pixels, energies] = scatter_generator(y_pixel, z_pixel, elist, ilist)
-    xray = static_ray_generator(y_pixel, z_pixel);
+    % Check that the voxels are entirely within the detector
+    assert(vox_init(1)^2 + vox_init(2)^2 <= (d2detector/2)^2, ...
+        'Phantom is not entirely within the detector');
+    assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
+        'Phantom is not entirely within the detector');
     
-    num_energy = length(elist); 
-    num_iters = self.scatter_factor * num_energy;
-    
-    pixel_values = NaN(num_iters, 1);
-    pixels = repmat([y_pixel, z_pixel], num_iters, 1);
-    energies = repmat(elist, 1, self.scatter_factor);
-    
-    fhit_pixel = @self.hit_pixel;
-    update_energy = @(ei) xray.update_energy(elist(ei)).randomise_n_mfp();
-    get_mu = @(ray, ei) ilist(ei) * exp(-ray.mu);
 
-    if isempty(xray.lengths); pixel_values(:) = 0; return; end
-    parfor i = 1:self.scatter_factor
-        for ei = 1:num_energy
-            new_ray = update_energy(ei).calculate_mu();
-         
-            hit = true;
-            scattered = new_ray.scatter_event > 0;
-            
-            if scattered
-                [pixel, hit] = fhit_pixel(new_ray, current_dv);
-                pixels(i, :) = pixel;
-                energies(i) = new_ray.energy;
+    % Start the ray tracing loop
+    photon_count = zeros(num_bins, npy, npz, num_rotations);
+    for angle = 1:num_rotations 
+        % For each rotation, we calculate the image for the source
+        ray_generator = d_array.ray_at_angle(gantry, angle);
+        for z_pix = 1:npz
+            for y_pix = 1:npy
+                [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
+                [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_length, ...
+                    vox_init, vox_dims, vox_nplanes);
+                for bin = 1:num_bins
+                    % Get the energies for the current bin
+                    [energies, intensities] = energies_at_bin(bin);
+                    for ei = 1:length(energies)
+                        mu = sum(ls .* get_saved_mu(idxs, mu_dict(num2str(energies(ei)))));
+                        photon_count(bin, y_pix, z_pix, angle) = intensities(ei)*exp(-mu);
+                    end
+                end
             end
-            
-            % if scattered; fprintf("%d, ", hit); end
-
-            if hit; pixel_values(i) = get_mu(new_ray, ei); end
         end
     end
+    
+    % Calculate the scatter signal
+    if scatter_type == 0 
+        scatter_signal = 0;
+    elseif scatter_type == 1 % Fast scatter
+        scatter_signal = ...
+            convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
+    elseif scatter_type == 2 % Slow scatter
+        scatter_signal = ...
+            monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
+    end
+
+    % Convert the photon count to a signal
+    primary_signal = sensor_unit.get_signal(photon_count);
+
+    % The following line is equivalent to image + scatter, 
+    % but is there as in the future we likely will adapt the 
+    % detector response.
+    sinogram = sensor_unit.get_image(primary_signal + scatter_signal);
 end
