@@ -47,7 +47,7 @@ classdef parallel_detector < detector_array
 
         function [pixel, hit] = hit_pixel(self, ray_start, ray_dir, detect_geom, angle_index)
             % Get the detector geometry
-            assert(norm(ray_dir) == 1, "Ray direction must be a unit vector")
+            assert(abs(norm(ray_dir) - 1) < 1e-14, "Ray direction must be a unit vector")
             rot_mat       = detect_geom.get_rot_mat(angle_index);
             to_source_vec = rot_mat * detect_geom.to_source_vec;
             detector_vec  = rotz(-pi/2) * to_source_vec; % perpendicular to the source vector
