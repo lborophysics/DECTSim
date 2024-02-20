@@ -5,8 +5,8 @@ classdef mat_consts
     properties (Constant)
         % Add new materials to the list alphabetically, this will allow the
         % material_attenuation class to "know" about the new material.
-        known_materials = {'air'    ,'blood','bone','fat','lung','muscle','titanium','water'};
-        known_densitys  = [1.205E-03, 1.06  , 1.92 , 0.95, 1.05 , 1.05   , 4.506    , 1.00  ];
+        known_materials = {'air'    ,'blood','bone','fat','lung','muscle','titanium','water','vacuum'};
+        known_densitys  = [1.205E-03, 1.06  , 1.92 , 0.95, 1.05 , 1.05   , 4.506    , 1.00  , 0      ];
         known_atomic_numbers = {...
             [6, 7, 8, 18],...                         % air
             [1, 6, 7, 8, 11, 15, 16, 17, 19, 26],...  % blood
@@ -16,6 +16,7 @@ classdef mat_consts
             [1, 6, 7, 8, 11, 15, 16, 17, 19],...      % muscle
             22,...                                    % titanium
             [1, 8],...                                % water         
+            1,...                                     % vacuum will be 0 density hydrogen
             };
         known_mass_fractions = {...
             [0.000124, 0.755268, 0.231781, 0.012827],...                              % air
@@ -26,6 +27,7 @@ classdef mat_consts
             [0.102, 0.143, 0.034, 0.710, 0.001, 0.002, 0.003, 0.001, 0.004],...       % muscle
             1.0,...                                                                   % titanium
             [0.111898, 0.888102],...                                                  % water
+            1.0, ...                                                                  % vacuum
             };
         atomic_masses = [
             1.0080, 4.0026, 6.94, 9.0122, 10.81, 12.011, 14.007, 15.999, 18.998,...

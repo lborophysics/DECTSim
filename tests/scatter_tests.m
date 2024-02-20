@@ -86,23 +86,19 @@ classdef scatter_tests < matlab.unittest.TestCase
                 [1 1 0]
                 [1 1 1]
             ];
-            empty_voxels = voxel_array([0;0;0], [1;1;1], 1);
             for ei = 1:length(energies)-2
                 for vi = 1:height(vectors)
                     e1 = energies(ei);
                     e2 = energies(ei+2);
-                    v = vectors(vi, :) / norm(vectors(vi, :));
+                    v = vectors(vi, :)' / norm(vectors(vi, :));
                     num_rays = 5e3;
                     angle_dist1 = zeros(1, num_rays);
                     angle_dist2 = zeros(1, num_rays);
                     energy_dist1 = zeros(1, num_rays);
                     energy_dist2 = zeros(1, num_rays);
                     for i = 1:num_rays
-                        x_ray1 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e1);
-                        x_ray2 = scatter_ray([0; 0; 0], v, 1, empty_voxels, e2);
-
-                        [d1, e1_scttrd] = x_ray1.scatter();
-                        [d2, e2_scttrd] = x_ray2.scatter();
+                        [d1, e1_scttrd] = random_scatter(v, e1);
+                        [d2, e2_scttrd] = random_scatter(v, e2);
 
                         angle_dist1(i) = acos(dot(v, d1));
                         angle_dist2(i) = acos(dot(v, d2));
@@ -138,8 +134,73 @@ classdef scatter_tests < matlab.unittest.TestCase
                     tc.verifyTrue(any(angle_dist2 > pi/2))
                 end
             end
+        end
 
+        function test_calc_scatter(tc)
+            rng(1712345)
+            energy = 300;
+            ray_start = [-6;0;0];
+            ray_dir = [1;0;0];
+            ray_len = 100;
 
+            lead = material_attenuation("bone");
+            abox = voxel_cube([0;0;0], [3;3;3], lead);
+            lead_array = voxel_array(zeros(3, 1), [5; 5; 5], 1, {abox});
+            vox_init = lead_array.array_position;
+            vox_dims = lead_array.dimensions;
+            vox_nplanes = lead_array.num_planes;
+
+            mu_arr = lead_array.get_mu_arr(energy);
+            mfp_arr = lead_array.get_mfp_arr(energy);
+
+            [ls, idxs] = ray_trace(ray_start, ray_dir * ray_len, ...
+                vox_init, vox_dims, vox_nplanes);
+        
+            ray_mu = ls .* lead_array.get_saved_mu(idxs, mu_arr);
+            mu = sum(ray_mu);
+            for i = 1:100
+                n_mfp = -log(rand);
+                [nray_start, nray_dir, total_mu, nrj, scattered] = ...
+                calculate_scatter(n_mfp, ls, idxs, ray_start, ray_dir, ray_len, ...
+                    energy, NaN, 0, mu_arr, mfp_arr, lead_array, @ray_trace);
+                if scattered % Check if it scattered once or more
+        
+                    mfp = lead_array.get_saved_mfp(idxs, mfp_arr);
+        
+                    ray_n_mfp = ls ./ mfp;
+
+                    tc.assertTrue(sum(ray_n_mfp) > n_mfp); % Check it should have scattered
+                    tc.assertTrue(nrj < energy); % energy is lost in scatter
+
+                    % Check that the new mu is at least the scattered mu + the original mu
+                    for j = 1:length(ray_n_mfp)
+                        if sum(ray_n_mfp(1:j)) > n_mfp
+                            % The length of the scatter should be the sum of the lengths of the voxels minus
+                            % the length within the voxel totalling the n_mfp
+                            scatter_length = sum(ls(1:j)) - (sum(ray_n_mfp(1:j)) - n_mfp) * mfp(j);
+                            uptoscatter_mu = sum(ray_mu(1:j)) - (sum(ray_n_mfp(1:j)) - n_mfp) * mfp(j) * ray_mu(j);
+                            break
+                        end
+                    end
+                    tc.verifyTrue((total_mu - uptoscatter_mu) > -1e-15)
+                    
+                    [ls2, idxs2] = ray_trace(nray_start, nray_dir * ray_len, ...
+                        vox_init, vox_dims, vox_nplanes);
+                    if ~isempty(ls2)
+                        scattered_mu = sum(ls2 .* lead_array.get_saved_mu(idxs2, mu_arr));
+                        if abs(total_mu - (scattered_mu + uptoscatter_mu)) < 1e-5 % scattered once
+                            tc.assertEqual(nray_start, ray_start + scatter_length .* ray_dir, 'RelTol', 1e-14, 'AbsTol', 1e-15);
+                        end
+                    end
+                    tc.assertNotEqual(nray_start, ray_start); % direction should have changed
+                    tc.assertNotEqual(nray_dir, ray_dir); % direction should have changed
+                else
+                    tc.assertEqual(total_mu, mu);
+                    tc.assertEqual(nrj, energy);
+                    tc.assertEqual(nray_start, ray_start);
+                    tc.assertEqual(nray_dir, ray_dir);
+                end
+            end
         end            
     end
 end

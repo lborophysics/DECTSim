@@ -5,7 +5,7 @@ function [sinogram, params] = dukesim_parser(MainDir)
     
     % Get the folder name and the path 
     dirs = genpath(MainDir); % https://stackoverflow.com/questions/8748976/list-the-subfolders-in-a-folder-matlab-only-subfolders-not-files
-    dir_list = strsplit(dirs,';');
+    dir_list = strsplit(dirs,':');
     dir = dir_list{2}; % Assume there is only 1 folder in the MainDir
         
     % Read the ray tracing parameter file

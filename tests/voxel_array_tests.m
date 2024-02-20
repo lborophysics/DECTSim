@@ -17,10 +17,10 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             vobj1 = voxel_object(@(i,j,k) i==i, tc.material1); % Define a simple function for testing
             tc.material2 = material_attenuation("air");
             vobj2 = voxel_object(@(i,j,k) i==i, tc.material2); % Define a simple function for testing
-            tc.test_obj1 = voxel_array(centre, object_dims, 1, vobj1);
-            tc.test_obj2 = voxel_array(centre, object_dims, 0.5, vobj1);
-            tc.test_obj3 = voxel_array(centre, object_dims, 1, vobj2);
-            tc.test_obj4 = voxel_array([5; 4; 0.5], object_dims, 1, vobj1);
+            tc.test_obj1 = voxel_array(centre, object_dims, 1, {vobj1});
+            tc.test_obj2 = voxel_array(centre, object_dims, 0.5, {vobj1});
+            tc.test_obj3 = voxel_array(centre, object_dims, 1, {vobj2});
+            tc.test_obj4 = voxel_array([5; 4; 0.5], object_dims, 1, {vobj1});
         end
     end
 
@@ -55,8 +55,8 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             mat3 = material_attenuation("air");
             mat3_att = mat3.get_mu(1);
             small_box = voxel_cube([0,0,0], 2, mat3);
-            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
-            get_mu = @(x,y,z,e) my_collection.get_saved_mu([x + 5;y + 5;z + 5], [mat1_att, mat2_att, mat3_att]); % coord to index -> + 5
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, {big_box, med_box, small_box});
+            get_mu = @(x,y,z,e) my_collection.get_saved_mu([x + 5;y + 5;z + 5], [mat1_att, mat2_att, mat3_att, inf]); % coord to index -> + 5
             for x = -5:5
                 if abs(x) <= 1
                     tc.verifyEqual(get_mu(x, 0, 0, 1), mat3_att)
@@ -84,14 +84,14 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             air =  voxel_cube([0,0,0], 6, material_attenuation("air")); 
             bone =  voxel_cube([0,0,0], 2, material_attenuation("bone"));
 
-            obj1 = voxel_array(centre, object_dims, 1, air, water, bone);
-            obj2 = voxel_array(centre, object_dims, 0.5, bone, air, water);
+            obj1 = voxel_array(centre, object_dims, 1, {air, water, bone});
+            obj2 = voxel_array(centre, object_dims, 0.5, {bone, air, water});
 
             arr_exp1 = [air.get_mu(12) water.get_mu(12) bone.get_mu(12) air.get_mu(12)];
             arr_exp2 = [bone.get_mu(24) air.get_mu(24) water.get_mu(24) air.get_mu(24)];
 
-            tc.verifyEqual(obj1.get_mu_dict(12), arr_exp1);
-            tc.verifyEqual(obj2.get_mu_dict(24), arr_exp2);
+            tc.verifyEqual(obj1.get_mu_arr(12), arr_exp1);
+            tc.verifyEqual(obj2.get_mu_arr(24), arr_exp2);
 
             arr_exp1 = [...
                 air.material.mean_free_path(12) ...
@@ -105,8 +105,8 @@ classdef voxel_array_tests < matlab.unittest.TestCase
                 water.material.mean_free_path(24) ...
                 air.material.mean_free_path(24)];
             
-            tc.verifyEqual(obj1.get_mfp_dict(12), arr_exp1);
-            tc.verifyEqual(obj2.get_mfp_dict(24), arr_exp2);
+            tc.verifyEqual(obj1.get_mfp_arr(12), arr_exp1);
+            tc.verifyEqual(obj2.get_mfp_arr(24), arr_exp2);
         end
 
         function test_saved_dicts(tc)
@@ -121,10 +121,10 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             big_box   = voxel_cube([0,0,0], 10, mat1);
             med_box   = voxel_cube([0,0,0], 6 , mat2);            
             small_box = voxel_cube([0,0,0], 2 , mat3);
-            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, big_box, med_box, small_box);
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, {big_box, med_box, small_box});
             
-            mu_arr = my_collection.get_mu_dict(13);
-            mfp_arr = my_collection.get_mfp_dict(59);
+            mu_arr = my_collection.get_mu_arr(13);
+            mfp_arr = my_collection.get_mfp_arr(59);
             get_mu = @(x,y,z) my_collection.get_saved_mu([x + 5;y + 5;z + 5], mu_arr); % coord to index -> + 5
             get_mfp = @(x,y,z) my_collection.get_saved_mfp([x + 5;y + 5;z + 5], mfp_arr); % coord to index -> + 5
 
