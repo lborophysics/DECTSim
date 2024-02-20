@@ -32,9 +32,10 @@ codegen/
 # Cloud based storage dotfile
 .MATLABDriveTag
 
-# Profile & Coverage results
+# Matlab folders
 profile_results/
 coverage_results/
+derived/
 
 # Documentation build folder
 docs/build/
