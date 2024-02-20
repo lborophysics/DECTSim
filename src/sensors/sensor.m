@@ -1,10 +1,10 @@
 classdef (Abstract) sensor
 
     properties
-        num_bins
-        bin_width
-        energy_range
-        energy_bins
+        num_bins     (1, 1) double
+        bin_width    (1, 1) double
+        energy_range (1, 2) double
+        energy_bins  (:, 1) double
     end
 
     methods (Abstract) % These need to be implemented by the child class

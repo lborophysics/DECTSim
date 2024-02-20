@@ -5,12 +5,11 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
         dimensions     (3, 1) double % dimensions of each voxel
         voxel_objs
         nobj           (1, 1) double
-        is_collection  (1, 1) logical
     end
 
     properties (Constant, NonCopyable)
         air = material_attenuation("air");
-        mu_dict = containers.Map();
+        mu_dict = containers.Map();       % Not actually constant, but the reference is
     end
 
     methods
