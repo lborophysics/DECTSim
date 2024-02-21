@@ -19,12 +19,17 @@ function scatter = convolutional_scatter(xray_source, photon_count, detector, sf
     skernel = get_scatter_kernel(); 
     air = air_scan(xray_source, detector);
     for i = 1:detector.gantry.num_rotations
-        % Create a 3D photon_count
-        slice = photon_count(:, :, :, i);
-        air_slice = air(:, :, :, i);
+        e_average = mean(photon_count(:, :, :, i), [2, 3, 4]);
+        e_average = e_average ./ sum(e_average);
+
+        slice = sum(photon_count(:, :, :, i), 1);
+        air_slice = sum(air(:, :, :, i), 1);
+
         scatter_slice = conv2(...
             sfactor.*0.025.*slice.*(-reallog(slice./air_slice)), ...
-            skernel, 'same') .* mean(slice, 1); % Double check the mean is correct
+            skernel, 'same');
+            
+        scatter_slice = kron(scatter_slice, e_average);
         scatter(:, :, :, i) = scatter_slice;
     end
 end
