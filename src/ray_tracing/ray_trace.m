@@ -39,10 +39,13 @@ function [lengths, indices] = ray_trace(ray_start, v1_to_v2, init_plane, v_dims,
     
     len_a = length(a);
     d_12 = norm(v1_to_v2);
+
     lengths = zeros(1, len_a - 1);
     indices = zeros(3, len_a - 1);
+    
     dist_to_voxels = (ray_start - init_plane) ./ v_dims;
     vox_v1_to_v2_2 = v1_to_v2 ./ (2 .* v_dims);
+    
     a_1 = a(2:end);
     parfor i = 1:len_a-1
         a_i = a_1(i); a_i_1 = a(i); % Pre-access the values to speed up the code

@@ -28,18 +28,20 @@ function photon_count = air_scan(xray_source, detector_obj)
     single_rotation = zeros(num_bins, npy, npz);
     ray_generator = d_array.ray_at_angle(gantry, 1);
     air = material_attenuation("air");
+    [energy_list, intensity_list] = sensor_unit.sample_source(xray_source);
     
     for z_pix = 1:npz
         for y_pix = 1:npy
             [~, ~, ray_length] = ray_generator(y_pix, z_pix);
             
-            for bin = 1:sensor_unit.num_bins
-                [energies, intensities] = ...
-                    xray_source.get_energies(sensor_unit.get_range(bin));
-                    
-                for ei = 1:length(energies)
-                    mu = ray_length*air.get_mu(energies(ei));
-                    single_rotation(bin, y_pix, z_pix) = intensities(ei)*exp(-mu);
+            for bin = 1:sensor_unit.num_bins    
+                for ei = 1:sensor_unit.num_samples
+                    nrj = energy_list(bin, ei);
+                    if isnan(nrj); continue; end
+                    intensity = intensity_list(bin, ei);
+
+                    mu = ray_length*air.get_mu(nrj);
+                    single_rotation(bin, y_pix, z_pix) = intensity*exp(-mu);
                 end
             end
         end

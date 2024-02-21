@@ -20,6 +20,10 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
     if ~~exist('ray_trace_mex', 'file'); ray_tracing = @ray_trace_mex;
     else                               ; ray_tracing = @ray_trace;
     end
+
+    if ~~exist('ray_trace_mex', 'file'); ray_tracing_many = @ray_trace_many_mex;
+    else                               ; ray_tracing_many = @ray_trace_many;
+    end
     
     % Retrieve sub-objects of all the objects
     sensor_unit = detector_obj.sensor;
@@ -34,9 +38,6 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
     npy = d_array.n_pixels(1); 
     npz = d_array.n_pixels(2); 
     
-    num_bins = sensor_unit.num_bins;
-    energies_at_bin = @(bin) xray_source.get_energies(sensor_unit.get_range(bin));
-
     vox_init = voxels.array_position;
     vox_dims = voxels.dimensions;
     vox_nplanes = voxels.num_planes;
@@ -45,12 +46,11 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
 
     % Retrieve the energies and intensities of the source, then precalculate the
     % mus of the voxels with the energies
-    energy_list = []; intensity_list = [];
-    for bin = 1:num_bins
-        [energies, intensities] = energies_at_bin(bin);
-        energy_list = [energy_list, energies];
-        intensity_list = [intensity_list, intensities];
-    end
+    [energy_list, intensity_list] = sensor_unit.sample_source(xray_source);
+    
+    energy_list = rmmissing(energy_list(:));
+    intensity_list = rmmissing(intensity_list(:));
+
     mu_dict = voxels.precalculate_mus(energy_list);
     mfp_dict = voxels.precalculate_mfps(energy_list);
 
@@ -62,31 +62,42 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
         'Phantom is not entirely within the detector');
 
 
-    scatter_count = zeros(num_bins, npy, npz, num_rotations);
+    scatter_count = zeros(sensor_unit.num_bins, npy, npz, num_rotations);
     for k = 1:num_rotations
         % Do the linear indexing of scatter
         ray_generator = d_array.ray_at_angle(gantry, k);
+        ray_starts = zeros(3, npy*npz);
+        ray_dirs = zeros(3, npy*npz);
+        for z_pix = 1:npz
+            for y_pix = 1:npy
+                [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
+                ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
+                ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir * ray_length;
+            end
+        end
+        [ray_lens, ray_idxs] = ray_tracing_many(ray_starts, ray_dirs, ...
+            vox_init, vox_dims, vox_nplanes);
+
         scatter_idxs = zeros(npy, npz, sfactor, 2); 
         scatter_vals = NaN  (npy, npz, sfactor);
         energies     = zeros(npy, npz, sfactor);    
         for z_pix = 1:npz
             for y_pix = 1:npy
-                [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
-                [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_length, ...
-                    vox_init, vox_dims, vox_nplanes);
+                idxs = ray_idxs{(z_pix-1)*npy + y_pix};
+                ls = ray_lens{(z_pix-1)*npy + y_pix};
                 cached_calc_mu = @(n_mfp, nrj, mu_arr, mfp_arr) ...
                     calculate_scatter(n_mfp, ls, idxs, ray_start, ray_dir, ...
                     ray_length, nrj, NaN, 0, mu_arr, mfp_arr, voxels, ray_tracing);
                 
                 for sf = 1:sfactor
                     for ei = 1:length(energy_list)
-                        energy = energy_list(ei);
+                        nrj = energy_list(ei);
                         intensity = intensity_list(ei)/sfactor;
-                        mu_arr = mu_dict(num2str(energy));
-                        mfp_arr = mfp_dict(num2str(energy));
+                        mu_arr = mu_dict(num2str(nrj));
+                        mfp_arr = mfp_dict(num2str(nrj));
                         
                         [new_ray_start, new_ray_dir, mu, nrj, scattered] =  ...
-                            cached_calc_mu(-log(rand), energy, mu_arr, mfp_arr);
+                            cached_calc_mu(-log(rand), nrj, mu_arr, mfp_arr);
 
                         energies(y_pix, z_pix, sf) = nrj;
 

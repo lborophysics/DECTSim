@@ -41,8 +41,8 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     scatter_type = find(["none", "fast", "slow"] == scatter);
     
     % Identify which compiled functions are available to use
-    if ~~exist('ray_trace_mex', 'file'); ray_tracing = @ray_trace_mex;
-    else                               ; ray_tracing = @ray_trace;
+    if ~~exist('ray_trace_mex', 'file'); ray_tracing = @ray_trace_many_mex;
+    else                               ; ray_tracing = @ray_trace_many;
     end
     
     % Retrieve sub-objects of all the objects
@@ -59,7 +59,7 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     npz = d_array.n_pixels(2); 
     
     num_bins = sensor_unit.num_bins;
-    energies_at_bin = @(bin) xray_source.get_energies(sensor_unit.get_range(bin));
+    num_esamples = sensor_unit.num_samples;
 
     vox_init = phantom.array_position;
     vox_dims = phantom.dimensions;
@@ -70,13 +70,8 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
 
     % Retrieve the energies and intensities of the source, then precalculate the
     % mus of the voxels with the energies
-    energy_list = []; intensity_list = [];
-    for bin = 1:num_bins
-        [energies, intensities] = energies_at_bin(bin);
-        energy_list = [energy_list, energies];
-        intensity_list = [intensity_list, intensities];
-    end
-    mu_dict = phantom.precalculate_mus(energy_list);
+    [energy_list, intensity_list] = sensor_unit.sample_source(xray_source);
+    mu_dict = phantom.precalculate_mus(rmmissing(energy_list(:)));
 
 
     % Check that the voxels are entirely within the detector
@@ -91,21 +86,35 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     for angle = 1:num_rotations 
         % For each rotation, we calculate the image for the source
         ray_generator = d_array.ray_at_angle(gantry, angle);
+        ray_starts = zeros(3, npy*npz);
+        ray_dirs = zeros(3, npy*npz);
+
         for z_pix = 1:npz
             for y_pix = 1:npy
                 [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
-                [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_length, ...
-                    vox_init, vox_dims, vox_nplanes);
-                for bin = 1:num_bins
-                    % Get the energies for the current bin
-                    [energies, intensities] = energies_at_bin(bin);
-                    for ei = 1:length(energies)
+                ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
+                ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir * ray_length;
+            end
+        end
+        
+        [ray_lens, ray_idxs] = ray_tracing(ray_starts, ray_dirs, ...
+            vox_init, vox_dims, vox_nplanes);
+        for z_pix = 1:npz
+            for y_pix = 1:npy
+                idxs = ray_idxs{(z_pix-1)*npy + y_pix};
+                ls = ray_lens{(z_pix-1)*npy + y_pix};
+                for bin = 1:num_bins % Get the energies for the current bin (No subsampling)
+                    for ei = 1:num_esamples
+                        nrj = energy_list(bin, ei);
+                        if isnan(nrj); continue; end
+
+                        intensity = intensity_list(bin, ei);
                         if ~isempty(ls)
-                            mu = sum(ls .* get_saved_mu(idxs, mu_dict(num2str(energies(ei)))));
+                            mu = sum(ls .* get_saved_mu(idxs, mu_dict(num2str(nrj))));
                         else
                             mu = 0;
                         end
-                        photon_count(bin, y_pix, z_pix, angle) = intensities(ei)*exp(-mu);
+                        photon_count(bin, y_pix, z_pix, angle) = intensity*exp(-mu);
                     end
                 end
             end
