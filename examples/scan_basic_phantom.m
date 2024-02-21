@@ -1,8 +1,7 @@
 rng(100);
 
 % Create source and sensor
-my_source = single_energy(30);
-my_sensor = ideal_sensor([0; 100], 100);
+my_source = single_energy(50);
 
 % Voxel array constants
 vox_arr_center = zeros(3, 1);
@@ -30,33 +29,33 @@ voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_widt
 dist_to_detector = 105; % cm
 pixel_size = [0.1 0.1]; % cm (so pixel size = 1mm)
 num_pixels = [900 1];
-num_rotations = 90;
+num_rotations = 180;
 
-my_detector = parallel_detector(my_source, my_sensor, dist_to_detector, ...
-    pixel_size, num_pixels, num_rotations);
+dgantry = gantry(dist_to_detector, num_rotations, pi);
+darray = parallel_detector(pixel_size, num_pixels);
+dsensor = ideal_sensor([0; 100], 100);
+d = detector(dgantry, darray, dsensor);
+
 tic
-sinogram = squeeze(my_detector.generate_image_p(voxels));
+sinogram = squeeze(compute_sinogram(my_source, voxels, d));
 toc
 
 imwrite(mat2gray(sinogram), "sinograph_cylinder.png")
 
-scan_angles = my_detector.get_scan_angles();    
+scan_angles = dgantry.get_scan_angles();    
 [R, ~] = iradon(sinogram, scan_angles);%, "linear", "None");
 
 imwrite(mat2gray(R), "cylinder.png")
-% seconds = 9.75 * scatter_factor + 40 ( i.e. an extra 10 seconds for every
-% factor)
-scatter_detector = parallel_detector(my_source, my_sensor, dist_to_detector, ...
-    pixel_size, num_pixels, num_rotations, "slow", 10); 
 
+scatter_type = "fast";
 tic
-scatter_sinogram = squeeze(scatter_detector.generate_image_p(voxels));
+scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, "fast"));
 toc
 
-if scatter_detector.scatter_type == 1
+if strcmp(scatter_type, "fast")
     sinograph_save_str = "scatter_sinograph_cylinder_fast.png";
     image_save_str = "scatter_cylinder_fast.png";
-elseif scatter_detector.scatter_type == 2
+elseif strcmp(scatter_type, "slow")
     sinograph_save_str = "scatter_sinograph_cylinder_slow.png";
     image_save_str = "scatter_cylinder_slow.png";
 end
