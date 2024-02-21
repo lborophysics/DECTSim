@@ -31,12 +31,6 @@ classdef sensor_tests < matlab.unittest.TestCase
             tc.verifyEqual(is.get_energy_bin(0), 1);
             tc.verifyEqual(is.get_energy_bin(9.99), 100);
 
-            % test get_range
-            tc.verifyEqual(is.get_range(43), [4.2; 4.3]);
-            tc.verifyEqual(is.get_range(1), [0; 0.1]);
-            tc.verifyEqual(is.get_range(100), [10-0.1; 10]);
-            tc.verifyEqual(is.get_range([10, 20, 30, 40]), [0.9, 1; 1.9, 2; 2.9, 3; 3.9, 4]', 'RelTol', 1e-15)
-
             % test detector_response
             tc.verifyEqual(is.detector_response(43, 2), 2 * 4.25);
             tc.verifyEqual(is.detector_response(1, 2), 2 * 0.05);
@@ -58,6 +52,24 @@ classdef sensor_tests < matlab.unittest.TestCase
                     reshape(image(i,:,:,:), [10 10 10]) .* (e_range(i) + 0.05);
             end
             tc.verifyEqual(is.get_signal(image), signal, 'RelTol', 1e-15)
+
+            s1 = single_energy(50);
+            tc.verifyEqual(s1.energy, 50);
+            is = ideal_sensor([0, 60], 6);
+            expE = [NaN; NaN; NaN; NaN; NaN; 50];
+            expI = [NaN; NaN; NaN; NaN; NaN; 1];
+            [e, i] = is.sample_source(s1);
+            tc.verifyEqual(e, expE);
+            tc.verifyEqual(i, expI);
+
+            s2 = single_energy(21);
+            tc.verifyEqual(s2.energy, 21);
+            is = ideal_sensor([0, 56], 8);
+            expE = [NaN; NaN; NaN; 21; NaN; NaN; NaN; NaN];
+            expI = [NaN; NaN; NaN; 1; NaN; NaN; NaN; NaN];
+            [e, i] = is.sample_source(s2);
+            tc.verifyEqual(e, expE);
+            tc.verifyEqual(i, expI);
         end
 
 

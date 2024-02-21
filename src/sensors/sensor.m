@@ -5,24 +5,27 @@ classdef (Abstract) sensor
         bin_width    (1, 1) double
         energy_range (1, 2) double
         energy_bins  (1, :) double
+        num_samples  (1, 1) double
     end
 
     methods (Abstract) % These need to be implemented by the child class
-        range = get_range(self, bin_index)
         signal = detector_response(self, energy_bin, count_array)
         image = get_image(self, signal) 
+        [energies, intensities] = sample_source(self, source)
     end
 
     methods
-        function self = sensor(energy_range, num_bins)
+        function self = sensor(energy_range, num_bins, num_samples)
             arguments
                 energy_range (2, 1) double {mustBeNonnegative}
                 num_bins     (1, 1) double {mustBePositive, mustBeInteger}
+                num_samples (1,1) double {mustBePositive, mustBeInteger} = 1;
             end
             self.energy_range = energy_range;
             assert(energy_range(1) < energy_range(2), 'sensor:IncorrectEnergyRange', 'Energy range must be increasing');
             
             self.num_bins = num_bins;
+            self.num_samples = num_samples;
             self.bin_width = (energy_range(2) - energy_range(1)) / (num_bins);
             self.energy_bins = energy_range(1):self.bin_width:energy_range(2);
         end
