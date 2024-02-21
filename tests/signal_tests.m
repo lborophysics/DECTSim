@@ -121,11 +121,6 @@ classdef signal_tests < matlab.unittest.TestCase
 
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "fast"));
             
-            scan_angles = dgantry.get_scan_angles();    
-            [R, ~] = iradon(scatter_sinogram, scan_angles);%, "linear", "None");
-            
-            imwrite(mat2gray(R), "cylinder.png")
-
             scatter_sinogram_expected = matfile("scatter_cylinder_fast.mat").scatter_sinogram;
             tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
