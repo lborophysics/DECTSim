@@ -2,13 +2,13 @@
 vox_arr_center = zeros(3, 1); 
 phantom_size = 500; 
 voxel_size = 1;
-material = @water;
+water = material_attenuation("water");
 
 % Create voxel array
 voxel_generator = voxel_shepp_logan(vox_arr_center, phantom_size, voxel_size);
 
-% voxel_generator = voxel_box(vox_arr_center, phantom_size, material);
-% voxel_generator = voxel_cylinder(vox_arr_center, phantom_size/2, 2, material);
+% voxel_generator = voxel_box(vox_arr_center, phantom_size, water);
+% voxel_generator = voxel_cylinder(vox_arr_center, phantom_size/2, 2, water);
 
 voxels = voxel_array(vox_arr_center, zeros(3, 1)+phantom_size, voxel_size, voxel_generator);
 

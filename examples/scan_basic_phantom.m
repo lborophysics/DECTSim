@@ -1,40 +1,72 @@
+rng(100);
+
+% Create source and sensor
+my_source = single_energy(50);
+
 % Voxel array constants
-vox_arr_center = zeros(3, 1); 
-phantom_radius = 300;% In the x-y plane 
-phantom_width = 500; % In the z direction
-voxel_size = 1;
+vox_arr_center = zeros(3, 1);
+phantom_radius = 30/2;% In the x-y plane
+phantom_width = 50; % In the z direction
+voxel_size = 0.1/2; % 1 mm
 
 % Create voxel array
-water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, @water);
+water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
 num_materials = 4;
 rot_mat_pos = rotz(2*pi/num_materials);
 init_mat_pos = [0; phantom_radius/2; 0];
-bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, @bone);
+bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("bone"));
 init_mat_pos = rot_mat_pos * init_mat_pos;
-blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, @blood);
+blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("fat"));
 init_mat_pos = rot_mat_pos * init_mat_pos;
-lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, @lung);
+lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
 init_mat_pos = rot_mat_pos * init_mat_pos;
-muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, @muscle);
+muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
 
-phantom = voxel_collection(water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder);
+voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
+    voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 
-voxels = voxel_array(vox_arr_center, zeros(3, 1)+phantom_radius*2, voxel_size, phantom);
-
-% profile on
 % Detector constants
-dist_to_detector = 1050;
-pixel_size = [1 1];
+dist_to_detector = 105; % cm
+pixel_size = [0.1 0.1]; % cm (so pixel size = 1mm)
 num_pixels = [900 1];
 num_rotations = 180;
 
-my_detector = parallel_detector(dist_to_detector, pixel_size, num_pixels, num_rotations);
-sinogram = squeeze(my_detector.generate_image(voxels));
+dgantry = gantry(dist_to_detector, num_rotations, pi);
+darray = parallel_detector(pixel_size, num_pixels);
+dsensor = ideal_sensor([0; 100], 100);
+d = detector(dgantry, darray, dsensor);
 
-imwrite(sinogram, "sinograph_cylinder.png")
+tic
+sinogram = squeeze(compute_sinogram(my_source, voxels, d));
+toc
 
-scan_angles = my_detector.get_scan_angles();
-[R, H] = iradon(sinogram, scan_angles);%, "linear", "None");
+imwrite(mat2gray(sinogram), "sinograph_cylinder.png")
+
+scan_angles = dgantry.get_scan_angles();    
+[R, ~] = iradon(sinogram, scan_angles);%, "linear", "None");
 
 imwrite(mat2gray(R), "cylinder.png")
-% profile viewer
+
+scatter_type = "fast";
+tic
+scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, "fast"));
+toc
+
+if strcmp(scatter_type, "fast")
+    sinograph_save_str = "scatter_sinograph_cylinder_fast.png";
+    image_save_str = "scatter_cylinder_fast.png";
+elseif strcmp(scatter_type, "slow")
+    sinograph_save_str = "scatter_sinograph_cylinder_slow.png";
+    image_save_str = "scatter_cylinder_slow.png";
+end
+
+imwrite(mat2gray(scatter_sinogram), sinograph_save_str)
+diff = scatter_sinogram - sinogram;
+
+imwrite(mat2gray(diff), strcat("diff_", sinograph_save_str))
+
+[scatter_R, H] = iradon(scatter_sinogram, scan_angles);%, "linear", "None");
+
+imwrite(mat2gray(scatter_R), image_save_str)
+diff_R = scatter_R - R;
+imwrite(mat2gray(diff_R), strcat("diff_", image_save_str))

@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - dev-josh
   pull_request:
     branches:
       - main
@@ -15,10 +16,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Get Photon Attenuation Package
-        run: wget https://uk.mathworks.com/matlabcentral/mlc-downloads/downloads/submissions/12092/versions/7/download/zip/PhotonAttenuation.zip
-      - name: Retrieve necessary file
-        run: unzip PhotonAttenuation.zip PhotonAttenuationQ.m -d src/
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
         with:
@@ -26,6 +23,7 @@ jobs:
       - name: Run tests and generate artifacts
         uses: matlab-actions/run-tests@v2
         with:
+          source-folder: src
           logging-level: verbose
           select-by-folder: tests
           test-results-junit: test-results/results.xml

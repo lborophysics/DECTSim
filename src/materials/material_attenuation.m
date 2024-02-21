@@ -1,0 +1,69 @@
+classdef material_attenuation
+    %MATERIAL A class to represent a material and its properties necessary
+    % for ray tracing and scattering
+
+    properties (SetAccess=immutable)
+        atomic_numbers % Atomic numbers of the elements in the material
+        mass_fractions % Mass fractions of the elements in the material
+        density        % Density of the material in g/cm^3
+        mu_from_energy % A function handle to get the linear attenuation coefficient from energy. Only used if use_mex is false
+    end
+
+
+    properties (Access=private, Constant, NonCopyable)
+        use_mex = ~~exist('photon_attenuation_mex', 'file');
+    end
+
+    methods
+        function self = material_attenuation(material_name, varargin)
+            %MATERIAL Construct a material object
+            %   mat = material("material_name") creates a material object with the properties of the given material, if it is available
+            %   
+            %   mat = material("material_name", atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
+            assert(isstring(material_name), 'assert:failure', 'The material name must be a string.');
+            if nargin == 1
+                material_index = find(mat_consts.known_materials == lower(material_name));
+                if any(material_index)
+                    self.atomic_numbers = mat_consts.known_atomic_numbers{material_index};
+                    self.mass_fractions = mat_consts.known_mass_fractions{material_index};
+                    self.density = mat_consts.known_densitys(material_index);
+                else
+                    error('MATLAB:invalidMaterial', ...
+                        'The material %s is not available. Available materials are: %s', ...
+                        material_name, strjoin(mat_consts.known_materials, ', '));
+                end
+            elseif nargin == 4
+                self.atomic_numbers = varargin{1};
+                self.mass_fractions = varargin{2};
+                self.density = varargin{3};
+                assert(isvector(self.atomic_numbers), 'assert:failure', 'The atomic numbers should be a vector.');
+                assert(isvector(self.mass_fractions), 'assert:failure', 'The mass fractions should be a vector.');
+                assert(length(self.atomic_numbers) == length(self.mass_fractions), 'assert:failure', 'The atomic numbers and mass fractions should have the same length.');
+                assert(isnumeric(self.density) && isscalar(self.density), 'assert:failure', 'The density should be a scalar number.');
+                self.mass_fractions = self.mass_fractions / sum(self.mass_fractions);
+            else
+                error('MATLAB:invalidInput', 'Invalid number of input arguments. Use either material("material_name") or material("material_name", atomic_numbers, mass_fractions, density).');
+            end
+            if ~self.use_mex
+                self.mu_from_energy = get_photon_attenuation(self.atomic_numbers);
+            end
+        end
+
+        function mu = get_mu(self, energy)
+            % GET_MU Get the linear attenuation coefficient of the material for a given energy
+            if self.use_mex
+                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, energy);
+            else
+                mus = self.mu_from_energy(log(energy));
+                mu = sum(exp(mus).*self.mass_fractions) * self.density;
+            end
+        end
+
+        function mfp = mean_free_path(self, E)
+            % MEAN_FREE_PATH Get the mean free path of the material for a given energy
+            mfp = 1 / (constants.N_A * self.density * ...
+                sum(self.mass_fractions .* cross_section(self.atomic_numbers, E) ...
+                    ./ mat_consts.atomic_masses(self.atomic_numbers)));
+        end
+    end
+end
