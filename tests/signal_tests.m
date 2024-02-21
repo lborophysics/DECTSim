@@ -47,12 +47,24 @@ classdef signal_tests < matlab.unittest.TestCase
             tc.verifyEqual(image(:, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
             tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
 
-            % 2D NEEDS TO BE CHECKED
-            % detector_2d = parallel_detector(tc.ray_source, tc.sensor_unit, ...
-            %     10, 4);
-            % image = detector_2d.generate_image(array);
-            % image_p = detector_2d.generate_image_p(array);
-            % tc.verifyEqual(image_p, image, 'RelTol', 1e-14)
+            % 2D 
+            a2 = parallel_detector([1, 1], [5, 5]);
+            d2 = detector(g1, a2, tc.sensor_unit);
+            image = compute_sinogram(tc.ray_source, array, d2);
+            tc.verifyEqual(size(image), [5, 5, 4]);
+            for row = 2:4
+                tc.verifyEqual(image(:, row, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
+                tc.verifyEqual(image(:, row, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 2e-15);
+                tc.verifyEqual(image(:, row, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
+                tc.verifyEqual(image(:, row, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
+            end
+            tc.verifyEqual(image(:, 1, :), zeros(5, 1, 4), 'AbsTol', 1e-15);
+            tc.verifyEqual(image(:, 5, :), zeros(5, 1, 4), 'AbsTol', 1e-15);
+
+            % No hits 2D
+            array = voxel_array(zeros(3, 1), [1; 1; 1], 1, {}, material_attenuation("vacuum"));
+            image = compute_sinogram(tc.ray_source, array, d2);
+            tc.verifyEqual(image, zeros(5, 5, 4), 'AbsTol', 1e-15);
         end
 
         function test_scatter_image(tc)

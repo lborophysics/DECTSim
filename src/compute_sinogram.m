@@ -100,7 +100,11 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
                     % Get the energies for the current bin
                     [energies, intensities] = energies_at_bin(bin);
                     for ei = 1:length(energies)
-                        mu = sum(ls .* get_saved_mu(idxs, mu_dict(num2str(energies(ei)))));
+                        if ~isempty(ls)
+                            mu = sum(ls .* get_saved_mu(idxs, mu_dict(num2str(energies(ei)))));
+                        else
+                            mu = 0;
+                        end
                         photon_count(bin, y_pix, z_pix, angle) = intensities(ei)*exp(-mu);
                     end
                 end
@@ -114,7 +118,7 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     elseif scatter_type == 2 % Fast scatter
         scatter_count = ...
             convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
-            scatter_signal = sensor_unit.get_signal(scatter_count);
+        scatter_signal = sensor_unit.get_signal(scatter_count);
     else
         scatter_count = ...
             monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
