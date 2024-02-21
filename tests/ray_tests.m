@@ -30,19 +30,20 @@ classdef ray_tests < matlab.unittest.TestCase
             threes = zeros(3, 5) + 3;
 
             voxels = tc.water_array;
+            voxels.array_position, voxels.dimensions, voxels.num_planes
             cached_ray_trace = @(start, v1to2) ray_trace(start, v1to2, ...
                 voxels.array_position, voxels.dimensions, voxels.num_planes);
-            [lengths, indices] = cached_ray_trace([-6;0;0], [1;0;0].*12);
+            [lengths, indices] = cached_ray_trace([-6;0;0], [1;0;0].*22);
             exp = threes; exp(1, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            [lengths, indices] = cached_ray_trace([0;-6;0], [0;1;0].*12);
+            [lengths, indices] = cached_ray_trace([0;-6;0], [0;1;0].*22);
             exp = threes; exp(2, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-           [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*12);
+           [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*22);
             exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
@@ -53,8 +54,8 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(lengths, [s2, s2, s2, s2, s2], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-            [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*12);
-            exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
+            [lengths, indices] = cached_ray_trace([0;0;6], [0;0;-1].*22);
+            exp = threes; exp(3, :) = [5, 4, 3, 2, 1];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
@@ -71,6 +72,51 @@ classdef ray_tests < matlab.unittest.TestCase
             [lengths, indices] = cached_ray_trace([6;6;6], [1;1;1].*22);
             tc.assertEqual(lengths, []);
             tc.assertEqual(indices, []);
+        end
+
+        function test_many_siddon_ray(tc)
+            threes = zeros(3, 5) + 3;
+
+            voxels = tc.water_array;
+            cached_ray_trace_many = @(start, v1to2) ray_trace_many(start, v1to2, ...
+                voxels.array_position, voxels.dimensions, voxels.num_planes);
+            
+            [lengths, indices] = cached_ray_trace_many([-6;0;0], [1;0;0].*12);
+            exp = threes; exp(1, :) = [1, 2, 3, 4, 5];
+            tc.assertEqual(lengths{1}, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
+            tc.assertEqual(indices{1}, exp);
+
+            start_points = [-6,0,0; 0,-6,0; 0,0,-6; -6,-6,0; 0,0,6; 6,6,6; 6,6,6]';
+            directions = [1,0,0; 0,1,0; 0,0,1; 1,1,0; 0,0,-1; -1,-1,-1; 1,1,1]';
+            v1to2 = directions .* 22;
+            [lengths, indices] = cached_ray_trace_many(start_points, v1to2);
+
+            iexp1 = threes; iexp1(1, :) = [1, 2, 3, 4, 5];
+            iexp2 = threes; iexp2(2, :) = [1, 2, 3, 4, 5];
+            iexp3 = threes; iexp3(3, :) = [1, 2, 3, 4, 5];
+            iexp4 = threes; iexp4(2, :) = [1, 2, 3, 4, 5]; iexp4(1, :) = [1, 2, 3, 4, 5];
+            iexp5 = threes; iexp5(3, :) = [5, 4, 3, 2, 1];
+            iexp6 = [
+                5, 4, 3, 2, 1;
+                5, 4, 3, 2, 1;
+                5, 4, 3, 2, 1
+                ];
+            iexp7 = [];
+            iexp = {iexp1, iexp2, iexp3, iexp4, iexp5, iexp6, iexp7};
+            s3 = sqrt(3);
+            s2 = sqrt(2);
+            lexp1 = [1, 1, 1, 1, 1];
+            lexp2 = [1, 1, 1, 1, 1];
+            lexp3 = [1, 1, 1, 1, 1];
+            lexp4 = [s2, s2, s2, s2, s2];
+            lexp5 = [1, 1, 1, 1, 1];
+            lexp6 = [s3, s3, s3, s3, s3];
+            lexp7 = [];
+            lexp = {lexp1, lexp2, lexp3, lexp4, lexp5, lexp6, lexp7};
+            for i = 1:7
+                tc.assertEqual(lengths{i}, lexp{i}, 'AbsTol', 5e-15);
+                tc.assertEqual(indices{i}, iexp{i});
+            end
         end
 
         % While scatter ray is not included in the project

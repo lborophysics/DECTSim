@@ -12,12 +12,15 @@ classdef single_energy < source
         end
 
         function [energies, intensities] = get_energies(self, range)
-            % range is a 2-element vector [min_energy, max_energy)
-            if self.energy < range(1) || self.energy >= range(2)
-                intensities = []; energies = [];
-            else
-                intensities = 1 ; energies = self.energy;
+            % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
+            arguments
+                self
+                range (:,2) double
             end
+            energies = zeros(1, size(range,1)) + self.energy; 
+            intensities = ones(1, size(range,1));
+            energies(self.energy < range(:,1) | self.energy >= range(:,2)) = NaN;
+            intensities(self.energy < range(:,1) | self.energy >= range(:,2)) = NaN;
         end 
     end
 
