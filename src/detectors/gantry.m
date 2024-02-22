@@ -18,12 +18,12 @@ classdef gantry < handle
             arguments
                 dist_to_detector (1, 1) double
                 num_rotations    (1, 1) double
-                total_rotation   (1, 1) double
+                total_rotation   (1, 1) double = 2*pi
             end
             % Detector Geometry
             assert(dist_to_detector > 0, 'Distance to detector must be greater than 0');
             assert(num_rotations > 0 && mod(num_rotations, 1) == 0, 'Number of rotations must be a positive integer');
-            assert(total_rotation > 0 && total_rotation < 2*pi, 'Total rotation must be between 0 and 2*pi');
+            assert(total_rotation > 0 && total_rotation <= 2*pi, 'Total rotation must be between 0 and 2*pi');
             
             self.dist_to_detector = dist_to_detector;
             self.total_rotation   = total_rotation;
