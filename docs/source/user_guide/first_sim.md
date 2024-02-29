@@ -53,7 +53,7 @@ water = material_attenuation([1, 8], [0.111894, 0.888106], 1.0);
 ```
 
 ### Voxel objects
-A voxel object is how the program represents a material in the phantom. only two arguments are required to create a voxel object:
+A voxel object is how the program represents a material in the phantom. Only two arguments are required to create a voxel object:
 - `is_in_object`: a function handle that takes in 3 arguments (x, y, z) and returns a boolean indicating whether the point is inside the object. `x`, `y` and `z` are the coordinates of the centre of the voxel, in cm. These coordinates **must** be able to be vectorised, therefore, the boolean returned must be the same size as `x`, `y` and `z`.
 - `material`: a `material_attenuation` object representing the material of the voxel object
 

@@ -37,60 +37,60 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.world_material = world_material;
         end
 
-        function mu_dict = precalculate_mus(self, energies)
+        function mu_dict = precalculate_mus(self, nrjs)
             % Create a dictionary of mu values for each material
             mu_dict = containers.Map();       % Not actually constant, but the reference is
-            for energy = energies
-                mu_dict(num2str(energy)) = self.get_mu_arr(energy);
+            for nrj = nrjs
+                mu_dict(num2str(nrj)) = self.get_mu_arr(nrj);
             end
         end
 
-        function mfp_dict = precalculate_mfps(self, energies)
+        function mfp_dict = precalculate_mfps(self, nrjs)
             % Create a dictionary of mfp values for each material
             mfp_dict = containers.Map();       % Not actually constant, but the reference is
-            for energy = energies
-                mfp_dict(num2str(energy)) = self.get_mfp_arr(energy);
+            for nrj = nrjs
+                mfp_dict(num2str(nrj)) = self.get_mfp_arr(nrj);
             end
         end
 
-        function mu_arr = get_mu_arr(self, energy)
+        function mu_arr = get_mu_arr(self, nrj)
             % Create a dictionary of mu values for each material
-            mu_arr(self.nobj + 1) = self.world_material.get_mu(energy);
+            mu_arr(self.nobj + 1) = self.world_material.get_mu(nrj);
             % mu_arr = zeros(1, self.nobj + 1);
             for n = 1:self.nobj
-                mu_arr(n) = self.voxel_objs{n}.get_mu(energy);
+                mu_arr(n) = self.voxel_objs{n}.get_mu(nrj);
             end
         end
 
-        function mu = get_saved_mu(self, indices, dict)
+        function mus = get_saved_mu(self, indices, dict)
             % Convert indices to position at centre of voxel
             position = self.array_position + (indices - 0.5) .* self.dimensions;
 
-            % Get mu at position
-            mu = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
+            % Get mus at position
+            mus = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
             for n = 1:self.nobj
-                mu(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
+                mus(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
                     dict(n);
             end
         end
 
-        function mfp_arr = get_mfp_arr(self, energy)
+        function mfp_arr = get_mfp_arr(self, nrj)
             % Create a dictionary of mfp values for each material
-            mfp_arr(self.nobj + 1) = self.world_material.mean_free_path(energy);
+            mfp_arr(self.nobj + 1) = self.world_material.mean_free_path(nrj);
             % mfp_arr = zeros(1, self.nobj + 1);
             for n = 1:self.nobj
-                mfp_arr(n) = self.voxel_objs{n}.material.mean_free_path(energy);
+                mfp_arr(n) = self.voxel_objs{n}.material.mean_free_path(nrj);
             end
         end
 
-        function mfp = get_saved_mfp(self, indices, dict)
+        function mfps = get_saved_mfp(self, indices, dict)
             % Convert indices to position at centre of voxel
             position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get material at position
-            mfp = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
+            mfps = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
             for n = 1:self.nobj
-                mfp(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = ...
+                mfps(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = ...
                     dict(n);
             end
         end

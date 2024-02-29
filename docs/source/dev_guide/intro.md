@@ -1,4 +1,4 @@
-# Introduction
+# Developer Introduction
 
 This is the introduction to the developer guide. It should be a brief overview of what the developer guide is and what it contains, as well as how to use it.
 
