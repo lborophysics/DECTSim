@@ -14,11 +14,13 @@ This class is a template for all detector pixel arrays and should hold all the i
 Properties
 ~~~~~~~~~~
 
-    `pixel_dims` : (1, 2) double
-        The dimensions of the pixel array in the x and y directions.
+.. attribute:: pixel_dims
     
-    `n_pixels` : (1, 2) double
-        The number of pixels in the x and y directions.
+    The dimensions of the pixel array in the x and y directions.
+    
+.. attribute:: n_pixels
+    
+    The number of pixels in the x and y directions.
 
 Functions
 ~~~~~~~~~
@@ -34,11 +36,11 @@ Abstract Methods
 
         This method is used to calculate the ray paths for each projection. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
-        * `detect_geom` is the detector geometry, so an instance of the gantry class.
-        * `angle_index` is the index of the angle that the gantry is at.
-        * `ray_per_pixel` is the number of rays that will be cast per pixel (default 1 - Not implemented yet). The purpose of this will be to include anti-aliasing techniques in the future, to improve the quality of the simulation.
+        * ``detect_geom`` is the detector geometry, so an instance of the gantry class.
+        * ``angle_index`` is the index of the angle that the gantry is at.
+        * ``ray_per_pixel`` is the number of rays that will be cast per pixel (default 1 - Not implemented yet). The purpose of this will be to include anti-aliasing techniques in the future, to improve the quality of the simulation.
 
-        **Returns**: ray_generator.
+        **Returns**: :code:`ray_generator`.
         
         The return value is a function that takes in the pixel in the y and z directions and returns `ray_start` (start point), `ray_dir` (direction) and `ray_length`. This is used to calculate the ray paths for each projection.
 
@@ -46,12 +48,12 @@ Abstract Methods
 
         This method is used to calculate which pixel a ray may intersect. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
-        * `ray_start` is the starting position of the ray.
-        * `ray_dir` is the unit vector of the ray, i.e. the direction of the ray.
-        * `detect_geom` is the detector geometry, so an instance of the gantry class.
-        * `angle_index` is the index of the angle that the gantry is at.
+        * ``ray_start`` is the starting position of the ray.
+        * ``ray_dir`` is the unit vector of the ray, i.e. the direction of the ray.
+        * ``detect_geom`` is the detector geometry, so an instance of the gantry class.
+        * ``angle_index`` is the index of the angle that the gantry is at.
 
-        **Returns**: [pixel, hit].
+        **Returns**: :code:`[pixel, hit]`.
 
         The return value is the pixel that was hit (a 1x2 array of the pixel index) and hit (a boolean value of whether the ray intersects the pixel at all).
 
@@ -92,7 +94,7 @@ Methods
 Potential Future Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `ray_per_pixel` parameter in the `ray_at_angle` is not implemented yet.
+The ``ray_per_pixel`` parameter in the :meth:`ray_at_angle` is not implemented yet.
 
 
 curved_detector
@@ -117,4 +119,4 @@ Methods
 Potential Future Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The `ray_per_pixel` parameter in the `ray_at_angle` is not implemented yet, as well as the `hit_pixel` method for the `curved_detector` class. 
+The ``ray_per_pixel`` parameter in the :meth:`ray_at_angle` is not implemented yet, as well as the :meth:`hit_pixel` method for the :class:`curved_detector` class. 

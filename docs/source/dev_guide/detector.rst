@@ -10,13 +10,16 @@ The only purpose of :class:`detector` is to collect all the objects that are req
 
 Properties
 ----------
-`gantry`
+.. attribute:: gantry
+    
     The gantry object that the detector is attached to.
 
-`detector_array`
+.. attribute:: detect_array
+    
     The detector pixel array object that the detector is using.
 
-`sensor`
+.. attribute:: sensor
+    
     The sensor object that the detector is using.
 
 Functions

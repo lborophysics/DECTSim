@@ -16,20 +16,25 @@ The :func:`get_rot_mat` method is used to get the rotation matrix for the gantry
 Properties
 ~~~~~~~~~~
 
-    `dist_to_detector` : (1, 1) double
-        Distance from source to detector
-
-    `to_source_vec`: (3, 1) double = [0;1;0]
-        Vector from source to centre of detector. The initial value is [0;1;0] as the source will always start above the detector pixel array. This is used in the `detector_array` classes to calculate the ray paths for each projection.
-
-    `num_rotations` : (1, 1) double
-        Number of rotations the gantry will make, i.e. the number of projections. This is required in the funciton :func:`compute_sinogram` 
+.. attribute:: dist_to_detector
     
-    `rot_angle` : (1, 1) double
-        The angle of rotation for each projection. Calculated as `total_rotation/num_rotations`. This is a precalculation to save time in the method :meth:`get_rot_mat`.
+    Distance from source to detector
 
-    `scan_angles` : (1, :) double
-        The angles at which the gantry will rotate to. This is for the user to get the scan angles for use with reconstruction algorithms. 
+.. attribute:: to_source_vec = [0;1;0]
+    
+    Vector from source to centre of detector. The initial value is [0;1;0] as the source will always start above the detector pixel array. This is used in the `detector_array` classes to calculate the ray paths for each projection.
+
+.. attribute:: num_rotations
+    
+    Number of rotations the gantry will make, i.e. the number of projections. This is required in the funciton :func:`compute_sinogram` 
+    
+.. attribute:: rot_angle
+
+    The angle of rotation for each projection. Calculated as ``total_rotation/num_rotations``. This is a precalculation to save time in the method :meth:`get_rot_mat`.
+
+.. attribute:: scan_angles
+    
+    The angles at which the gantry will rotate to. This is for the user to get the scan angles for use with reconstruction algorithms. 
     
 
 Functions
@@ -39,9 +44,9 @@ Functions
     
         Constructor for the gantry class. 
 
-        * `dist_to_detector` is the distance from the source to the detector.
-        * `num_rotations` is the number of rotations the gantry will make, i.e. the number of projections.
-        * `total_rotation` is the total rotation of the gantry in radians (default :math:`2\pi`).
+        * ``dist_to_detector`` is the distance from the source to the detector.
+        * ``num_rotations`` is the number of rotations the gantry will make, i.e. the number of projections.
+        * ``total_rotation`` is the total rotation of the gantry in radians (default :math:`2\pi`).
 
 
 Methods

@@ -26,7 +26,7 @@ classdef material_attenuation
                 if any(material_index)
                     self.atomic_numbers = mat_consts.known_atomic_numbers{material_index};
                     self.mass_fractions = mat_consts.known_mass_fractions{material_index};
-                    self.density = mat_consts.known_densitys(material_index);
+                    self.density = mat_consts.known_densities(material_index);
                 else
                     error('MATLAB:invalidMaterial', ...
                         'The material %s is not available. Available materials are: %s', ...
@@ -49,20 +49,20 @@ classdef material_attenuation
             end
         end
 
-        function mu = get_mu(self, energy)
+        function mu = get_mu(self, nrj)
             % GET_MU Get the linear attenuation coefficient of the material for a given energy
             if self.use_mex
-                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, energy);
+                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, nrj);
             else
-                mus = self.mu_from_energy(log(energy));
+                mus = self.mu_from_energy(log(nrj));
                 mu = sum(exp(mus).*self.mass_fractions) * self.density;
             end
         end
 
-        function mfp = mean_free_path(self, E)
+        function mfp = mean_free_path(self, nrj)
             % MEAN_FREE_PATH Get the mean free path of the material for a given energy
             mfp = 1 / (constants.N_A * self.density * ...
-                sum(self.mass_fractions .* cross_section(self.atomic_numbers, E) ...
+                sum(self.mass_fractions .* cross_section(self.atomic_numbers, nrj) ...
                     ./ mat_consts.atomic_masses(self.atomic_numbers)));
         end
     end
