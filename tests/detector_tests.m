@@ -90,8 +90,8 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_get_scan_angles(tc)
             for num_rotations = 2:10
                 geom = gantry(2, num_rotations, pi);
-                res = geom.get_scan_angles();
-                exp = rad2deg(linspace(0, pi, num_rotations+1));
+                res = geom.scan_angles;
+                exp = linspace(0, pi, num_rotations+1);
 
                 tc.verifyEqual(res, exp(1:end-1), 'AbsTol', 1e-15);
             end

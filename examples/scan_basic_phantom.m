@@ -42,7 +42,7 @@ toc
 
 imwrite(mat2gray(sinogram), "sinograph_cylinder.png")
 
-scan_angles = dgantry.get_scan_angles();    
+scan_angles = rad2deg(dgantry.scan_angles);
 [R, ~] = iradon(sinogram, scan_angles);%, "linear", "None");
 
 imwrite(mat2gray(R), "cylinder.png")

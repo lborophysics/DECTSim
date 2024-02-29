@@ -18,6 +18,10 @@ Welcome to DECTSim's documentation!
    :caption: Developer Guide:
    :glob: 
    
+   dev_guide/intro.md
+   dev_guide/detector_movement.rst
+   dev_guide/detector_arrays.rst
+   dev_guide/detector.rst
    dev_guide/*
 
 

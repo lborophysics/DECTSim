@@ -14,7 +14,7 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
                 centre      (3, 1) double {mustBeReal}
                 object_dims (3, 1) double {mustBePositive}
                 voxel_size  (1, 1) double {mustBePositive} % Needs updating to [x;y;z]
-                voxel_objs  cell 
+                voxel_objs         cell 
                 world_material     material_attenuation = material_attenuation("air");
             end
             % Constructor method
