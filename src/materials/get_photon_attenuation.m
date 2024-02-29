@@ -1,15 +1,15 @@
-function att_fun = get_photon_attenuation(z)
+function att_fun = get_photon_attenuation(Z)
 %PhotonAttenuationQ NIST attenuation cooeficiant tables
 % for photon interaction with elements.
 %
-% att_fun = get_photon_attenuation(z, fracs)
+% att_fun = get_photon_attenuation(Z, fracs)
 % Function providing the attenuation of various elements,
 % based on NIST report 5632, by % J. Hubbell and S.M. Seltzer.
 % This is a quick version of the function with
 % narrow range of inputs and outputs.
 %
 % Input :
-%   z - atomic number Z in [1, 100] range, or array of Z numbers
+%   Z - atomic number Z in [1, 100] range, or array of Z numbers
 %
 % Output :
 %   att_fun - A function handle for the for the attenuation coefficients
@@ -316,7 +316,7 @@ edges = [ ...
 sample_energies = log(1:0.05:300)';
 % end
 %% Initialize variables
-elems  = z(:);
+elems  = Z(:);
 
 nData = size(mac, 1);
 nelem = length(elems);

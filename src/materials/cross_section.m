@@ -1,8 +1,8 @@
-function cs = cross_section(Z, E) % Once tested change this function to evaluate the cross section for a vector of energies
+function cs = cross_section(Z, nrj) % Once tested change this function to evaluate the cross section for a vector of energies
     % CROSS_SECTION Get the cross section of the material for a given energy (CREDIT: Geant4)
     % The values, formulae and code is taken directly from
     % https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/standard/src/G4KleinNishinaCompton.cc
-    if E < 100*units.eV; cs = 0; return; end % Below 100 eV, we are beyond the limit of the cross section table -> 0
+    if nrj < 100*units.eV; cs = 0; return; end % Below 100 eV, we are beyond the limit of the cross section table -> 0
     % See https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html
     
     persistent a b c d1 d2 d3 d4 e1 e2 e3 e4 f1 f2 f3 f4
@@ -18,20 +18,20 @@ function cs = cross_section(Z, E) % Once tested change this function to evaluate
     T0 = zeros(size(Z)) + 40; % Special case for hydrogen (KeV)
     T0(Z > 1.5) = 15; % KeV
     
-    X = max(E, T0) ./ constants.em_ee; % Unitless
+    X = max(nrj, T0) ./ constants.em_ee; % Unitless
     p1Z = Z.*(d1 + e1.*Z + f1.*Z.*Z); p2Z = Z.*(d2 + e2.*Z + f2.*Z.*Z); % cm^2
     p3Z = Z.*(d3 + e3.*Z + f3.*Z.*Z); p4Z = Z.*(d4 + e4.*Z + f4.*Z.*Z); % cm^2
 
     cs = p1Z.*log(1.+2.*X)./X + (p2Z + p3Z.*X + p4Z.*X.*X)./(1. + a.*X + b.*X.*X + c.*X.*X.*X); % cm^2
 
-    if E < T0
+    if nrj < T0
         X = (T0+1) ./ constants.em_ee; % Unitless
         sigma = p1Z.*log(1.+2.*X)./X + (p2Z + p3Z.*X + p4Z.*X.*X)./(1. + a.*X + b.*X.*X + c.*X.*X.*X); % cm^2
         c1 = -T0.*(sigma-cs)./cs; % Unitless
         c2 = zeros(size(Z)) + 0.150;
         c2(Z > 1.5) = 0.375-0.0556.*log(Z(Z>1.5));
         
-        y = log(E./T0); % Unitless
+        y = log(nrj./T0); % Unitless
         cs = cs .* exp(-y.*(c1+c2.*y)); % cm^2
     end
 end

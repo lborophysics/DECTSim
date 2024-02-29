@@ -1,15 +1,15 @@
-function att = photon_attenuation(z, fracs, density, nrj)
+function att = photon_attenuation(Z, fracs, density, nrj)
 %PhotonAttenuationQ NIST attenuation cooeficiant tables
 % for photon interaction with elements.
 %
-% att_fun = photon_attenuation(z, fracs)
+% att_fun = photon_attenuation(Z, fracs)
 % Function providing the attenuation of various elements,
 % based on NIST report 5632, by % J. Hubbell and S.M. Seltzer.
 % This is a quick version of the function with
 % narrow range of inputs and outputs.
 %
 % Input :
-%   z - atomic number Z in [1, 100] range, or array of Z numbers
+%   Z - atomic number Z in [1, 100] range, or array of Z numbers
 %   fracs - mass fractions of each element in the material, should sum to 1
 %   density - density of the material in g/cm^3
 %   nrj - Energy in keV
@@ -316,7 +316,7 @@ edges = [ ...
     55, 0.0359846*1000, 5.863   , 3.143E+1;... % Stop at caesium
     ];
 %% Initialize variables
-elems  = z(:);
+elems  = Z(:);
 fracs = fracs ./ sum(fracs); % normalize fractions
 nData = size(mac, 1);
 nelem = length(elems);
