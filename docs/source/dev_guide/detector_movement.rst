@@ -44,9 +44,9 @@ Functions
     
         Constructor for the gantry class. 
 
-        * ``dist_to_detector`` is the distance from the source to the detector.
-        * ``num_rotations`` is the number of rotations the gantry will make, i.e. the number of projections.
-        * ``total_rotation`` is the total rotation of the gantry in radians (default :math:`2\pi`).
+        :param dist_to_detector: is the distance from the source to the detector.
+        :param num_rotations: is the number of rotations the gantry will make, i.e. the number of projections.
+        :param total_rotation: is the total rotation of the gantry in radians (default :math:`2\pi`).
 
 
 Methods

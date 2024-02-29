@@ -36,9 +36,9 @@ Abstract Methods
 
         This method is used to calculate the ray paths for each projection. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
-        * ``detect_geom`` is the detector geometry, so an instance of the gantry class.
-        * ``angle_index`` is the index of the angle that the gantry is at.
-        * ``ray_per_pixel`` is the number of rays that will be cast per pixel (default 1 - Not implemented yet). The purpose of this will be to include anti-aliasing techniques in the future, to improve the quality of the simulation.
+        :param detect_geom: is the detector geometry, so an instance of the gantry class.
+        :param angle_index: is the index of the angle that the gantry is at.
+        :param ray_per_pixel: is the number of rays that will be cast per pixel (default 1 - Not implemented yet). The purpose of this will be to include anti-aliasing techniques in the future, to improve the quality of the simulation.
 
         **Returns**: :code:`ray_generator`.
         
@@ -48,10 +48,10 @@ Abstract Methods
 
         This method is used to calculate which pixel a ray may intersect. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
-        * ``ray_start`` is the starting position of the ray.
-        * ``ray_dir`` is the unit vector of the ray, i.e. the direction of the ray.
-        * ``detect_geom`` is the detector geometry, so an instance of the gantry class.
-        * ``angle_index`` is the index of the angle that the gantry is at.
+        :param ray_start: is the starting position of the ray.
+        :param ray_dir: is the unit vector of the ray, i.e. the direction of the ray.
+        :param detect_geom: is the detector geometry, so an instance of the gantry class.
+        :param angle_index: is the index of the angle that the gantry is at.
 
         **Returns**: :code:`[pixel, hit]`.
 

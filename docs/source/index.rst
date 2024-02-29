@@ -26,7 +26,11 @@ Welcome to DECTSim's documentation!
    dev_guide/voxel_shapes.rst
    dev_guide/voxel_array.rst
    dev_guide/ray_tracing.rst
-   dev_guide/*
+   dev_guide/sensors.rst
+   dev_guide/sources.rst
+   dev_guide/util.rst
+   dev_guide/misc.rst
+   dev_guide/contributing.rst
 
 
 

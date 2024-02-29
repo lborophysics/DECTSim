@@ -33,7 +33,7 @@ Abstract Methods
 
     This method is meant to be overridden by the child classes. It should return two lists, one with the energies of the xrays and the other with the intensities of the xrays.
 
-    * ``range``: A Nx2-element vector with N rows of [min_energy, max_energy).
+    :param range: A Nx2-element vector with N rows of [min_energy, max_energy).
 
     **Returns**: :code:`[energies, intensities]`.
 
@@ -70,7 +70,7 @@ Methods
 
     This method returns the energy and intensity of the xray if it is within the range. If it is not, it returns NaNs.
 
-    * ``range``: A Nx2-element vector with N rows of [min_energy, max_energy).
+    :param range: A Nx2-element vector with N rows of [min_energy, max_energy).
 
     **Returns**: :code:`[energies, intensities]`.
 

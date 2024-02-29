@@ -75,9 +75,9 @@ Methods
 
 .. method:: sample_source(self, source)
 
-    This method samples a :class:`source` object and returns the energies and intensities of the photons sampled from the source. The parameters are as follows:
+    This method samples a :class:`source` object and returns the energies and intensities of the photons sampled from the source.
 
-    * ``source``: A :class:`source` object representing the x-ray source.
+    :param source: A :class:`source` object representing the x-ray source.
 
     **Returns**: :code:`[energies, intensities]`.
 
@@ -85,9 +85,9 @@ Methods
 
 .. method:: get_energy_bin(self, energy)
 
-    This method takes in an energy in keV and returns the index of the energy bin that the energy falls into. The parameters are as follows:
+    This method takes in an energy in keV and returns the index of the energy bin that the energy falls into.
 
-    * ``energy``: A single value representing the energy in keV.
+    :param energy: A single value representing the energy in keV.
 
     **Returns**: :code:`ebin`.
 
@@ -95,9 +95,9 @@ Methods
 
 .. method:: get_signal(self, array)
 
-    This method takes in an array of dimensions [energy_bins, ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in each energy bin, and returns the signal from the sensor using the :meth:`detector_response` method. The parameters are as follows:
+    This method takes in an array of dimensions [energy_bins, ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in each energy bin, and returns the signal from the sensor using the :meth:`detector_response` method.
 
-    * ``array``: An array of dimensions [energy_bins, ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in each energy bin.
+    :param array: An array of dimensions [energy_bins, ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in each energy bin.
 
     **Returns**: :code:`signal`.
 
