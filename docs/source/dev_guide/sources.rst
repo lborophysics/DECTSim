@@ -35,9 +35,7 @@ Abstract Methods
 
     :param range: A Nx2-element vector with N rows of [min_energy, max_energy).
 
-    **Returns**: :code:`[energies, intensities]`.
-
-    The energies and intensities are lists of length N. If the source is not able to generate the energies in the range, it should return ``NaNs`` in place.
+    :returns: :code:`[energies, intensities]` lists of length N. If the source is not able to generate the energies in the range, it should return ``NaNs`` in place.
     
 single_energy
 -------------
@@ -72,7 +70,5 @@ Methods
 
     :param range: A Nx2-element vector with N rows of [min_energy, max_energy).
 
-    **Returns**: :code:`[energies, intensities]`.
-
-    The energies and intensities are lists of length N. If the single energy is not within the range, ``NaNs`` are returned.
+    :returns: :code:`[energies, intensities]` are lists of length N. If the single energy is not within the range, ``NaNs`` are returned.
 

@@ -55,9 +55,7 @@ Methods
 
     :param nrjs: A list of energies in keV.
   
-    **Returns**: :code:`mu_dict`.
-
-    The return value is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at that energy.
+    :returns: :code:`mu_dict` is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at that energy.
 
 .. method:: precalculate_mfps(self, nrjs)
 
@@ -65,9 +63,7 @@ Methods
 
     :param nrjs: A list of energies in keV.
 
-    **Returns**: :code:`mfp_dict`.
-
-    The return value is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at that energy.
+    :returns: :code:`mfp_dict` is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at that energy.
 
 .. method:: get_mu_arr(self, nrj)
 
@@ -75,9 +71,7 @@ Methods
 
     :param nrj: The energy in keV.
 
-    **Returns**: :code:`mu_arr`.
-
-    The return value is a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at the energy ``nrj``.
+    :returns: :code:`mu_arr` is a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
 .. method:: get_mfp_arr(self, nrj)
 
@@ -85,9 +79,7 @@ Methods
 
     :param nrj: The energy in keV.
 
-    **Returns**: :code:`mfp_arr`.
-
-    The return value is a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at the energy ``nrj``.
+    returns :code:`mfp_arr` is a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
 .. method:: get_saved_mu(self, indices, dict)
 
@@ -96,9 +88,7 @@ Methods
     :param indices: A 3xN list of indices.
     :param dict: A list of linear attenuation coefficients, as returned by a single energy from the dictionary returned by :meth:`precalculate_mus`.
   
-    **Returns**: :code:`mus`.
-
-    The return value is a 1D array of the linear attenuation coefficients at the indices in ``indices``. It is the same length as the number of indices in ``indices``.
+    :returns: :code:`mus` is a 1D array of the linear attenuation coefficients at the indices in ``indices``. It is the same length as the number of indices in ``indices``.
 
 .. method:: get_saved_mfp(self, indices, dict)
 
@@ -107,9 +97,7 @@ Methods
     :param indices: A 3xN list of indices.
     :param dict: A list of Compton mean free paths, as returned by a single energy from the dictionary returned by :meth:`precalculate_mfps`.
   
-    **Returns**: :code:`mfps`.
-
-    The return value is a 1D array of the Compton mean free paths at the indices in ``indices``. It is the same length as the number of indices in ``indices``.
+    :returns: :code:`mfps` is a 1D array of the Compton mean free paths at the indices in ``indices``. It is the same length as the number of indices in ``indices``.
 
 
     

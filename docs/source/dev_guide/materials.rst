@@ -13,9 +13,7 @@ Functions
 
     Given an array of atomic numbers and a photon energy, this function returns the compton cross section for each element in the array. The method is taken from `Geant4 Compton Scattering <https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html>`_, has been translated to MATLAB, and extended to use arrays of atomic numbers.
 
-    **Returns**: :code:`cs`
-
-    The return value, ``cs``, is an array of the same size as ``Z``, containing the compton cross section for each element in the array.
+    :returns: ``cs``, an array of the same size as ``Z``, containing the compton cross section for each element in the array.
 
 .. function:: photon_attenuation(Z, fracs, density, nrj)
 
@@ -26,9 +24,7 @@ Functions
 
     The arrays ``Z`` and ``fracs`` must be the same size. This function is based on `PhotonAttenuation <https://uk.mathworks.com/matlabcentral/fileexchange/12092-photonattenuation>`_ package available on the MATLAB File Exchange, but has been heavily reduced in size and simplified for the purposes of this code. The function is not directly used in the code, but is converted to a MEX file using `MATLAB Coder <https://uk.mathworks.com/products/matlab-coder.html>`_, which is then used in the code.
 
-    **Returns**: :code:`att`
-
-    The return value, `att`, is the linear attenuation coefficient in :math:`cm^{-1}` for the material at the given energy.
+    :returns: ``att``, is the linear attenuation coefficient in :math:`cm^{-1}` for the material at the given energy.
 
 .. function:: get_photon_attenuation(Z)
 
@@ -36,9 +32,7 @@ Functions
 
     Given an array of atomic numbers, this function returns a gridded interpolant of the attenuation coefficients for the elements in the array. This function is significantly faster than the :code:`photon_attenuation` function, when run in MATLAB, as it only needs to be run once for each element in the array. However, the gridded interpolant is a large object and so is not suitable for use in the MEX file, if parallel processing is to be used.
 
-    **Returns**: :code:`att_fun`
-
-    The return value, `att_fun`, is a gridded interpolant of the attenuation coefficients for the elements in the array. This gridded interpolant returns the mass attenuation coefficients for the elements when given a photon energy. These values can then be converted to linear attenuation coefficients using the atomic fractions and density of the material.
+    :returns: ``att_fun``, is a gridded interpolant of the attenuation coefficients for the elements in the array. This gridded interpolant returns the mass attenuation coefficients for the elements when given a photon energy. These values can then be converted to linear attenuation coefficients using the atomic fractions and density of the material.
 
 mat_consts
 ----------

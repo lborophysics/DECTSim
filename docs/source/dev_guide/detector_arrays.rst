@@ -40,9 +40,7 @@ Abstract Methods
         :param angle_index: is the index of the angle that the gantry is at.
         :param ray_per_pixel: is the number of rays that will be cast per pixel (default 1 - Not implemented yet). The purpose of this will be to include anti-aliasing techniques in the future, to improve the quality of the simulation.
 
-        **Returns**: :code:`ray_generator`.
-        
-        The return value is a function that takes in the pixel in the y and z directions and returns `ray_start` (start point), `ray_dir` (direction) and `ray_length`. This is used to calculate the ray paths for each projection.
+        :returns: ``ray_generator``, a function that takes in the pixel in the y and z directions and returns ``ray_start`` (start point), ``ray_dir`` (direction) and ``ray_length``. This is used to calculate the ray paths for each projection.
 
 .. function:: hit_pixel(self, ray_start, ray_dir, detect_geom, angle_index)
 
@@ -53,9 +51,7 @@ Abstract Methods
         :param detect_geom: is the detector geometry, so an instance of the gantry class.
         :param angle_index: is the index of the angle that the gantry is at.
 
-        **Returns**: :code:`[pixel, hit]`.
-
-        The return value is the pixel that was hit (a 1x2 array of the pixel index) and hit (a boolean value of whether the ray intersects the pixel at all).
+        :returns: ``[pixel, hit]``, where pixel is the pixel that was hit (a 1x2 array of the pixel index) and hit is a boolean value of whether the ray intersects the pixel at all.
 
 The available classes for the detector pixel arrays are:
 
