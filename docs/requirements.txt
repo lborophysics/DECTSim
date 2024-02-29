@@ -1,0 +1,2 @@
+myst_parser==2.0.0
+sphinxcontrib-matlabdomain==0.21.5
