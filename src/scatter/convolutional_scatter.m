@@ -7,7 +7,11 @@ function scatter = convolutional_scatter(xray_source, photon_count, detector, sf
     %   photon_count: 4D array of photon counts (num_bins, npy, npz, num_rotations)
     %   detector: detector object (see compute_sinogram.m for details)
     %   sfactor: scatter factor
-    % Check the inputs
+    % 
+    % Returns:
+    %   scatter: 4D array of scatter (num_bins, npy, npz, num_rotations)
+
+    % Note: detector might not be necessary, could instead just pass the air scan.
     arguments
         xray_source  {mustBeA(xray_source, 'source')}
         photon_count (:, :, :, :) double
@@ -34,3 +38,8 @@ function scatter = convolutional_scatter(xray_source, photon_count, detector, sf
     end
 end
 
+%{
+    Taken from https://github.com/xcist/main/blob/edaf763b4fcc477feffc1179765debdc36e84831/gecatsim/pyfiles/Scatter_ConvolutionModel.py
+    The method and scatter kernel has the following license:
+    Copyright 2020, General Electric Company. All rights reserved. See: XCAT_LICENSE.txt
+%}

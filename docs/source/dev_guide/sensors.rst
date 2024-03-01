@@ -3,7 +3,7 @@ Sensors
 
 To convert the photon intensity to a signal, sensors are required. 
 
-sensor
+Sensor
 ------
 
 Purpose
@@ -41,9 +41,12 @@ Functions
 
     This function returns a sensor object. The parameters are as follows:
 
-    * ``energy_range``: A 2x1 array representing the range of energies the sensor can detect in keV.
-    * ``num_bins``: The number of energy bins the sensor has.
-    * ``num_samples``: The number of energy samples to take in each energy bin of the sensor. (default = 1)
+    :param energy_range: An array representing the range of energies the sensor can detect in keV.
+    :param num_bins: The number of energy bins the sensor has.
+    :param num_samples: The number of energy samples to take in each energy bin of the sensor. (default = 1)
+    :type energy_range: 2x1 double
+    :type num_bins: double
+    :type num_samples: double
 
 
 Abstract Methods
@@ -53,22 +56,21 @@ Abstract Methods
 
     This method is meant to be overridden by the child class. It should take in an index referring to the energy bin and an array of photon counts in that energy bin. It should then return the signal from the sensor in response to the counts in the energy bin. The parameters are as follows:
 
-    * ``energy_bin``: A single value representing the index of the energy bin.
-    * ``count_array``: An array of dimensions [ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in the energy bin.
+    :param energy_bin: A single value representing the index of the energy bin.
+    :param count_array: An array of dimensions [ny_pix, nz_pix, nrotation] representing the number of photons in each pixel and rotation in the energy bin.
+    :type energy_bin: double
+    :type count_array: MxNxP double
 
-    **Returns**: :code:`signal`.
-
-    The return value should be of the same shape as ``count_array``, and should represent the signal from the sensor in response to the counts in the energy bin.
+    :returns: :code:`signal` should be of the same shape as ``count_array``, and should represent the signal from the sensor in response to the counts in the energy bin.
 
 .. method:: get_image(self, signal)
 
     This method is meant to be overridden by the child class. It should take in the signal from the sensor and return an image from the signal. The parameters are as follows:
 
-    * ``signal``: An array of dimensions [ny_pix, z_pix, rotation] representing the signal from the sensor.
+    :param signal: An array of dimensions [ny_pix, nz_pix, nrotation] representing the signal from the sensor.
+    :type signal: MxNxP double
 
-    **Returns**: :code:`image`.
-
-    The return value should be of the same shape as ``signal``, and should represent the image from the sensor in response to the signal.
+    :returns: :code:`image` should be of the same shape as ``signal``, and should represent the image from the sensor in response to the signal.
 
 Methods
 ~~~~~~~
@@ -77,34 +79,31 @@ Methods
 
     This method samples a :class:`source` object and returns the energies and intensities of the photons sampled from the source.
 
-    :param source: A :class:`source` object representing the x-ray source.
+    :param source: The xray source to sample.
+    :type source: source
 
-    **Returns**: :code:`[energies, intensities]`.
-
-    The return values are two arrays of length [1, num_bins*num_samples], representing the energies and intensities of the photons sampled from the source. 
+    :returns: :code:`[energies, intensities]` arrays of length [1, num_bins*num_samples], representing the energies and intensities of the photons sampled from the source. 
 
 .. method:: get_energy_bin(self, energy)
 
     This method takes in an energy in keV and returns the index of the energy bin that the energy falls into.
 
     :param energy: A single value representing the energy in keV.
+    :type energy: double
 
-    **Returns**: :code:`ebin`.
-
-    The return value is a single value representing the index of the energy bin that the energy falls into.
+    :returns: :code:`ebin` is a single value representing the index of the energy bin that the energy falls into.
 
 .. method:: get_signal(self, array)
 
-    This method takes in an array of dimensions [energy_bins, ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in each energy bin, and returns the signal from the sensor using the :meth:`detector_response` method.
+    This method takes in an array of dimensions [energy_bins, ny_pix, nz_pix, nrotation] representing the number of photons in each pixel and rotation in each energy bin, and returns the signal from the sensor using the :meth:`detector_response` method.
 
-    :param array: An array of dimensions [energy_bins, ny_pix, z_pix, rotation] representing the number of photons in each pixel and rotation in each energy bin.
+    :param array: An array of dimensions [energy_bins, ny_pix, nz_pix, nrotation] representing the number of photons in each pixel and rotation in each energy bin.
+    :type array: MxNxPxQ double
 
-    **Returns**: :code:`signal`.
-
-    The return value will be [ny_pix, z_pix, rotation], and will represent the signal from the sensor in response to the counts in each energy bin.
+    :returns: :code:`signal` will be [ny_pix, nz_pix, nrotation], and will represent the signal from the sensor in response to the counts in each energy bin.
 
 
-ideal_sensor
+Ideal Sensor
 ------------
 
 Purpose
@@ -121,5 +120,5 @@ Methods
 
 .. method:: ideal_sensor.get_image(self, signal)
     
-        This method takes in the final signal and returns :math:`-\ln{S}`, where ``S`` is the signal. See the parameters and return values from :meth:`get_image`.
+    This method takes in the final signal and returns :math:`-\ln{S}`, where ``S`` is the signal. See the parameters and return values from :meth:`get_image`.
 

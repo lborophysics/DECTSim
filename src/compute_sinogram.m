@@ -4,10 +4,7 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     %
     % Parameters:
     %  - xray_source: the source object, this returns a sample of the source spectrum
-    %            giving energy and intensities of the photons. Made up of the following:
-    %            - spectrum: the energy spectrum of the source
-    %            - collimation: adjusts the source spectrum to account for the collimation
-    %            - filter: adjusts the source spectrum to account for the filter
+    %            giving energy and intensities of the photons. 
     %  - phantom: the phantom object, this allows you to determine the following:
     %             - How the world is divided into voxels, for ray tracing
     %             - What material is in each voxel
@@ -123,21 +120,17 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     
     % Calculate the scatter signal
     if scatter_type == 1
-        scatter_signal = 0;
+        scatter_count = 0;
     elseif scatter_type == 2 % Fast scatter
         scatter_count = ...
             convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
-        scatter_signal = sensor_unit.get_signal(scatter_count);
     else
         scatter_count = ...
             monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
-        scatter_signal = sensor_unit.get_signal(scatter_count);
     end
-    % Convert the photon count to a signal
-    primary_signal = sensor_unit.get_signal(photon_count);
+    % Convert the photon count (rays + scatter) to a signal
+    signal = sensor_unit.get_signal(photon_count + scatter_count);
 
-    % The following line is equivalent to image + scatter, 
-    % but is there as in the future we likely will adapt the 
-    % detector response.
-    sinogram = sensor_unit.get_image(primary_signal + scatter_signal);
+    % Convert the signal to a sinogram
+    sinogram = sensor_unit.get_image(signal);
 end

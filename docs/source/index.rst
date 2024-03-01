@@ -30,6 +30,9 @@ Welcome to DECTSim's documentation!
    dev_guide/sources.rst
    dev_guide/util.rst
    dev_guide/misc.rst
+   dev_guide/sinogram.rst
+   dev_guide/scatter.rst
+   
    dev_guide/contributing.rst
 
 
