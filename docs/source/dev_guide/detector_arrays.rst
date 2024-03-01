@@ -3,7 +3,7 @@ Detector Pixel Arrays
 
 The detector pixel arrays are used to store the data about the shape of the pixel array and position of the source. This is used to calculate the ray paths for each projection, and which pixel that a ray may intersect.
 
-detector_array
+Detector Array
 --------------
 
 Purpose
@@ -37,8 +37,11 @@ Abstract Methods
         This method is used to calculate the ray paths for each projection. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
         :param detect_geom: is the detector geometry, so an instance of the gantry class.
+        :type detect_geom: gantry
         :param angle_index: is the index of the angle that the gantry is at.
+        :type angle_index: double
         :param ray_per_pixel: is the number of rays that will be cast per pixel (default 1 - Not implemented yet). The purpose of this will be to include anti-aliasing techniques in the future, to improve the quality of the simulation.
+        :type ray_per_pixel: double
 
         :returns: ``ray_generator``, a function that takes in the pixel in the y and z directions and returns ``ray_start`` (start point), ``ray_dir`` (direction) and ``ray_length``. This is used to calculate the ray paths for each projection.
 
@@ -47,22 +50,34 @@ Abstract Methods
         This method is used to calculate which pixel a ray may intersect. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
         :param ray_start: is the starting position of the ray.
+        :type ray_start: 3x1 double
         :param ray_dir: is the unit vector of the ray, i.e. the direction of the ray.
+        :type ray_dir: 3x1 double
         :param detect_geom: is the detector geometry, so an instance of the gantry class.
+        :type detect_geom: gantry
         :param angle_index: is the index of the angle that the gantry is at.
+        :type angle_index: double
 
         :returns: ``[pixel, hit]``, where pixel is the pixel that was hit (a 1x2 array of the pixel index) and hit is a boolean value of whether the ray intersects the pixel at all.
 
 The available classes for the detector pixel arrays are:
 
 
-flat_array
--------------
+Flat Array
+----------
 
 Purpose
 ~~~~~~~
 
 The flat_array class is a subclass of the class :class:`detector_array`. This class is also an abstract class, and so cannot be called directly. It adds a single method to the :class:`detector_array` class, which is the method :meth:`hit_pixel`, which is consistent across all flat detector arrays.
+
+Functions
+~~~~~~~~~
+
+.. function:: flat_array(pixel_dims, n_pixels)
+
+        Constructor for the flat_array class. Identical to :class:`detector_array`
+
 
 Methods
 ~~~~~~~
@@ -71,7 +86,7 @@ Methods
 
     This method calculates the intersected pixel for a flat detector panel, therefore, could be generalised for any future detector panels that are flat, but do not have the same source.
 
-parallel_detector
+Parallel Detector
 -----------------
 
 Purpose
@@ -79,6 +94,12 @@ Purpose
 
 The parallel_detector class is a subclass of the class :class:`flat_array`. The geometry of this is a flat detector panel, with the source emmitting rays directly above each pixel, landing in the centre of each pixel. This results in many parallel rays being cast for each projection.
 
+Functions
+~~~~~~~~~
+
+.. function:: parallel_detector(pixel_dims, n_pixels)
+
+        Constructor for the parallel_detector class. Identical to :class:`detector_array`
 
 Methods
 ~~~~~~~
@@ -93,13 +114,20 @@ Potential Future Changes
 The ``ray_per_pixel`` parameter in the :meth:`ray_at_angle` is not implemented yet.
 
 
-curved_detector
+Curved Detector
 ---------------
 
 Purpose
 ~~~~~~~
 
 The curved_detector class is a subclass of the class :class:`detector_array`. The geometry of this is a cylindrical detector panel, with the source emmitting from a single point, and the rays landing on the detector panel at varying distances from the source. 
+
+Functions
+~~~~~~~~~
+
+.. function:: curved_detector(pixel_dims, n_pixels)
+
+        Constructor for the curved_detector class. Identical to :class:`detector_array`
 
 Methods
 ~~~~~~~

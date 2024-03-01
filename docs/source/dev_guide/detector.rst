@@ -11,6 +11,7 @@ The only purpose of :class:`detector` is to collect all the objects that are req
 Properties
 ----------
 .. attribute:: gantry
+    :noindex:
     
     The gantry object that the detector is attached to.
 

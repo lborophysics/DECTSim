@@ -3,8 +3,8 @@ Sources
 
 To generate the intensities and energies of the xrays, a source needs to be instantiated.
 
-source
-------
+Source Class
+------------
 
 Purpose
 ~~~~~~~
@@ -33,12 +33,13 @@ Abstract Methods
 
     This method is meant to be overridden by the child classes. It should return two lists, one with the energies of the xrays and the other with the intensities of the xrays.
 
-    :param range: A Nx2-element vector with N rows of [min_energy, max_energy).
+    :param range: A vector with N rows of [min_energy, max_energy) indicating the range of energies that the source should generate.
+    :type range: Nx2 double
 
     :returns: :code:`[energies, intensities]` lists of length N. If the source is not able to generate the energies in the range, it should return ``NaNs`` in place.
     
-single_energy
--------------
+Single Energy Source
+--------------------
 
 Purpose
 ~~~~~~~
@@ -68,7 +69,8 @@ Methods
 
     This method returns the energy and intensity of the xray if it is within the range. If it is not, it returns NaNs.
 
-    :param range: A Nx2-element vector with N rows of [min_energy, max_energy).
+    :param range: A vector with N rows of [min_energy, max_energy) indicating the range of energies that the source should generate.
+    :type range: Nx2 double
 
     :returns: :code:`[energies, intensities]` are lists of length N. If the single energy is not within the range, ``NaNs`` are returned.
 

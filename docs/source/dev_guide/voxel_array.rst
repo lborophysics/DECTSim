@@ -46,6 +46,12 @@ Functions
     :param voxel_objs: A cell array of all the voxel objects in the array (see :doc:`voxel_shapes`).
     :param world_material: The material of the world in the array that is not occupied by any voxel objects, defaults to air.
 
+    :type centre: 3x1 double
+    :type object_dims: 3x1 double
+    :type voxel_size: double
+    :type voxel_objs: :class:`voxel_object` cell array
+    :type world_material: material_attenuation
+
 Methods
 -------
 
@@ -54,6 +60,7 @@ Methods
     Pre-calculates the linear attenuation coefficient for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
 
     :param nrjs: A list of energies in keV.
+    :type nrjs: 1xN double
   
     :returns: :code:`mu_dict` is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at that energy.
 
@@ -62,6 +69,7 @@ Methods
     Pre-calculates the Compton mean free path for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
 
     :param nrjs: A list of energies in keV.
+    :type nrjs: 1xN double
 
     :returns: :code:`mfp_dict` is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at that energy.
 
@@ -70,6 +78,7 @@ Methods
     Obtain all the linear attenuation coefficients for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
     :param nrj: The energy in keV.
+    :type nrj: double
 
     :returns: :code:`mu_arr` is a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
@@ -78,6 +87,7 @@ Methods
     Obtain all the Compton mean free paths for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
     :param nrj: The energy in keV.
+    :type nrj: double
 
     returns :code:`mfp_arr` is a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
@@ -85,8 +95,10 @@ Methods
 
     Obtain the linear attenuation coefficients at the indices in ``indices`` from the list of linear attenuation coefficients in ``dict``.
 
-    :param indices: A 3xN list of indices.
+    :param indices: List of indices of voxels to obtain the linear attenuation coefficients for.
     :param dict: A list of linear attenuation coefficients, as returned by a single energy from the dictionary returned by :meth:`precalculate_mus`.
+    :type indices: 3xN double
+    :type dict: double
   
     :returns: :code:`mus` is a 1D array of the linear attenuation coefficients at the indices in ``indices``. It is the same length as the number of indices in ``indices``.
 
@@ -94,8 +106,10 @@ Methods
 
     Obtain the Compton mean free paths at the indices in ``indices`` from the list of Compton mean free paths in ``dict``.
 
-    :param indices: A 3xN list of indices.
+    :param indices: List of indices of voxels to obtain the Compton mean free paths for.
     :param dict: A list of Compton mean free paths, as returned by a single energy from the dictionary returned by :meth:`precalculate_mfps`.
+    :type indices: 3xN double
+    :type dict: double
   
     :returns: :code:`mfps` is a 1D array of the Compton mean free paths at the indices in ``indices``. It is the same length as the number of indices in ``indices``.
 

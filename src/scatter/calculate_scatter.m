@@ -27,7 +27,7 @@ function [ray_start, ray_dir, mu, nrj, scattered] = calculate_scatter (n_mfp, ls
 
        % Get the new direction and energy of the ray, and update the start point
        ray_start = ray_start + (sum(ls(1:i)) + ray_nmfp(i) * mfps(i)) .* ray_dir;
-       [ray_dir, nrj] = random_scatter(ray_dir, nrj);
+       [ray_dir, nrj] = compton_scatter(ray_dir, nrj);
        
        % Create a new ray with the new direction, energy, and start point
        [ls, idxs] = ray_tracing(ray_start, ray_dir * ray_len, ...
