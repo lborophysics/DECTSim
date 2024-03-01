@@ -4,6 +4,7 @@ Computing the Sinogram
 To generate the sinogram of the phantom, there is a single function to call.
 
 .. function:: compute_sinogram(xray_source, phantom, detector_obj, scatter, sfactor)
+    
     Compute the sinogram of the phantom, given the source and detector, and optionally, the scatter model.
 
     :param xray_source: the source object, this returns a sample of the source spectrum
