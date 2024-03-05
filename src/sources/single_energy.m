@@ -11,16 +11,23 @@ classdef single_energy < source
             self.energy = energy;
         end
 
-        function [energies, intensities] = get_energies(self, range)
+        function energies = get_energies(self, range)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
                 self
                 range (:,2) double
             end
             energies = zeros(1, size(range,1)) + self.energy; 
+        end 
+        
+        function intensities = get_fluences(self, range)
+            % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
+            arguments
+                self 
+                range (:,2) double
+            end
             intensities = ones(1, size(range,1));
-            energies(self.energy < range(:,1) | self.energy >= range(:,2)) = NaN;
-            intensities(self.energy < range(:,1) | self.energy >= range(:,2)) = NaN;
+            intensities(self.energy < range(:,1) | self.energy >= range(:,2)) = 0;
         end 
     end
 

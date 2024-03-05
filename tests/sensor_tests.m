@@ -53,23 +53,18 @@ classdef sensor_tests < matlab.unittest.TestCase
             end
             tc.verifyEqual(is.get_signal(image), signal, 'RelTol', 1e-15)
 
-            s1 = single_energy(50);
-            tc.verifyEqual(s1.energy, 50);
             is = ideal_sensor([0, 60], 6);
-            expE = [NaN; NaN; NaN; NaN; NaN; 50];
-            expI = [NaN; NaN; NaN; NaN; NaN; 1];
-            [e, i] = is.sample_source(s1);
-            tc.verifyEqual(e, expE);
-            tc.verifyEqual(i, expI);
+            exp_ranges = [0, 10; 10, 20; 20, 30; 30, 40; 40, 50; 50, 60];
+            act_ranges = is.get_range();
+            tc.verifyEqual(act_ranges, exp_ranges);
 
-            s2 = single_energy(21);
-            tc.verifyEqual(s2.energy, 21);
-            is = ideal_sensor([0, 56], 8);
-            expE = [NaN; NaN; NaN; 21; NaN; NaN; NaN; NaN];
-            expI = [NaN; NaN; NaN; 1; NaN; NaN; NaN; NaN];
-            [e, i] = is.sample_source(s2);
-            tc.verifyEqual(e, expE);
-            tc.verifyEqual(i, expI);
+            is = ideal_sensor([0, 72], 6, 2);
+            exp_ranges = [
+                0 , 6 ; 6 , 12; 12, 18; 18, 24; 24, 30; 30, 36;
+                36, 42; 42, 48; 48, 54; 54, 60; 60, 66; 66, 72
+                ];
+            act_ranges = is.get_range();
+            tc.verifyEqual(act_ranges, exp_ranges);
         end
 
 
