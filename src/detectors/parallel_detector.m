@@ -10,7 +10,7 @@ classdef parallel_detector < flat_array
                 angle_index    double
                 ray_per_pixel  int32             = 1
             end
-            assert(nargin<4, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
+            assert(ray_per_pixel==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
 
             % Get the detector geometry
             rot_mat       = detect_geom.get_rot_mat(angle_index);
