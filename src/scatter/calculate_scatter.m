@@ -1,8 +1,7 @@
-function [ray_start, ray_dir, mu, nrj, scattered] = calculate_scatter (n_mfp, ls, idxs, ray_start,...
+function [ray_start, ray_dir, mu, nrj, num_scatter] = calculate_scatter (n_mfp, ls, idxs, ray_start,...
     ray_dir, ray_len, nrj, prev_mu, num_scatter, mu_arr, mfp_arr, voxels, ray_tracing)
 
    % If there are no intersections, exit
-   scattered = false;
    if isempty(ls); mu = prev_mu; return; end
    
    if  num_scatter == 0; mu = 0;
@@ -37,9 +36,8 @@ function [ray_start, ray_dir, mu, nrj, scattered] = calculate_scatter (n_mfp, ls
        mfp_arr = voxels.get_mfp_arr(nrj);
        
        % Now repeat the process for the new ray
-       [ray_start, ray_dir, mu, nrj, ~] = calculate_scatter(-log(rand), ls, idxs, ...
+       [ray_start, ray_dir, mu, nrj, num_scatter] = calculate_scatter(-log(rand), ls, idxs, ...
            ray_start, ray_dir, ray_len, nrj, mu, num_scatter + 1, mu_arr, mfp_arr, voxels, ray_tracing);
-       scattered = true;
    else
        mu = mu + sum(ls .* voxels.get_saved_mu(idxs, mu_arr));  % This case only occurs if the ray does not scatter
    end

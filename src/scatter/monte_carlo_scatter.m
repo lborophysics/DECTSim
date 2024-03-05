@@ -36,7 +36,12 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
     d2detector = gantry.dist_to_detector;
         
     npy = d_array.n_pixels(1); 
-    npz = d_array.n_pixels(2); 
+    npz = d_array.n_pixels(2);
+    pix_size = prod(d_array.pixel_dims);
+
+    num_bins = sensor_unit.num_bins;
+    num_esamples = sensor_unit.num_samples;
+    sensor_range = sensor_unit.get_range();
     
     vox_init = voxels.array_position;
     vox_dims = voxels.dimensions;
@@ -44,15 +49,18 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
     vox_last = vox_init + (vox_nplanes - 1) .* vox_dims;
 
 
-    % Retrieve the energies and intensities of the source, then precalculate the
-    % mus of the voxels with the energies
-    [energy_list, intensity_list] = sensor_unit.sample_source(xray_source);
-    
-    energy_list = rmmissing(energy_list(:));
-    intensity_list = rmmissing(intensity_list(:));
+    % We use the sensor unit to sample the source so then we can correctly index 
+    % the sinogram (for speed).
+    energy_list = xray_source.get_energies(sensor_range);
 
-    mu_dict = voxels.precalculate_mus(energy_list);
-    mfp_dict = voxels.precalculate_mfps(energy_list);
+    % Now the fluences
+    fluences = xray_source.get_fluences(sensor_range);
+
+    mean_energy = sum(energy_list .* fluences) / sum(fluences);
+    % mu_dict = voxels.precalculate_mus(energy_list);
+    % mfp_dict = voxels.precalculate_mfps(energy_list);
+    mu_dict  = voxels.get_mu_arr(mean_energy );
+    mfp_dict = voxels.get_mfp_arr(mean_energy);
 
 
     % Check that the voxels are entirely within the detector
@@ -62,24 +70,28 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
         'Phantom is not entirely within the detector');
 
 
-    scatter_count = zeros(sensor_unit.num_bins, npy, npz, num_rotations);
-    for k = 1:num_rotations
+    scatter_count = zeros(num_bins, npy, npz, num_rotations);
+    for angle = 1:num_rotations
         % Do the linear indexing of scatter
-        ray_generator = d_array.ray_at_angle(gantry, k);
+        ray_generator = d_array.ray_at_angle(gantry, angle);
         ray_starts = zeros(3, npy*npz);
         ray_dirs = zeros(3, npy*npz);
+        intensity_list = zeros(num_bins*num_esamples, npy, npz);
+        
         for z_pix = 1:npz
             for y_pix = 1:npy
                 [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
                 ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
                 ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir * ray_length;
+                intensity_list(:, y_pix, z_pix) = ...
+                    fluences .* pix_size / (ray_length^2)./sfactor;
             end
         end
         [ray_lens, ray_idxs] = ray_tracing_many(ray_starts, ray_dirs, ...
             vox_init, vox_dims, vox_nplanes);
 
         scatter_idxs = zeros(npy, npz, sfactor, 2); 
-        scatter_vals = NaN  (npy, npz, sfactor);
+        scatter_vals = zeros(npy, npz, sfactor);
         energies     = zeros(npy, npz, sfactor);    
         for z_pix = 1:npz
             for y_pix = 1:npy
@@ -88,33 +100,39 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
                 cached_calc_mu = @(n_mfp, nrj, mu_arr, mfp_arr) ...
                     calculate_scatter(n_mfp, ls, idxs, ray_start, ray_dir, ...
                     ray_length, nrj, NaN, 0, mu_arr, mfp_arr, voxels, ray_tracing);
+                intensity = mean(intensity_list(:, y_pix, z_pix));
+
+                if isempty(ls)
+                    scatter_vals(y_pix, z_pix, :) = intensity;
+                    scatter_idxs(y_pix, z_pix, :, :) = repmat([y_pix, z_pix], sfactor, 1);
+                    energies(y_pix, z_pix, :) = mean_energy;
+                    continue;
+                end
                 
                 for sf = 1:sfactor
-                    for ei = 1:length(energy_list)
-                        nrj = energy_list(ei);
-                        intensity = intensity_list(ei)/sfactor;
-                        mu_arr = mu_dict(num2str(nrj));
-                        mfp_arr = mfp_dict(num2str(nrj));
-                        
-                        [new_ray_start, new_ray_dir, mu, nrj, scattered] =  ...
-                            cached_calc_mu(-log(rand), nrj, mu_arr, mfp_arr);
+                    nrj = mean_energy;
+                    if intensity == 0; continue; end
+                    
+                    [new_ray_start, new_ray_dir, mu, nrj, scattered] =  ...
+                        cached_calc_mu(-log(rand), nrj, mu_dict, mfp_dict);
 
-                        energies(y_pix, z_pix, sf) = nrj;
+                    energies(y_pix, z_pix, sf) = nrj;
 
-                        if scattered
-                            [pixel, hit] = d_array.hit_pixel(...
-                                new_ray_start, new_ray_dir, gantry, k);
-                            scatter_idxs(y_pix, z_pix, sf, :) = pixel;
-                        else
-                            hit = true;
-                            scatter_idxs(y_pix, z_pix, sf, :) = [y_pix, z_pix];
-                        end
-                        
-                        if hit
-                            scatter_vals(y_pix, z_pix, sf) = intensity * exp(-mu);
-                        else
-                            scatter_vals(y_pix, z_pix, sf) = NaN;
-                        end
+                    if scattered
+                        [pixel, hit] = d_array.hit_pixel(...
+                            new_ray_start, new_ray_dir, gantry, angle);
+                        scatter_idxs(y_pix, z_pix, sf, :) = pixel;
+                    else
+                        hit = true;
+                        scatter_idxs(y_pix, z_pix, sf, :) = [y_pix, z_pix];
+                    end
+                    
+                    if hit
+                        scatter_vals(y_pix, z_pix, sf) = ... 
+                        scatter_vals(y_pix, z_pix, sf) + ...
+                        intensity * exp(-mu);
+                    else
+                        scatter_vals(y_pix, z_pix, sf) = NaN;
                     end
                 end
             end
@@ -128,14 +146,13 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
                         y_index = scatter_idxs(y_pix, z_pix, sf, 1);
                         z_index = scatter_idxs(y_pix, z_pix, sf, 2);
                         bin = sensor_unit.get_energy_bin(energies(y_pix, z_pix, sf));
-
-                        scatter_count(bin, y_index, z_index, k) = ...
-                        scatter_count(bin, y_index, z_index, k) + ...
+                        
+                        scatter_count(bin, y_index, z_index, angle) = ...
+                        scatter_count(bin, y_index, z_index, angle) + ...
                             scatter_vals(y_pix, z_pix, sf);
                     end
                 end
             end
-
         end
     end
 end

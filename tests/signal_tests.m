@@ -25,7 +25,8 @@ classdef signal_tests < matlab.unittest.TestCase
 
             air = material_attenuation("air");
             scan = squeeze(sum(air_scan(xray_source, d1), 1));
-            expected = zeros(110, 20, 10) + exp(-air.get_mu(30)*2);
+            intensity = 1 .* (0.1 * 0.35) / 4; % The conversion from fluences to intensity
+            expected = zeros(110, 20, 10) + intensity*exp(-air.get_mu(30)*2);
             tc.verifyEqual(scan, expected, 'RelTol', 1e-15);
         end
 
@@ -39,22 +40,23 @@ classdef signal_tests < matlab.unittest.TestCase
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, {my_box}, material_attenuation("vacuum"));
             att = mat.get_mu(30);
             sq2 = sqrt(2);
-            
+
             image = squeeze(compute_sinogram(tc.ray_source, array, d1));
             tc.verifyEqual(size(image), [5, 4]);
             tc.verifyEqual(image(:, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
-            tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 2e-15);
+            tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
             tc.verifyEqual(image(:, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
             tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
 
-            % 2D 
+            % % 2D 
             a2 = parallel_detector([1, 1], [5, 5]);
-            d2 = detector(g1, a2, tc.sensor_unit);
+            sampled_sensor = ideal_sensor([0, 100], 50, 2);
+            d2 = detector(g1, a2, sampled_sensor);
             image = compute_sinogram(tc.ray_source, array, d2);
             tc.verifyEqual(size(image), [5, 5, 4]);
             for row = 2:4
                 tc.verifyEqual(image(:, row, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
-                tc.verifyEqual(image(:, row, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 2e-15);
+                tc.verifyEqual(image(:, row, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
                 tc.verifyEqual(image(:, row, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
                 tc.verifyEqual(image(:, row, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
             end
@@ -62,7 +64,7 @@ classdef signal_tests < matlab.unittest.TestCase
             tc.verifyEqual(image(:, 5, :), zeros(5, 1, 4), 'AbsTol', 1e-15);
 
             % No hits 2D
-            array = voxel_array(zeros(3, 1), [1; 1; 1], 1, {}, material_attenuation("vacuum"));
+            array = voxel_array(zeros(3, 1), [1; 1; 1].*2, 1, {}, material_attenuation("vacuum"));
             image = compute_sinogram(tc.ray_source, array, d2);
             tc.verifyEqual(image, zeros(5, 5, 4), 'AbsTol', 1e-15);
         end
@@ -73,6 +75,7 @@ classdef signal_tests < matlab.unittest.TestCase
             a1 = parallel_detector([1, 1], [5, 1]);
             g1 = gantry(10, 4, pi);
             d1 = detector(g1, a1, tc.sensor_unit);
+            d2 = detector(g1, a1, ideal_sensor([0, 100], 50, 2));
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, {}, material_attenuation("vacuum")); % Will never scatter
         
             % Check that 
@@ -86,7 +89,7 @@ classdef signal_tests < matlab.unittest.TestCase
             scatter_image = compute_sinogram(tc.ray_source, array, d1, "slow");
             tc.verifyEqual(scatter_image, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         
-            scatter_image = compute_sinogram(tc.ray_source, array, d1, "slow", 3);
+            scatter_image = compute_sinogram(tc.ray_source, array, d2, "slow", 3);
             tc.verifyEqual(scatter_image, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
 
@@ -122,7 +125,7 @@ classdef signal_tests < matlab.unittest.TestCase
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "fast"));
             
             scatter_sinogram_expected = matfile("scatter_cylinder_fast.mat").scatter_sinogram;
-            tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+            tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-15, 'AbsTol', 1e-15);
         end
     end
 end

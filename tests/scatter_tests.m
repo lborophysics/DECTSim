@@ -184,11 +184,10 @@ classdef scatter_tests < matlab.unittest.TestCase
                     end
                     tc.verifyTrue((total_mu - uptoscatter_mu) > -1e-15)
                     
-                    [ls2, idxs2] = ray_trace(nray_start, nray_dir * ray_len, ...
+                    [ls2, ~] = ray_trace(nray_start, nray_dir * ray_len, ...
                         vox_init, vox_dims, vox_nplanes);
                     if ~isempty(ls2)
-                        scattered_mu = sum(ls2 .* bone_array.get_saved_mu(idxs2, mu_arr));
-                        if abs(total_mu - (scattered_mu + uptoscatter_mu)) < 1e-5 % scattered once
+                        if scattered == 1
                             tc.assertEqual(nray_start, ray_start + scatter_length .* ray_dir, 'RelTol', 1e-14, 'AbsTol', 1e-15);
                         end
                     end
