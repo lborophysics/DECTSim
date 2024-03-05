@@ -4,7 +4,7 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     %
     % Parameters:
     %  - xray_source: the source object, this returns a sample of the source spectrum
-    %            giving energy and intensities of the photons. 
+    %            giving energy and fluences of the photons. 
     %  - phantom: the phantom object, this allows you to determine the following:
     %             - How the world is divided into voxels, for ray tracing
     %             - What material is in each voxel
@@ -37,11 +37,6 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     % Determine the scatter model
     scatter_type = find(["none", "fast", "slow"] == scatter);
     
-    % Identify which compiled functions are available to use
-    if ~~exist('ray_trace_mex', 'file'); ray_tracing = @ray_trace_many_mex;
-    else                               ; ray_tracing = @ray_trace_many;
-    end
-    
     % Retrieve sub-objects of all the objects
     sensor_unit = detector_obj.sensor;
     gantry      = detector_obj.gantry;
@@ -54,21 +49,38 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
         
     npy = d_array.n_pixels(1); 
     npz = d_array.n_pixels(2); 
+    pix_size = prod(d_array.pixel_dims);
+    ray_at_angle = @(angle) d_array.ray_at_angle(gantry, angle);
     
     num_bins = sensor_unit.num_bins;
     num_esamples = sensor_unit.num_samples;
+    sensor_range = sensor_unit.get_range();
 
     vox_init = phantom.array_position;
     vox_dims = phantom.dimensions;
     vox_nplanes = phantom.num_planes;
     vox_last = vox_init + (vox_nplanes - 1) .* vox_dims;
-    get_saved_mu = @phantom.get_saved_mu;
 
+    % Identify which compiled functions are available to use
+    if ~~exist('ray_trace_mex', 'file')
+        ray_tracing = @(ray_starts, ray_dirs) ray_trace_many_mex(ray_starts, ray_dirs, ...
+            vox_init, vox_dims, vox_nplanes);
+    else
+        ray_tracing = @(ray_starts, ray_dirs) ray_trace_many    (ray_starts, ray_dirs, ...
+            vox_init, vox_dims, vox_nplanes);
+    end
 
-    % Retrieve the energies and intensities of the source, then precalculate the
-    % mus of the voxels with the energies
-    [energy_list, intensity_list] = sensor_unit.sample_source(xray_source);
-    mu_dict = phantom.precalculate_mus(rmmissing(energy_list(:)));
+    % We use the sensor unit range to sample the source so then we can correctly
+    % index the sinogram (for speed).
+    energies = xray_source.get_energies(sensor_range);
+    energy_list = reshape(energies, num_esamples, num_bins)';
+
+    % Now the fluences
+    fluences = xray_source.get_fluences(sensor_range);
+    fluences = reshape(fluences, num_esamples, num_bins)';
+
+    % Pre-calculate the mu values for the energy list
+    mu_dict = phantom.precalculate_mus(energy_list);
 
 
     % Check that the voxels are entirely within the detector
@@ -82,37 +94,43 @@ function sinogram = compute_sinogram(xray_source, phantom, detector_obj, scatter
     photon_count = zeros(num_bins, npy, npz, num_rotations);
     for angle = 1:num_rotations 
         % For each rotation, we calculate the image for the source
-        ray_generator = d_array.ray_at_angle(gantry, angle);
+        ray_generator = ray_at_angle(angle);
         ray_starts = zeros(3, npy*npz);
         ray_dirs = zeros(3, npy*npz);
+        intensity_list = zeros(num_bins, num_esamples, npy, npz);
 
         for z_pix = 1:npz
             for y_pix = 1:npy
                 [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
                 ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
                 ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir * ray_length;
+                intensity_list(:, :, y_pix, z_pix) = ...
+                    fluences .* pix_size / (ray_length^2);
             end
         end
         
-        [ray_lens, ray_idxs] = ray_tracing(ray_starts, ray_dirs, ...
-            vox_init, vox_dims, vox_nplanes);
+        [ray_lens, ray_idxs] = ray_tracing(ray_starts, ray_dirs);
         for z_pix = 1:npz
             for y_pix = 1:npy
-                idxs = ray_idxs{(z_pix-1)*npy + y_pix};
                 ls = ray_lens{(z_pix-1)*npy + y_pix};
-                for bin = 1:num_bins % Get the energies for the current bin (No subsampling)
-                    for ei = 1:num_esamples
-                        nrj = energy_list(bin, ei);
-                        if isnan(nrj); continue; end
-
-                        intensity = intensity_list(bin, ei);
-                        if ~isempty(ls)
-                            mu = sum(ls .* get_saved_mu(idxs, mu_dict(num2str(nrj))));
-                        else
-                            mu = 0;
-                        end
-                        photon_count(bin, y_pix, z_pix, angle) = intensity*exp(-mu);
+                if isempty(ls)
+                    photon_count(:, y_pix, z_pix, angle) = ...
+                        sum(intensity_list(:, :, y_pix, z_pix), 2);
+                else
+                    idxs = ray_idxs{(z_pix-1)*npy + y_pix};
+                    obj_idxs = phantom.get_object_idxs(idxs);
+                    
+                    % Get a the length of the ray in each object
+                    obj_lens = zeros(phantom.nobj + 1, 1);
+                    for i = 1:phantom.nobj+1
+                        obj_lens(i) = sum(ls(obj_idxs == i));
                     end
+                    
+                    % Now we calculate the attenuation
+                    mus = sum(mu_dict .* obj_lens, 1);
+                    photons = intensity_list(:, :, y_pix, z_pix) .* ...
+                        reshape(exp(-mus), num_bins, num_esamples); 
+                    photon_count(:, y_pix, z_pix, angle) = sum(photons, 2); % Sum over the sample dimension
                 end
             end
         end
