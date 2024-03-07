@@ -58,7 +58,7 @@ get_saved_mu     = @voxels.get_saved_mu;
 precalculate_mus = @voxels.precalculate_mus;
 
 num_scatters = 100; % Number of scatter rays to sample at each scatter point (will be a parameter later)
-mfp_fraction = 1e-3; % Fraction of the mean free path to sample scatter points
+mfp_fraction = 1e-2/sfactor; % Fraction of the mean free path to sample scatter points
 
 % We use the sensor unit to sample the source so then we can correctly index
 % the sinogram (for speed).
@@ -127,7 +127,7 @@ parfor angle = 1:num_rotations
 
                 % Calculate the probability of scattering at each intersection
                 n_mfps = cumsum(ls ./ mfps);
-                prob_scatter = 1 - exp(-n_mfps);
+                prob_scatter = 1 - exp(-ls ./ mfps);
 
                 % Calculate the number of scatter points to sample
                 num_points = floor(n_mfps(end) ./ mfp_fraction);
@@ -136,10 +136,14 @@ parfor angle = 1:num_rotations
                 % Determine where the scatter points are
                 lis = zeros(1, ray_num_scatters);
                 scatter_points = zeros(3, num_points);
+                probabilities = zeros(1, num_points);
+                prev_scatter = 1;
                 for i = 1:num_points
                     [~, iscatter] = find(n_mfps - i*mfp_fraction > 0, 1);
                     lis((i-1)*num_scatters+1:i*num_scatters) = iscatter;
                     scatter_points(:, i) = ray_start + ray_dir .* sum(ls(1:iscatter));
+                    probabilities(i) = sum(prob_scatter(prev_scatter:iscatter));
+                    prev_scatter = iscatter+1;                    
                 end
 
                 scatter_dirs     = zeros(3, ray_num_scatters);
@@ -167,8 +171,10 @@ parfor angle = 1:num_rotations
 
                 % Remove scatter points that don't hit the detector arrays
                 scatter_starts = repelem(scatter_points, 1, num_scatters);
+                prob_scatter   = repelem(probabilities, 1, num_scatters);
                 ignore = isnan(scatter_energies);
                 scatter_starts  (:, ignore) = [];
+                prob_scatter    (   ignore) = [];
                 scatter_dirs    (:, ignore) = [];
                 hit_pixels      (:, ignore) = [];
                 scatter_energies(   ignore) = [];
@@ -197,7 +203,7 @@ parfor angle = 1:num_rotations
                     % the percentage of rays getting to the detector from the scatter point
                     new_intensity = intensity * ...
                         exp(-sum(mus(1:li) .* ls(1:li))) * ...
-                        (prob_scatter(li) ./ num_scatters) * ...
+                        (prob_scatter(si) ./ num_scatters) * ...
                         exp(-sum(scatter_mus .* scatter_ray_lens{si}));
                     ang_scatter_count(:, hit_pixels(1, si), hit_pixels(2, si)) = ...
                         ang_scatter_count(:, hit_pixels(1, si), hit_pixels(2, si)) + ...
