@@ -62,7 +62,7 @@ vox_nplanes = phantom.num_planes;
 vox_last = vox_init + (vox_nplanes - 1) .* vox_dims;
 
 % Identify which compiled functions are available to use
-if ~~exist('ray_trace_mex', 'file')
+if ~~exist('ray_trace_many_mex', 'file')
     ray_tracing = @(ray_starts, ray_dirs) ray_trace_many_mex(ray_starts, ray_dirs, ...
         vox_init, vox_dims, vox_nplanes);
 else
