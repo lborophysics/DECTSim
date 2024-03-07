@@ -94,6 +94,38 @@ classdef signal_tests < matlab.unittest.TestCase
 
         function test_scatter_image(tc)
             rng(1712345)
+            % THIS IS NOT GREAT - CHANGE 
+            % Voxel array constants
+            vox_arr_center = zeros(3, 1);
+            phantom_radius = 15;% In the x-y plane
+            phantom_width = 15; % In the z direction
+            voxel_size = 1; % 1 cm
+
+            % Create voxel array
+            water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
+            num_materials = 4;
+            rot_mat_pos = rotz(2*pi/num_materials);
+            init_mat_pos = [0; phantom_radius/2; 0];
+            bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("bone"));
+            init_mat_pos = rot_mat_pos * init_mat_pos;
+            blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("fat"));
+            init_mat_pos = rot_mat_pos * init_mat_pos;
+            lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
+            init_mat_pos = rot_mat_pos * init_mat_pos;
+            muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
+
+            voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
+                voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
+
+            dgantry = gantry(105, 45, pi);
+            darray = parallel_detector([0.2 0.1], [450 1]);
+            dsensor = ideal_sensor([0; 100], 100);
+            d = detector(dgantry, darray, dsensor);
+            
+            scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "slow", 1));
+            
+            scatter_sinogram_expected = matfile("scatter_cylinder_slow.mat").scatter_sinogram;
+            tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-15, 'AbsTol', 1e-15);
         end
 
         function test_conv_scatter_image(tc)
