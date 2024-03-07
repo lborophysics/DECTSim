@@ -1,47 +1,39 @@
-function [ndir, nnrj] = compton_scatter(direction, inrj, thetas)
-   % This function simulates the Compton scattering of a photon with
-   % initial energy "inrj" and direction "direction", using the thetas provided
-   % as the scattering angles. The function returns new direction and 
-   % the energy of the scattered particle. 
+function theta = compton_dist(nrjs)
+   % Produces a random sample of Compton scattering angles
+   % The input is the energy of the incident photons
+   % The output is the scattering angle in radians
 
-   % Initialize some constants
-   sin_theta = sin(thetas);
-   cos_theta = cos(thetas);
-   phi = 2 * pi * rand(1, length(thetas));
+   % Source for the algorithm:
+   % https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html
+   % https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/lowenergy/src/G4PenelopeComptonModel.cc   
 
-   change_frame = false;
-   if abs(direction(3)) == max(abs(direction))
-      change_frame = true;
-      direction = roty(pi/2) * direction;
+   num_nrjs = numel(nrjs);
+   cos_theta  = zeros(1, num_nrjs);
+   for j = 1:num_nrjs
+      insuitable = true; % A flag to indicate if the new direction is suitable
+      E_0m = nrjs(j) ./ constants.me_c2; % E_0 in units of m_e*c^2
+      e_0 = 1 ./ (1 + 2*E_0m); 
+      e_02 = e_0*e_0; 
+      a_1 = -log(e_0); 
+      a_2 = a_1 + (1 - e_02) ./ 2;
+      
+      while insuitable
+         if a_1 > a_2 * rand
+            e  = e_0^rand;
+            e2 = e^2;
+         else
+            e2 = e_02 + (1 - e_02) * rand;
+            e  = sqrt(e2);
+         end
+         t = (1 - e) / (E_0m * e);
+         cos_theta(j) = 1 - t;
+         sin2_theta = t * (2 - t);
+         insuitable = 1 - e*sin2_theta/(1 + e2) < rand;
+      end
    end
-
-   ndir = rotateUz(direction, sin_theta, cos_theta, phi);
-   if change_frame; ndir = roty(-pi/2) * ndir; end
-
-   nnrj = ((constants.me_c2 .* inrj) ./ (constants.me_c2 + inrj .* (1 - cos_theta)));
+   % Maintain the shape of the input
+   theta = reshape(acos(cos_theta), size(nrjs));
 end
-
-function u = rotateUz(u, sin_theta, cos_theta, phi)
-    % Sourced from CLHEP:
-    % https://apc.u-paris.fr/~franco/g4doxy4.10/html/_three_vector_8cc_source.html#l00072
-    u1 = u(1); u2 = u(2); u3 = u(3);
-    up = u1*u1 + u2*u2;
-    u = zeros(3, length(phi));
-
-    if up > 0 % Not sure this if statement is necessary
-        up = sqrt(up);
-        px = sin_theta.*cos(phi); 
-        py = sin_theta.*sin(phi);
-        pz = cos_theta;
-        u(1, :) = (u1.*u3.*px - u2.*py)./up + u1.*pz;
-        u(2, :) = (u2.*u3.*px + u1.*py)./up + u2.*pz;
-        u(3, :) = -up.*px + u3.*pz;
-    elseif u3 < 0
-        u(1) = -u(1);
-        u(3) = -u(3);  % phi=0  theta=pi
-    end
-end
-
 
 %{
 Geant4 Software License

@@ -1,7 +1,8 @@
-rng(100);
+rng(200);
 
 % Create source and sensor
-my_source = single_energy(50);
+% my_source = single_energy(50);
+my_source = source_fromfile('spectrum.spk');
 
 % Voxel array constants
 vox_arr_center = zeros(3, 1);
@@ -33,13 +34,13 @@ num_rotations = 180;
 
 dgantry = gantry(dist_to_detector, num_rotations, pi);
 darray = parallel_detector(pixel_size, num_pixels);
-dsensor = ideal_sensor([0; 100], 100);
+dsensor = ideal_sensor([1; 80], 30, 1);
 d = detector(dgantry, darray, dsensor);
 
 tic
 sinogram = squeeze(compute_sinogram(my_source, voxels, d));
 toc
-
+    
 imwrite(mat2gray(sinogram), "sinograph_cylinder.png")
 
 scan_angles = rad2deg(dgantry.scan_angles);

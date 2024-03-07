@@ -320,8 +320,8 @@ elems  = Z(:);
 fracs = fracs ./ sum(fracs); % normalize fractions
 nData = size(mac, 1);
 nelem = length(elems);
-att = 0;
-if nrj < 0.9|| nrj > 300
+att = zeros(1, length(nrj));
+if any(nrj < 0.9) || any(nrj > 300)
     warning('photon_attenuation:wrongEnergy',...
         'photon_attenuation function: energy is outside of the recomended range from 1 KeV to 300 KeV. Results may be inaccurate.');
 end
@@ -351,15 +351,16 @@ for i = 1:nelem
         w  = w(ix, :); % array with 0 for 'grid' points and 1's for absorbtion edge points
         w  = (convn(w, [1; 1; 1],  'same')>0); % neighbors of edges will be marked with 1's too
         b  = interp1(x, [y, w], nrj,  'linear',  'extrap'); % merge inputs for speed
-        a  = interp1(x,  y,     nrj,  'pchip');                v  = b(:, 2);
-        b  = b(:, 1);
+        a  = interp1(x,  y,     nrj,  'pchip');                
+        v  = b(:, 2)';
+        b  = b(:, 1)';
         a  = a.*(1-v) + b.*v; % smoothly merge curves using linear near edges and cubic otherwise
     else % if there are no absorbtion edges than life is easy
         a = interp1(log(x),  log(y),  nrj,  'pchip');
     end
-    att = att + exp(a) * fracs(i);    
+    att = att + exp(a) .* fracs(i);
 end
-att = att * density; %Convert from cm^2/g to cm^-1
+att = att .* density; %Convert from cm^2/g to cm^-1
 end
 
 %{

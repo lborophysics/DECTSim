@@ -101,25 +101,49 @@ classdef detector_tests < matlab.unittest.TestCase
             geom = gantry(2, 10, pi);
             a1 = parallel_detector([0.1, 0.35], [110, 20]);
             ray_generator = a1.ray_at_angle(geom, 13);
+            hit_at_angle = a1.hit_pixel(geom, 13);
             for i = 1:110
                 for j = 1:20
-                    [ray_start, ray_dir, ~] = ray_generator(i, j);
-                    [pixel, hit] = a1.hit_pixel(ray_start, ray_dir, geom, 13);
-                    tc.verifyEqual(pixel, [i, j]);
+                    [ray_start, ray_dir, exp_ray_len] = ray_generator(i, j);
+                    [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
+                    tc.verifyEqual(pixel, [i; j]);
+                    tc.verifyEqual(act_ray_len, exp_ray_len, "RelTol", 1e-15);
                     tc.verifyTrue(hit);
                 end
-            end
+            end 
             [ray_start, ray_dir, ~] = ray_generator(111, 20);
-            [pixel, hit] = a1.hit_pixel(ray_start, ray_dir, geom, 13);
-            tc.verifyEqual(pixel, [0, 0]);
+            hit_at_angle = a1.hit_pixel(geom, 13);
+            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
+            tc.verifyEqual(pixel, [0; 0]);
+            tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);
 
             ray_generator = a1.ray_at_angle(geom, 35);
             [ray_start, ray_dir, ~] = ray_generator(55, 10);
-            [pixel, hit] = a1.hit_pixel(ray_start, -ray_dir, geom, 35);
-            tc.verifyEqual(pixel, [0, 0]);
+            hit_at_angle = a1.hit_pixel(geom, 35);
+            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, -ray_dir);
+            tc.verifyEqual(pixel, [0; 0]);
+            tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);                
-        end
+            
+            [ray_start, ray_dir, ray_len] = ray_generator(55, 15);
+            ray_dirs = repmat(ray_dir, 1, 10);
+            [pixels, act_ray_lens, hits] = hit_at_angle(ray_start, ray_dirs);
+            tc.verifyTrue(all(pixels(1,:) == 55));
+            tc.verifyTrue(all(pixels(2,:) == 15));
+            tc.verifyEqual(act_ray_lens, repmat(ray_len, 1, 10), "RelTol", 1e-15);
+            tc.verifyTrue(all(hits));
 
+            ray_dirs(:, 2:4) = -ray_dirs(:, 2:4);
+            [pixels, act_ray_lens, hits] = hit_at_angle(ray_start, ray_dirs);
+            tc.verifyTrue(all(pixels(1,2:4) == 0));
+            tc.verifyTrue(all(pixels(2,2:4) == 0));
+            tc.verifyEqual(act_ray_lens(2:4), zeros(1, 3), "RelTol", 1e-15);
+            tc.verifyTrue(all(~hits(2:4)));
+            tc.verifyTrue(all(pixels(1,[1,5:end]) == 55));
+            tc.verifyTrue(all(pixels(2,[1,5:end]) == 15));
+            tc.verifyEqual(act_ray_lens([1,5:end]), repmat(ray_len, 1, 7), "RelTol", 1e-15);
+            tc.verifyTrue(all(hits([1,5:end])));
+        end
     end
 end

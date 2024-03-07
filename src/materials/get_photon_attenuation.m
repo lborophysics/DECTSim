@@ -313,7 +313,7 @@ edges = [ ...
     55, 0.0057143*1000, 6.556E+2, 7.547E+2;...
     55, 0.0359846*1000, 5.863   , 3.143E+1;... % Stop at caesium
     ];
-sample_energies = log(1:0.05:300)';
+sample_energies = log(1:0.01:300)';
 % end
 %% Initialize variables
 elems  = Z(:);

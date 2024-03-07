@@ -27,7 +27,7 @@ classdef attenuation_tests < matlab.unittest.TestCase
             % tc.verifyEqual(water(2e1   ), 1.813E-02, "RelTol", 1e-3) % Now out of energy range
 
             water_mat = material_attenuation("_water", [1, 8], [0.111898, 0.888102], 1);
-            water = @(e) water_mat.get_mu(e*1000);
+            water = @(e) water_mat.get_mu(e.*1000);
             tc.verifyEqual(water(1e-3  ), 4.078E+03, "RelTol", 1e-3)
             tc.verifyEqual(water(1.5e-2), 1.673E+00, "RelTol", 1e-3)
             tc.verifyEqual(water(8e-2  ), 1.837E-01, "RelTol", 1e-3)
@@ -108,6 +108,30 @@ classdef attenuation_tests < matlab.unittest.TestCase
                 mu = photon_attenuation([6 7 8 18], [0.000124 0.755268 0.231781 0.012827], 1.205E-03, e);
                 tc.verifyEqual(air_mat.get_mu(e), mu)
             end
+
+            E = [1 1.5 3 4 20 60 300];
+            mus = air_mat.get_mu(E);
+            tc.verifyEqual(mus(1), 3.606E+03 * 1.205E-03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(2), 1.191E+03 * 1.205E-03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(3), 1.625E+02 * 1.205E-03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(4), 7.788E+01 * 1.205E-03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(5), 7.779E-01 * 1.205E-03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(6), 1.875E-01 * 1.205E-03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(7), 1.067E-01 * 1.205E-03, "RelTol", 1e-3)
+        end
+
+        function test_get_photon_attenuation(tc)
+            air_mat = material_attenuation("air");
+            E = log([1 1.5 3 4 20 60 300]);
+            grid_int = get_photon_attenuation(air_mat.atomic_numbers);
+            mus = sum(exp(grid_int(E)) .* air_mat.mass_fractions, 2);
+            tc.verifyEqual(mus(1), 3.606E+03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(2), 1.191E+03, "RelTol", 1e-3)
+            tc.verifyEqual(mus(3), 1.625E+02, "RelTol", 1e-3)
+            tc.verifyEqual(mus(4), 7.788E+01, "RelTol", 1e-3)
+            tc.verifyEqual(mus(5), 7.779E-01, "RelTol", 1e-3)
+            tc.verifyEqual(mus(6), 1.875E-01, "RelTol", 1e-3)
+            tc.verifyEqual(mus(7), 1.067E-01, "RelTol", 1e-3)
         end
     end
 end

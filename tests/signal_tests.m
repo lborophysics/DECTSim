@@ -69,7 +69,7 @@ classdef signal_tests < matlab.unittest.TestCase
             tc.verifyEqual(image, zeros(5, 5, 4), 'AbsTol', 1e-15);
         end
 
-        function test_scatter_image(tc)
+        function test_noscatter_image(tc)
             % This test should probably include a test for correct scatter factor (not that it has no effect when no scatter is present)
             % Check that with no scattering, the scatter image is the same as the regular image
             a1 = parallel_detector([1, 1], [5, 1]);
@@ -83,14 +83,17 @@ classdef signal_tests < matlab.unittest.TestCase
             scatter_count = monte_carlo_scatter(tc.ray_source, array, d1);
             scatter_signal = tc.sensor_unit.get_signal(scatter_count);
 
-            scatter = tc.sensor_unit.get_image(scatter_signal);
-            tc.verifyEqual(scatter, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+            tc.verifyEqual(scatter_signal, zeros(5,1,4), 'RelTol', 1e-15, 'AbsTol', 1e-15);
         
             scatter_image = compute_sinogram(tc.ray_source, array, d1, "slow");
             tc.verifyEqual(scatter_image, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         
             scatter_image = compute_sinogram(tc.ray_source, array, d2, "slow", 3);
             tc.verifyEqual(scatter_image, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
+        end
+
+        function test_scatter_image(tc)
+            rng(1712345)
         end
 
         function test_conv_scatter_image(tc)

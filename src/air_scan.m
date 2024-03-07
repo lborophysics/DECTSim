@@ -40,6 +40,9 @@ function photon_count = air_scan(xray_source, detector_obj)
     fluences = reshape(fluences, num_esamples, num_bins)';
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
     
+    lin_elist = reshape(energy_list, 1, []);
+    mu_arr = reshape(air.get_mu(lin_elist), num_bins, num_esamples);
+    
     for z_pix = 1:npz
         for y_pix = 1:npy
             [~, ~, ray_length] = ray_generator(y_pix, z_pix);
@@ -48,11 +51,10 @@ function photon_count = air_scan(xray_source, detector_obj)
             
             for bin = 1:sensor_unit.num_bins    
                 for ei = 1:sensor_unit.num_samples
-                    nrj = energy_list(bin, ei);
-                    if isnan(nrj); continue; end
+                    if isnan(energy_list(bin, ei)); continue; end
                     intensity = intensity_list(bin, ei, y_pix, z_pix);
 
-                    mu = ray_length*air.get_mu(nrj);
+                    mu = ray_length*mu_arr(bin, ei);
                     single_rotation(bin, y_pix, z_pix) = ...
                         single_rotation(bin, y_pix, z_pix) + intensity*exp(-mu);
                 end

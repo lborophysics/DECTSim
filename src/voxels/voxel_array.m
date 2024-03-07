@@ -39,12 +39,13 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mu_dict = precalculate_mus(self, nrj_arr)
             % Return a 3D matrix of mu values using the 2D array of nrj values
-            num_nrjs = numel(nrj_arr);
-            mu_dict = zeros(self.nobj + 1, size(nrj_arr, 1), size(nrj_arr, 2));
-            for n = 1:num_nrjs
-                [i, j] = ind2sub(size(nrj_arr), n);
-                mu_dict(:, i, j) = self.get_mu_arr(nrj_arr(i));
+            mu_dict = zeros(self.nobj + 1, numel(nrj_arr));
+            lin_nrjs = reshape(nrj_arr, 1, []);
+            for n = 1:self.nobj
+                mu_dict(n, :) = self.voxel_objs{n}.get_mu(lin_nrjs);
             end
+            mu_dict(self.nobj + 1, :) = self.world_material.get_mu(lin_nrjs);
+            mu_dict = reshape(mu_dict, [self.nobj + 1, size(nrj_arr)]);
         end
 
         function mfp_dict = precalculate_mfps(self, nrj_arr)
