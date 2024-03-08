@@ -128,14 +128,15 @@ classdef detector_tests < matlab.unittest.TestCase
             
             [ray_start, ray_dir, ray_len] = ray_generator(55, 15);
             ray_dirs = repmat(ray_dir, 1, 10);
-            [pixels, act_ray_lens, hits] = hit_at_angle(ray_start, ray_dirs);
+            ray_starts = repmat(ray_start, 1, 10);
+            [pixels, act_ray_lens, hits] = hit_at_angle(ray_starts, ray_dirs);
             tc.verifyTrue(all(pixels(1,:) == 55));
             tc.verifyTrue(all(pixels(2,:) == 15));
             tc.verifyEqual(act_ray_lens, repmat(ray_len, 1, 10), "RelTol", 1e-15);
             tc.verifyTrue(all(hits));
 
             ray_dirs(:, 2:4) = -ray_dirs(:, 2:4);
-            [pixels, act_ray_lens, hits] = hit_at_angle(ray_start, ray_dirs);
+            [pixels, act_ray_lens, hits] = hit_at_angle(ray_starts, ray_dirs);
             tc.verifyTrue(all(pixels(1,2:4) == 0));
             tc.verifyTrue(all(pixels(2,2:4) == 0));
             tc.verifyEqual(act_ray_lens(2:4), zeros(1, 3), "RelTol", 1e-15);

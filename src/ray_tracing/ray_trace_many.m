@@ -64,7 +64,6 @@ function [lengths, indices] = ray_trace_many(ray_start, v1_to_v2, init_plane, v_
     amax(not_nan_list) = a_max;
     amax(nan_list) = NaN;
        
-
     parfor i = 1:num_rays
         if not_nan_list(i)
             [lengths{i}, indices{i}] = ray_trace_single(...

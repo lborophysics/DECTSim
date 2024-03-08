@@ -57,8 +57,8 @@ get_saved_mfp    = @voxels.get_saved_mfp;
 get_saved_mu     = @voxels.get_saved_mu;
 precalculate_mus = @voxels.precalculate_mus;
 
-num_scatters = 100; % Number of scatter rays to sample at each scatter point (will be a parameter later)
-mfp_fraction = 1e-2/sfactor; % Fraction of the mean free path to sample scatter points
+num_scatters = 100*sfactor; % Number of scatter rays to sample at each scatter point (will be a parameter later)
+mfp_fraction = 1e-2; % Fraction of the mean free path to sample scatter points
 
 % We use the sensor unit to sample the source so then we can correctly index
 % the sinogram (for speed).
@@ -156,22 +156,17 @@ parfor angle = 1:num_rotations
                 % Calculate the scatter directions and energies
                 [ndirs, nnrjs] = compton_scatter(ray_dir, mean_energy, thetas);
 
-                % Loop over scatter points
-                for point_idx = 1:num_points
-                    point_range = (point_idx-1)*num_scatters+1:point_idx*num_scatters;
-
-                    [pixels, scatter_lens, hits] = hit_at_angle(...
-                        scatter_points(:, point_idx), ndirs(:, point_range));
-
-                    hit_inds = point_range(hits);
-                    scatter_energies(hit_inds) = nnrjs(hit_inds);
-                    scatter_dirs(:, hit_inds) = ndirs(:, hit_inds) .* scatter_lens(hits);
-                    hit_pixels(:, hit_inds) = pixels(:, hits);
-                end
-
-                % Remove scatter points that don't hit the detector arrays
                 scatter_starts = repelem(scatter_points, 1, num_scatters);
                 prob_scatter   = repelem(probabilities, 1, num_scatters);
+                
+                [pixels, scatter_lens, hits] = hit_at_angle(scatter_starts, ndirs);
+
+                % Set all the scatter points that do hit the detector to the correct values
+                scatter_energies(hits) = nnrjs(hits);
+                scatter_dirs(:, hits) = ndirs(:, hits) .* scatter_lens(hits);
+                hit_pixels(:, hits) = pixels(:, hits);
+
+                % Remove scatter points that don't hit the detector arrays
                 ignore = isnan(scatter_energies);
                 scatter_starts  (:, ignore) = [];
                 prob_scatter    (   ignore) = [];
@@ -183,7 +178,7 @@ parfor angle = 1:num_rotations
                 [scatter_ray_lens, scatter_ray_idxs] = ray_tracing_many(...
                     scatter_starts, scatter_dirs);
 
-                % Need this if we want to do multiple scattering
+                % Need this is needed if we want to do multiple scattering
                 % scatter_mfp_dict = voxels.precalculate_mfps(scatter_energies);
 
                 % Now calculate the intensity at each scattered ray that hits the detector array

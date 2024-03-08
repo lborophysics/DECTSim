@@ -17,8 +17,9 @@ classdef (Abstract) flat_array < detector_array
                                   - [0;0;1] .* pixel_height * npz/2;
              det_xy = detector_vec(1:2);
              hit_pixel_at_angle = @at_angle;
-             function [pixel, ray_len, hit] = at_angle(ray_start, ray_dirs)
+             function [pixel, ray_len, hit] = at_angle(ray_starts, ray_dirs)
                 assert(all(abs(sum(ray_dirs.^2, 1) - 1) < 1e-14), "All ray directions must be unit vectors")
+                assert(size(ray_starts, 2) == size(ray_dirs, 2), "The number of ray starts must match the number of ray directions")
                 
                 num_rays = size(ray_dirs, 2);
                 ray_xy = ray_dirs(1:2, :); hit = true(1, num_rays); 
@@ -34,19 +35,19 @@ classdef (Abstract) flat_array < detector_array
                 if all(~hit); return; end
 
                 % Get point on the detector vector where the ray intersects in xy plane
-                dy = ray_xy(2, :) .* (corner(1) - ray_start(1)) + ray_xy(1, :) ...
-                    .* (ray_start(2) - corner(2)) ./ ...
+                dy = ray_xy(2, :) .* (corner(1) - ray_starts(1, :)) + ray_xy(1, :) ...
+                    .* (ray_starts(2, :) - corner(2)) ./ ...
                     (ray_xy(1, :) .* det_xy(2) - ray_xy(2, :) .* det_xy(1));
                 py = floor(dy ./ pixel_width) + 1;
                 hit(py < 1 | py > npy) = false;
                 if all(~hit); return; end
                 
                 hit_xy_coord = centre + detector_vec .* (py - (npy+1)/2) .* pixel_width;
-                ray_len = sqrt(sum((ray_start(1:2) - hit_xy_coord(1:2, :)).^2, 1));
+                ray_len = sqrt(sum((ray_starts(1:2, :) - hit_xy_coord(1:2, :)).^2, 1));
                 ray_len(~hit) = 0;
                 
                 % Get point on the detector vector where the ray intersects in z direction
-                ray_hit_point = ray_start + ray_dirs .* ray_len;
+                ray_hit_point = ray_starts + ray_dirs .* ray_len;
                 pz = floor((ray_hit_point(3, :) - corner(3)) ./ pixel_height) + 1;
                 hit(pz < 1 | pz > npz) = false;
                 ray_len(~hit) = 0;
