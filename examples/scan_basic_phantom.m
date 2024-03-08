@@ -6,9 +6,9 @@ my_source = source_fromfile('spectrum.spk');
 
 % Voxel array constants
 vox_arr_center = zeros(3, 1);
-phantom_radius = 30/2;% In the x-y plane
-phantom_width = 50; % In the z direction
-voxel_size = 0.1/2; % 1 mm
+phantom_radius = 30/2 * units.cm; % In the x-y plane
+phantom_width = 50 * units.cm; % In the z direction
+voxel_size = 0.5 * units.mm;
 
 % Create voxel array
 water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
@@ -27,8 +27,8 @@ voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_widt
     voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 
 % Detector constants
-dist_to_detector = 105; % cm
-pixel_size = [0.1 0.1]; % cm (so pixel size = 1mm)
+dist_to_detector = 1.05 * units.m;
+pixel_size = [1 1] .* units.mm;
 num_pixels = [900 1];
 num_rotations = 180;
 
