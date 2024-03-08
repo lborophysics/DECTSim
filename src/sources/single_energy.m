@@ -26,7 +26,7 @@ classdef single_energy < source
                 self 
                 range (:,2) double
             end
-            intensities = ones(1, size(range,1));
+            intensities = zeros(1, size(range,1)) + 1e6;
             intensities(self.energy < range(:,1) | self.energy >= range(:,2)) = 0;
         end 
     end

@@ -48,11 +48,17 @@ classdef source_fromfile < source
                 if isempty(indices)
                     error('No energies found in the range [%f, %f)', range(i,1), range(i,2));
                 end
-                energies(i) = mean(self.ebins(indices));
+                weights = self.fluences(indices);
+                
+                % If all weights are zero, set them all to 1, we will not use them anyway
+                if sum(weights) == 0; weights = ones(size(weights)); end
+                 
+                weights = weights / sum(weights);
+                energies(i) = sum(self.ebins(indices) .* weights);
             end
         end
 
-        function intensities = get_fluences(self, range)
+        function fluences = get_fluences(self, range)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
                 self
@@ -64,7 +70,8 @@ classdef source_fromfile < source
                 indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
                 flist(i) = sum(self.fluences(indices).* self.ebins(indices));
             end
-            intensities = flist .* 1e4; % Make fluence from source (by default, the fluence is at 100 cm)
+             % Convert from ph/cm^2 to ph/m^2 and then move the point fluence is measured from 1 m to 1 cm
+            fluences = flist / units.m2 * (1 * units.m)^2;
         end
     end
 end

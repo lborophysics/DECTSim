@@ -6,7 +6,7 @@ classdef source_tests < matlab.unittest.TestCase
             tc.verifyEqual(s1.energy, 50);
             range1 = [0 10; 10 20; 20 30; 30 40; 40 50; 50 60];
             expE = [50; 50; 50; 50; 50; 50]';
-            expI = [0; 0; 0; 0; 0; 1]';
+            expI = [0; 0; 0; 0; 0; 1e6]';
             e = s1.get_energies(range1);
             i = s1.get_fluences(range1);
             tc.verifyEqual(e, expE);
@@ -16,7 +16,7 @@ classdef source_tests < matlab.unittest.TestCase
             tc.verifyEqual(s2.energy, 21);
             range2 = [0 7; 7 10; 10 15; 15 25; 25 30; 30 40; 40 50; 50 60];
             expE = [21; 21; 21; 21; 21; 21; 21; 21]';
-            expI = [0; 0; 0; 1; 0; 0; 0; 0]';
+            expI = [0; 0; 0; 1e6; 0; 0; 0; 0]';
             e = s2.get_energies(range2);
             i = s2.get_fluences(range2);
             tc.verifyEqual(e, expE);
@@ -62,14 +62,15 @@ classdef source_tests < matlab.unittest.TestCase
                 71.8812 *  13.5; 
                 1507282.8827 * 25.5;
                 3211914.5414 * 37.5
-            ]' .* 1e4;
+            ]';
             e = s.get_energies(range);
             i = s.get_fluences(range);
             tc.verifyEqual(e, expE);
-            tc.verifyEqual(i, expI);
+            % Precision is lost when summing large numbers
+            tc.verifyEqual(i, expI, 'RelTol', 1e-10);
 
             range = [0 10; 40 50; 70 80];
-            expE = [5.5, 45, 75];
+            
             expI = [
                 0; 
                 3180300.2508 * 40.5 + 3141114.2826 * 41.5 + 3094702.4266 * 42.5 + ...
@@ -80,11 +81,24 @@ classdef source_tests < matlab.unittest.TestCase
                 555465.0211 * 73.5 + 476481.1458 * 74.5 + 396112.0471 * 75.5 + ...
                 314269.5785 * 76.5 + 230691.5663 * 77.5 + 145363.1041 * 78.5 + ...
                 56373.3614 * 79.5
-            ]'.*1e4;
+            ]';
+            expE = [
+                5.5;
+                expI(2)/sum([3180300.2508, 3141114.2826, 3094702.4266, ...
+                    3041959.8999, 2983738.1968, 2917590.0357, ...
+                    2844759.8856, 2769308.4106, 2691732.6485, ...
+                    2612535.8109]);
+                expI(3)/sum([786882.7618, 710400.7260, 633303.9447, ...
+                    555465.0211, 476481.1458, 396112.0471, ...
+                    314269.5785, 230691.5663, 145363.1041, ...
+                    56373.3614])
+
+            ]';
             e = s.get_energies(range);
             i = s.get_fluences(range);
             tc.verifyEqual(e, expE);
-            tc.verifyEqual(i, expI);
+            % Precision is lost when summing large numbers
+            tc.verifyEqual(i, expI, 'RelTol', 1e-10); 
         end
     end
 end
