@@ -129,7 +129,7 @@ Methods
 .. method:: get_mu(self, energy)
 
     :param energy: The photon energy (in :math:`keV`).
-    :type energy: double
+    :type energy: 1xN double
 
     This method returns the linear attenuation coefficient of the material at a given energy. If the :func:`photon_attenuation_mex` function is available, the method will use the ``mu_from_energy`` attribute (the result of :func:`get_photon_attenuation`) to return the linear attenuation coefficient. Otherwise, the method will use the MEX of the :func:`photon_attenuation` function to return the linear attenuation coefficient.
 

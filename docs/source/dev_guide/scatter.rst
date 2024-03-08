@@ -47,7 +47,12 @@ To normalise the photon count, we calculate what the count would be if there was
 Monte Carlo Scatter
 -------------------
 
-This scatter method is still under development and is not reliable for extensive use. The method is extremely rudimentary, where we rely on the rays generated for ray tracing, and then see where a number of these rays may scatter to. 
+This scatter method is still under development and may be subject to change.
+The method is takes a more deterministic approach to scatter than true monte carlo methods, where we rely on the rays generated for ray tracing, and then sample the scatter from these rays. 
+
+We sample every ray at 0.1 mean free paths, and then trace ``100*sfactor`` rays from this point, randomly choosing the direction of the scatter, and the energy of the scattered ray. We then calculate if this ray will hit the detector, and if it does, we add the number of photons that will hit this pixel to the scatter array.
+
+We determine the number of photons that will hit the pixel by using the attenuation of the up to this sample point, the probability of the ray scattering at this point, the number of rays being sampled from this point, and the attenuation of the ray from this point to the detector.
 
 There are several functions involved in this method, but the main function is the following.
 
@@ -65,60 +70,25 @@ There are several functions involved in this method, but the main function is th
 
     :return: An array of dimensions [energy_bins, ny_pix, nz_pix, nrotation], representing the scatter in the image.
 
-    This function is very similar to :func:`compute_sinogram`, with the only real difference being that the function used to calculate the attenuation, instead :func:`calculate_scatter` is used. Also, as we know that the rays may not have the same energy or appear in the same place as the original rays, we need to keep track of these with linear indexing, so we can then non linearly index the scatter array (for parallelisation purposes).
+    This function is very similar to :func:`compute_sinogram`, with the only real difference being that this function is used to calculate the scatter, and not the sinogram. This also means that the energy that the rays are scattered with is not the same as the energy that the rays are generated with, and so we need to keep track of this.
 
-.. function:: calculate_scatter (n_mfp, ls, idxs, ray_start, ray_dir, ray_len, nrj, prev_mu, num_scatter, mu_arr, mfp_arr, voxels, ray_tracing)
+.. function:: compton_dist(nrjs)
 
-    :param n_mfp: The number of mean free paths that this particular ray will have before it scatters. (Use :math:`-\ln(\xi)` where :math:`\xi` is a random number between 0 and 1).
-    :param ls: The lengths in each voxel that the ray has been ray traced through.
-    :param idxs: The indices of the voxels that the ray has been ray traced through.
-    :param ray_start: The starting point of the ray.
-    :param ray_dir: The direction of the ray.
-    :param ray_len: The length of the ray.
-    :param nrj: The energy of the ray.
-    :param prev_mu: The previous linear attenuation coefficient of the ray. (Set to 0 if this is the first scatter).
-    :param num_scatter: The number of times the ray has scattered.
-    :param mu_arr: The linear attenuation coefficients of the voxels.
-    :param mfp_arr: The mean free paths of the voxels.
-    :param voxels: The phantom that the ray is being scattered through.
-    :param ray_tracing: The ray tracing function to be used to trace the ray through the phantom.
+    :param nrjs: A list of energies to be used to sample the scatter.
+    :type nrjs: 1xN double
 
-    :type n_mfp: double
-    :type ls: 1xN double
-    :type idxs: 3xN double
-    :type ray_start: 3x1 double
-    :type ray_dir: 3x1 double
-    :type ray_len: double
-    :type nrj: double
-    :type prev_mu: double
-    :type num_scatter: double
-    :type mu_arr: 1xN double
-    :type mfp_arr: 1xN double
-    :type voxels: voxel_array
-    :type ray_tracing: function
+    :return: :code:`thetas` A list of thetas produced by sampling the distribution using the `Geant4 physics reference manual <https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html>`_. Used alongside the :func:`compton_scatter` function. The produced thetas should be randomly sampled to produce the angles of scatter.
 
-    :return:
-        - **ray_start** (:class:`3x1 double`) - The starting point of the final scattered ray (if it has scattered), otherwise the same as the input.
-        - **ray_dir** (:class:`3x1 double`) - The direction of the final scattered ray (if it has scattered), otherwise the same as the input.
-        - **mu** (:class:`double`)-  The total linear attenuation coefficient of the ray after scattering
-        - **num_scatter** (:class:`double`) - The number of times the ray has scattered.
-        - **scattered** (:class:`logical`) - A boolean representing whether the ray has scattered or not.
-    
-    This method is slightly flawed in it's approach to scattering, first only compton interactions are considered, and secondly, we continue to track the attenuation of the ray, however, this implies that if this ray is used alongside the Beers-Lambert law, we are assuming that this scattered ray represents many rays, which is not the case. This method is still under development and is not reliable for extensive use. Once sources with reliable intensities have been implemented, this method will be revisited.
 
-    To determine whether a ray should scatter, we calculate a random number of mean free paths that the ray will take. Where :math:`l_m = -\ln(\xi)`, where :math:`\xi` is a random number between 0 and 1. Then using the :func:`cross_section` and :func:`mean_free_path` functions, we can calculate the true number of mean free paths that the ray will take. At the point that the random number of mean free paths is equal to the true number of mean free paths, the ray will scatter.
-
-    Once we know the point at which our ray will scatter, we need to calculate the new direction of the ray, and the new energy of the ray. This is done using the :func:`compton_scatter` function. Then we recalculate the linear attenuation coefficient of the ray, from this new point in the new direction with the new energy using the :func:`ray_tracing` function, before recursively calling the :func:`calculate_scatter` function again.
-
-    The function will continue to call itself until the ray has reaches the end of the tracing length, without scattering, or if the ray no longer intersects the phantom. 
-
-.. function:: compton_scatter(direction, inrj)
+.. function:: compton_scatter(direction, inrj, thetas)
 
     :param direction: The initial direction of the ray.
     :param inrj: The initial energy of the ray.
+    :param thetas: A list of thetas to be used to sample the scatter.
 
     :type direction: 3x1 double
     :type inrj: double
+    :type thetas: 1xN double
 
     :return:
         - **direction** (:class:`3x1 double`) - The new direction of the ray after scattering.

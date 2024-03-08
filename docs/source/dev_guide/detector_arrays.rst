@@ -45,20 +45,16 @@ Abstract Methods
 
         :returns: ``ray_generator``, a function that takes in the pixel in the y and z directions and returns ``ray_start`` (start point), ``ray_dir`` (direction) and ``ray_length``. This is used to calculate the ray paths for each projection.
 
-.. function:: hit_pixel(self, ray_start, ray_dir, detect_geom, angle_index)
+.. function:: hit_pixel_at_angle = hit_pixel(self, detect_geom, angle_index)
 
-        This method is used to calculate which pixel a ray may intersect. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
+        This method is used to generate a function which calculates which pixel a ray may intersect. This is an abstract method and should be implemented in the subclasses, so cannot be called from this class.
 
-        :param ray_start: is the starting position of the ray.
-        :type ray_start: 3x1 double
-        :param ray_dir: is the unit vector of the ray, i.e. the direction of the ray.
-        :type ray_dir: 3x1 double
         :param detect_geom: is the detector geometry, so an instance of the gantry class.
         :type detect_geom: gantry
         :param angle_index: is the index of the angle that the gantry is at.
         :type angle_index: double
 
-        :returns: ``[pixel, hit]``, where pixel is the pixel that was hit (a 1x2 array of the pixel index) and hit is a boolean value of whether the ray intersects the pixel at all.
+        :returns: ``hit_pixel_at_angle``, a function that takes in a 3xN array of ray start points and a 3xN array of ray directions. The return must be the pixels that were hit as an Nx2 array, a 1xN array of the length that the ray will travel to reach the pixel, and a 1xN array of the length that the ray will travel to reach the pixel.
 
 The available classes for the detector pixel arrays are:
 
@@ -82,9 +78,9 @@ Functions
 Methods
 ~~~~~~~
 
-.. method:: flat_detector.hit_pixel(ray_start, ray_dir, detect_geom, angle_index)
+.. method:: flat_detector.hit_pixel(detect_geom, angle_index)
 
-    This method calculates the intersected pixel for a flat detector panel, therefore, could be generalised for any future detector panels that are flat, but do not have the same source.
+    This method is used to generate a function which calculates which pixel a ray may intersect for a flat detector panel. This is consistent across all flat detector arrays, so is implemented in this class.
 
 Parallel Detector
 -----------------
@@ -136,7 +132,7 @@ Methods
 
     This method produces rays starting from the same point for each projection, but with varying directions and lengths, depending on the position of the pixel on the detector panel. This is because the source is at a single point, so the rays are not parallel and any reconstruction algorithm will need to take this into account.
 
-.. method:: curved_detector.hit_pixel(ray_start, ray_dir, detect_geom, angle_index)
+.. method:: curved_detector.hit_pixel(detect_geom, angle_index)
 
     Not implemented yet, but will be used to calculate the intersected pixel for a curved detector panel.
 
