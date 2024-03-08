@@ -58,6 +58,17 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             end
         end
 
+        function iobj = get_object_idxs(self, indices)
+            % Convert indices to position at centre of voxel
+            position = self.array_position + (indices - 0.5) .* self.dimensions;
+
+            % Get mus at position
+            iobj = zeros(1, size(indices, 2)) + self.nobj + 1; % Default to air
+            for n = 1:self.nobj
+                iobj(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = n;
+            end
+        end
+    
         function mu_arr = get_mu_arr(self, nrj)
             % Create a dictionary of mu values for each material
             mu_arr(self.nobj + 1) = self.world_material.get_mu(nrj);
@@ -76,17 +87,6 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             for n = 1:self.nobj
                 mus(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
                     dict(n);
-            end
-        end
-
-        function iobj = get_object_idxs(self, indices)
-            % Convert indices to position at centre of voxel
-            position = self.array_position + (indices - 0.5) .* self.dimensions;
-
-            % Get mus at position
-            iobj = zeros(1, size(indices, 2)) + self.nobj + 1; % Default to air
-            for n = 1:self.nobj
-                iobj(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = n;
             end
         end
 
