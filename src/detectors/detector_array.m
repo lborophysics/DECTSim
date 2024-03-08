@@ -9,7 +9,7 @@ classdef (Abstract) detector_array
         ray_generator = ray_at_angle(self, detect_geom, angle_index, ray_per_pixel)
         
         % To calculate which pixel a ray hits in the detector array (scattering)
-        [pixel, hit] = hit_pixel(self, ray_start, ray_dir, detect_geom, angle_index)
+        [pixel, hit] = hit_pixel(self, detect_geom, angle_index)
     end
 
     methods

@@ -6,7 +6,7 @@ classdef mat_consts
         % Add new materials to the list alphabetically, this will allow the
         % material_attenuation class to "know" about the new material.
         known_materials = {'air'    ,'blood','bone','fat','lung','muscle','titanium','water','vacuum'};
-        known_densities  = [1.205E-03, 1.06  , 1.92 , 0.95, 1.05 , 1.05   , 4.506    , 1.00  , 0      ];
+        known_densities  = [1.205E-03, 1.06  , 1.92 , 0.95, 1.05 , 1.05   , 4.506    , 1.00  , 0      ] .* units.g / units.cm^3;
         known_atomic_numbers = {...
             [6, 7, 8, 18],...                         % air
             [1, 6, 7, 8, 11, 15, 16, 17, 19, 26],...  % blood
@@ -39,7 +39,7 @@ classdef mat_consts
             137.33, 138.91, 140.12, 140.91, 144.24, 145.0, 150.36, 151.96, 157.25,...
             158.93, 162.50, 164.93, 167.26, 168.93, 173.05, 174.97, 178.49, 180.95,...
             183.84, 186.21, 190.23, 192.22, 195.08, 196.97, 200.59, 204.38, 207.2,...
-            ]; % g/mol up to atomic number 82 (Lead) Source: 
+            ] .* units.g; % g/mol up to atomic number 82 (Lead) Source: 
         % Prohaska, Thomas, Irrgeher, Johanna, Benefield, Jacqueline, Böhlke, John K.,
         % Chesson, Lesley A., Coplen, Tyler B., Ding, Tiping, Dunn, Philip J. H.,
         % Gröning, Manfred, Holden, Norman E., Meijer, Harro A. J., Moossen, Heiko,

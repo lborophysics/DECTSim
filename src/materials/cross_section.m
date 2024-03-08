@@ -15,8 +15,8 @@ function cs = cross_section(Z, nrj) % Once tested change this function to evalua
         f1=-3.9178e-7*units.barn; f2= 6.8241e-5*units.barn; % cm^2 (e-24 for the barn)
         f3= 6.0480e-5*units.barn; f4= 3.0274e-4*units.barn; % cm^2 (e-24 for the barn)
     end
-    T0 = zeros(size(Z)) + 40; % Special case for hydrogen (KeV)
-    T0(Z > 1.5) = 15; % KeV
+    T0 = zeros(size(Z)) + 40 * units.keV; % Special case for hydrogen (KeV)
+    T0(Z > 1.5) = 15 * units.keV; % For Z > 1.5, T0 = 15 KeV
     
     X = max(nrj, T0) ./ constants.me_c2; % Unitless
     p1Z = Z.*(d1 + e1.*Z + f1.*Z.*Z); p2Z = Z.*(d2 + e2.*Z + f2.*Z.*Z); % cm^2
