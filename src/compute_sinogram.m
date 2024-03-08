@@ -56,10 +56,12 @@ num_bins = sensor_unit.num_bins;
 num_esamples = sensor_unit.num_samples;
 sensor_range = sensor_unit.get_range();
 
+num_obj = phantom.nobj;
 vox_init = phantom.array_position;
 vox_dims = phantom.dimensions;
 vox_nplanes = phantom.num_planes;
 vox_last = vox_init + (vox_nplanes - 1) .* vox_dims;
+get_object_idxs = @(idxs) phantom.get_object_idxs(idxs);
 
 % Identify which compiled functions are available to use
 if ~~exist('ray_trace_many_mex', 'file')
@@ -92,9 +94,9 @@ assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
 
 % Start the ray tracing loop
 photon_count = zeros(num_bins, npy, npz, num_rotations);
-for angle = 1:num_rotations
+parfor angle = 1:num_rotations
     % For each rotation, we calculate the image for the source
-    ray_generator = ray_at_angle(angle);
+    ray_generator = feval(ray_at_angle, angle);
     ray_starts = zeros(3, npy*npz);
     ray_dirs = zeros(3, npy*npz);
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
@@ -118,11 +120,11 @@ for angle = 1:num_rotations
                     sum(intensity_list(:, :, y_pix, z_pix), 2);
             else
                 idxs = ray_idxs{(z_pix-1)*npy + y_pix};
-                obj_idxs = phantom.get_object_idxs(idxs);
+                obj_idxs = get_object_idxs(idxs);
 
                 % Get a the length of the ray in each object
-                obj_lens = zeros(phantom.nobj + 1, 1);
-                for i = 1:phantom.nobj+1
+                obj_lens = zeros(num_obj + 1, 1);
+                for i = 1:num_obj+1
                     obj_lens(i) = sum(ls(obj_idxs == i));
                 end
 
