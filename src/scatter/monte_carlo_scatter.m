@@ -145,20 +145,26 @@ parfor angle = 1:num_rotations
                     probabilities(i) = sum(prob_scatter(prev_scatter:iscatter));
                     prev_scatter = iscatter+1;                    
                 end
-
-                scatter_dirs     = zeros(3, ray_num_scatters);
-                hit_pixels       = zeros(2, ray_num_scatters);
-                scatter_energies = NaN  (1, ray_num_scatters);
-
                 % Sample the scatter angles
                 thetas = sample_angles(randi(num_angle_samples, 1, ray_num_scatters));
-
-                % Calculate the scatter directions and energies
-                [ndirs, nnrjs] = compton_scatter(ray_dir, mean_energy, thetas);
+                phis  = 2*pi*rand(1, ray_num_scatters);
 
                 scatter_starts = repelem(scatter_points, 1, num_scatters);
                 prob_scatter   = repelem(probabilities, 1, num_scatters);
-                
+                ignore = phis > pi | thetas > pi;
+
+                scatter_starts(:, ignore) = [];
+                prob_scatter  (   ignore) = [];
+                thetas        (   ignore) = [];
+                phis          (   ignore) = [];
+
+                num_acute = length(thetas);
+                scatter_dirs     = zeros(3, num_acute); 
+                hit_pixels       = zeros(2, num_acute);
+                scatter_energies = NaN  (1, num_acute);
+
+                % Calculate the scatter directions and energies
+                [ndirs, nnrjs] = compton_scatter(ray_dir, mean_energy, thetas, phis);
                 [pixels, scatter_lens, hits] = hit_at_angle(scatter_starts, ndirs);
 
                 % Set all the scatter points that do hit the detector to the correct values

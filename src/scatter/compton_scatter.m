@@ -1,4 +1,4 @@
-function [ndir, nnrj] = compton_scatter(direction, inrj, thetas)
+function [ndir, nnrj] = compton_scatter(direction, inrj, thetas, phis)
    % This function simulates the Compton scattering of a photon with
    % initial energy "inrj" and direction "direction", using the thetas provided
    % as the scattering angles. The function returns new direction and 
@@ -7,7 +7,6 @@ function [ndir, nnrj] = compton_scatter(direction, inrj, thetas)
    % Initialize some constants
    sin_theta = sin(thetas);
    cos_theta = cos(thetas);
-   phi = 2 * pi * rand(1, length(thetas));
 
    change_frame = false;
    if abs(direction(3)) == max(abs(direction))
@@ -15,23 +14,23 @@ function [ndir, nnrj] = compton_scatter(direction, inrj, thetas)
       direction = roty(pi/2) * direction;
    end
 
-   ndir = rotateUz(direction, sin_theta, cos_theta, phi);
+   ndir = rotateUz(direction, sin_theta, cos_theta, phis);
    if change_frame; ndir = roty(-pi/2) * ndir; end
 
    nnrj = ((constants.me_c2 .* inrj) ./ (constants.me_c2 + inrj .* (1 - cos_theta)));
 end
 
-function u = rotateUz(u, sin_theta, cos_theta, phi)
+function u = rotateUz(u, sin_theta, cos_theta, phis)
     % Sourced from CLHEP:
     % https://apc.u-paris.fr/~franco/g4doxy4.10/html/_three_vector_8cc_source.html#l00072
     u1 = u(1); u2 = u(2); u3 = u(3);
     up = u1*u1 + u2*u2;
-    u = zeros(3, length(phi));
+    u = zeros(3, length(phis));
 
     if up > 0 % Not sure this if statement is necessary
         up = sqrt(up);
-        px = sin_theta.*cos(phi); 
-        py = sin_theta.*sin(phi);
+        px = sin_theta.*cos(phis); 
+        py = sin_theta.*sin(phis);
         pz = cos_theta;
         u(1, :) = (u1.*u3.*px - u2.*py)./up + u1.*pz;
         u(2, :) = (u2.*u3.*px + u1.*py)./up + u2.*pz;
