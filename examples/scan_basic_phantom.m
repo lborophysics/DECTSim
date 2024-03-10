@@ -50,7 +50,7 @@ imwrite(mat2gray(R), "cylinder.png")
 
 scatter_type = "fast";
 tic
-scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, "fast"));
+scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, scatter_type));
 toc
 
 if strcmp(scatter_type, "fast")

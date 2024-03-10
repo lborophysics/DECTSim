@@ -56,15 +56,15 @@ We determine the number of photons that will hit the pixel by using the attenuat
 
 There are several functions involved in this method, but the main function is the following.
 
-.. function:: monte_carlo_scatter(xray_source, voxels, detector_obj, sfactor)
+.. function:: monte_carlo_scatter(xray_source, phantom, detector_obj, sfactor)
 
     :param xray_source: The source of xrays to be used to create the scatter.
-    :param voxels: The phantom that the rays will be scattered through.
+    :param phantom: The phantom that the rays will be scattered through.
     :param detector_obj: The detector that the rays will be scattered to.
     :param sfactor: A scatter factor used to customise the amount of rays traced and potentially scattered.
     
     :type xray_source: source
-    :type voxels: voxel_array
+    :type phantom: voxel_array
     :type detector_obj: detector
     :type sfactor: double
 

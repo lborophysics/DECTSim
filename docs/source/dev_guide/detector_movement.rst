@@ -59,7 +59,42 @@ Methods
 
         Returns the rotation matrix for the gantry. This is used to rotate any objects attached to the gantry.
 
+        :returns: The rotation matrix for the gantry.
+    
+.. function:: get_source_pos(index, pixel_position)
+
+        :param index: The index rotation of the gantry.
+        :type index: double
+        :param pixel_position: The position of the pixel on the detector.
+        :type pixel_position: 3x1 double
+
+        Returns the position of the source. This is used to calculate the ray paths for each projection. For this gantry, the source position is independent of the pixel position and a single point, dependent on the index of the rotation.
+
+        :returns: The position of the source.
+
 Potential Future Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 This class will likely be changed to be an abstract class, and then a new class will be created for each type of gantry. This will allow for more specific gantry types to be created, such as axial or helical gantry, and for the user to be able to create their own gantry types.
+
+Parallel Gantry Class
+---------------------
+
+Purpose
+~~~~~~~
+
+The parallel gantry class is a subclass of the gantry class. It has the same properties and methods as the gantry class, but has a different method for getting the source position. This is because the source position is dependent on the pixel position for the parallel gantry.
+
+Methods
+~~~~~~~
+
+.. function:: get_source_pos(index, pixel_position)
+
+        :param index: The index rotation of the gantry.
+        :type index: double
+        :param pixel_position: The position of the pixel on the detector.
+        :type pixel_position: 3x1 double
+
+        Returns the position of the source, directly above the pixel position. This is used to calculate the ray paths for each projection. For this gantry, the source position is dependent on the pixel position and the index of the rotation.
+
+        :returns: The position of the source.
