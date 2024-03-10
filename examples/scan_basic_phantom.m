@@ -32,8 +32,8 @@ pixel_size = [1 1] .* units.mm;
 num_pixels = [900 1];
 num_rotations = 180;
 
-dgantry = gantry(dist_to_detector, num_rotations, pi);
-darray = parallel_detector(pixel_size, num_pixels);
+dgantry = parallel_gantry(dist_to_detector, num_rotations, pi);
+darray = flat_detector(pixel_size, num_pixels);
 dsensor = ideal_sensor([1; 80], 30, 1);
 d = detector(dgantry, darray, dsensor);
 

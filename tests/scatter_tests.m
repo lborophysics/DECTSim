@@ -76,7 +76,7 @@ classdef scatter_tests < matlab.unittest.TestCase
 
         function test_angle_distribution(tc)
             % Test the energy distribution of the scattered photons
-            energies = [10, 30, 60, 100, 300]';
+            energies = [10, 30, 60, 100, 300]' .* units.keV;
             vectors = [
                 [1 0 0]
                 [0 1 0]
@@ -90,6 +90,7 @@ classdef scatter_tests < matlab.unittest.TestCase
             num_scatter = 1e5;
             esamples = zeros(5, num_scatter) + energies;
             thetas = compton_dist(esamples);
+            phis = 2*pi*rand(1, num_scatter);
             for ei = 1:length(energies)-2
                 for vi = 1:height(vectors)
                     e1 = energies(ei);
@@ -101,18 +102,18 @@ classdef scatter_tests < matlab.unittest.TestCase
                     edist2 = zeros(1, num_rays);
                     for i = 1:num_rays
                         a1 = thetas(ei, randi(num_scatter ,1));
-                        [d1, e1_scttrd] = compton_scatter(v, e1, a1);
+                        p1 = phis(randi(num_scatter, 1));
+                        [d1, e1_scttrd] = compton_scatter(v, e1, a1, p1);
                         a2 = thetas(ei+2, randi(num_scatter,1));
-                        [d2, e2_scttrd] = compton_scatter(v, e2, a2);
+                        [d2, e2_scttrd] = compton_scatter(v, e2, a2, p1);
 
                         angle_dist1(i) = acos(dot(v, d1));
                         angle_dist2(i) = acos(dot(v, d2));
                         edist1(i) = e1_scttrd;
                         edist2(i) = e2_scttrd;
                     end
-
                     % Check that the energy angle relationship is correct
-                    tc.verifyEqual(edist1,...
+                     tc.verifyEqual(edist1,...
                         (constants.me_c2 .* e1) ./ ...
                         (constants.me_c2 + e1 .* (1 - cos(angle_dist1))), ...
                         "RelTol", 0.1); % 1%

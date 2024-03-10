@@ -44,23 +44,27 @@ d_array     = detector_obj.detector_array;
 
 
 % Retrieve information within the sub-objects
-num_rotations = gantry.num_rotations;
-d2detector = gantry.dist_to_detector;
+num_rotations  = gantry.num_rotations;
+d2detector     = gantry.dist_to_detector;
 
 npy = d_array.n_pixels(1);
 npz = d_array.n_pixels(2);
-pix_size = prod(d_array.pixel_dims);
-ray_at_angle = @(angle) d_array.ray_at_angle(gantry, angle);
 
-num_bins = sensor_unit.num_bins;
+pix_size = prod(d_array.pixel_dims);
+
+num_bins     = sensor_unit.num_bins;
 num_esamples = sensor_unit.num_samples;
 sensor_range = sensor_unit.get_range();
 
-num_obj = phantom.nobj;
-vox_init = phantom.array_position;
-vox_dims = phantom.dimensions;
+num_obj     = phantom.nobj;
+vox_init    = phantom.array_position;
+vox_dims    = phantom.dimensions;
 vox_nplanes = phantom.num_planes;
-vox_last = vox_init + (vox_nplanes - 1) .* vox_dims;
+vox_last    = vox_init + (vox_nplanes - 1) .* vox_dims;
+
+% Now lets define some functions that we will use to calculate the sinogram
+get_source_pos  = @(angle, pixel_pos) gantry.get_source_pos(angle, pixel_pos);
+set_array_angle = @(angle) d_array.set_array_angle(gantry, angle);
 get_object_idxs = @(idxs) phantom.get_object_idxs(idxs);
 
 % Identify which compiled functions are available to use
@@ -96,18 +100,25 @@ assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
 photon_count = zeros(num_bins, npy, npz, num_rotations);
 parfor angle = 1:num_rotations
     % For each rotation, we calculate the image for the source
-    ray_generator = feval(ray_at_angle, angle);
+    pixel_generator = feval(set_array_angle, angle);
     ray_starts = zeros(3, npy*npz);
     ray_dirs = zeros(3, npy*npz);
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
 
     for z_pix = 1:npz
         for y_pix = 1:npy
-            [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
+            pixel_position = pixel_generator(y_pix, z_pix);
+            % Even if parallel beams are removed, this still must be called for
+            % every pixel, as the source position may change (cloud of points)
+            ray_start = feval(get_source_pos, angle, pixel_position); 
+            ray_dir = pixel_position - ray_start;
+            ray_length2 = sum(ray_dir.^2);
+            
+            % Here you are missing a call to the source dependent of the pixel position
             ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
-            ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir * ray_length;
+            ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir;
             intensity_list(:, :, y_pix, z_pix) = ...
-                fluences .* pix_size / (ray_length^2);
+                fluences .* pix_size / ray_length2;
         end
     end
 

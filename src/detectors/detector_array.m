@@ -6,7 +6,7 @@ classdef (Abstract) detector_array
 
     methods (Abstract)
         % To calculate the ray vectors for each pixel in the detector array (ray tracing)
-        ray_generator = ray_at_angle(self, detect_geom, angle_index, ray_per_pixel)
+        pixel_generator = set_array_angle(self, detect_geom, angle_index, ray_per_pixel)
         
         % To calculate which pixel a ray hits in the detector array (scattering)
         [pixel, hit] = hit_pixel(self, detect_geom, angle_index)

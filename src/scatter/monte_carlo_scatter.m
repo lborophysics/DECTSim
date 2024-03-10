@@ -1,9 +1,9 @@
-function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, sfactor)
+function scatter_count = monte_carlo_scatter(xray_source, phantom, detector_obj, sfactor)
 %monte_carlo_scatter Monte Carlo simulation of scatter signal
 %
 % Parameters:
 %  source: Source object (see compute_sinogram.m for details)
-%  voxels: voxel array object (see compute_sinogram.m for details)
+%  phantom: voxel array object (see compute_sinogram.m for details)
 %  detector: Detector object (see compute_sinogram.m for details)
 %  scatter_factor: This determines how many rays to scatter for each pixel
 %
@@ -11,7 +11,7 @@ function scatter_count = monte_carlo_scatter(xray_source, voxels, detector_obj, 
 %  scatter_signal: The scatter signal
 arguments
     xray_source  {mustBeA(xray_source, 'source')}
-    voxels       {mustBeA(voxels, 'voxel_array')}
+    phantom      {mustBeA(phantom, 'voxel_array')}
     detector_obj {mustBeA(detector_obj, 'detector')}
     sfactor      double = 1
 end
@@ -21,41 +21,42 @@ sensor_unit = detector_obj.sensor;
 gantry      = detector_obj.gantry;
 d_array     = detector_obj.detector_array;
 
-% Retrieve information about the movement of the gantry
-num_rotations = gantry.num_rotations;
-d2detector = gantry.dist_to_detector;
+% Retrieve information within the sub-objects
+num_rotations  = gantry.num_rotations;
+d2detector     = gantry.dist_to_detector;
 
-% Retrieve information about the detector array
 npy = d_array.n_pixels(1);
 npz = d_array.n_pixels(2);
-ray_at_angle = @(ang) d_array.ray_at_angle(gantry, ang);
-hit_pixel = @(ang) d_array.hit_pixel(gantry, ang);
+
 pix_size = prod(d_array.pixel_dims);
 
-% Retrieve information about the sensor unit
-num_bins = sensor_unit.num_bins;
+num_bins     = sensor_unit.num_bins;
 num_esamples = sensor_unit.num_samples;
 sensor_range = sensor_unit.get_range();
 
-% Retrieve information about the voxels
-vox_init    = voxels.array_position;
-vox_dims    = voxels.dimensions;
-vox_nplanes = voxels.num_planes;
+vox_init    = phantom.array_position;
+vox_dims    = phantom.dimensions;
+vox_nplanes = phantom.num_planes;
 vox_last    = vox_init + (vox_nplanes - 1) .* vox_dims;
+
+% Now lets define some functions that we will use to calculate the sinogram
+get_source_pos  = @(angle, pixel_pos) gantry.get_source_pos(angle, pixel_pos);
+set_array_angle = @(angle) d_array.set_array_angle(gantry, angle);
+hit_pixel       = @(angle) d_array.hit_pixel(gantry, angle);
 
 % Identify which compiled functions are available to use
 if ~~exist('ray_trace_many_mex', 'file')
-    ray_tracing_many = @(ray_starts, ray_dirs) ray_trace_many_mex(...
-        ray_starts, ray_dirs, vox_init, vox_dims, vox_nplanes);
+    ray_tracing = @(ray_starts, ray_dirs) ray_trace_many_mex(ray_starts, ray_dirs, ...
+        vox_init, vox_dims, vox_nplanes);
 else
-    ray_tracing_many = @(ray_starts, ray_dirs) ray_trace_many(...
-        ray_starts, ray_dirs, vox_init, vox_dims, vox_nplanes);
+    ray_tracing = @(ray_starts, ray_dirs) ray_trace_many    (ray_starts, ray_dirs, ...
+        vox_init, vox_dims, vox_nplanes);
 end
 
 % Create function handles to retrieve the mfp and mu values
-get_saved_mfp    = @voxels.get_saved_mfp;
-get_saved_mu     = @voxels.get_saved_mu;
-precalculate_mus = @voxels.precalculate_mus;
+get_saved_mfp    = @(idxs, mfp_dict) phantom.get_saved_mfp(idxs, mfp_dict);
+get_saved_mu     = @(idxs, mu_dict)  phantom.get_saved_mu(idxs, mu_dict);
+precalculate_mus = @(energies)       phantom.precalculate_mus(energies);
 
 num_scatters = 100*sfactor; % Number of scatter rays to sample at each scatter point (will be a parameter later)
 mfp_fraction = 1e-2; % Fraction of the mean free path to sample scatter points
@@ -68,48 +69,53 @@ energy_list = xray_source.get_energies(sensor_range);
 fluences = xray_source.get_fluences(sensor_range);
 
 mean_energy = sum(energy_list .* fluences) / sum(fluences);
-% mu_dict = voxels.precalculate_mus(energy_list);
-% mfp_dict = voxels.precalculate_mfps(energy_list);
-mu_dict  = voxels.get_mu_arr(mean_energy );
-mfp_dict = voxels.get_mfp_arr(mean_energy);
+% mu_dict = phantom.precalculate_mus(energy_list);
+% mfp_dict = phantom.precalculate_mfps(energy_list);
+mu_dict  = phantom.get_mu_arr(mean_energy );
+mfp_dict = phantom.get_mfp_arr(mean_energy);
 
 
-% Check that the voxels are entirely within the detector
+% Check that the phantom are entirely within the detector
 assert(vox_init(1)^2 + vox_init(2)^2 <= (d2detector/2)^2, ...
     'Phantom is not entirely within the detector');
 assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
     'Phantom is not entirely within the detector');
 
-num_angle_samples = 1e7;
+num_angle_samples = 1e2;
 sample_angles = compton_dist(zeros(1, num_angle_samples) + mean_energy);
 
 scatter_count = zeros(num_bins, npy, npz, num_rotations);
 parfor angle = 1:num_rotations
     % Do the linear indexing of scatter
-    ray_generator = feval(ray_at_angle, angle);
+    pixel_generator = feval(set_array_angle, angle);
     hit_at_angle  = feval(hit_pixel, angle);
     ang_scatter_count = zeros(num_bins, npy, npz);
 
     intensity_list = zeros(num_bins*num_esamples, npy, npz);
     ray_starts = zeros(3, npy*npz);
     ray_dirs   = zeros(3, npy*npz);
-    ray_lens  = zeros(1, npy*npz);
+    ray_lens   = zeros(1, npy*npz);
 
     for z_pix = 1:npz
         for y_pix = 1:npy
-            [ray_start, ray_dir, ray_length] = ray_generator(y_pix, z_pix);
+            pixel_position = pixel_generator(y_pix, z_pix);
+            ray_start = feval(get_source_pos, angle, pixel_position); 
+            ray_dir = pixel_position - ray_start;
+            ray_length2 = sum(ray_dir.^2);
+            ray_length = sqrt(ray_length2);
+
             idx = (z_pix-1)*npy + y_pix;
             ray_starts(:, idx) = ray_start;
-            ray_dirs(:, idx) = ray_dir;
+            ray_dirs(:, idx) = ray_dir ./ ray_length;
             ray_lens(idx) = ray_length;
 
             intensity_list(:, y_pix, z_pix) = ...
-                fluences .* pix_size / (ray_length^2)./sfactor;
+                fluences .* pix_size ./ ray_length2 ./sfactor;
         end
     end
 
     % Ray trace the primary rays
-    [traced_lens, traced_idxs] = ray_tracing_many(ray_starts, ray_dirs .* ray_lens);
+    [traced_lens, traced_idxs] = ray_tracing(ray_starts, ray_dirs .* ray_lens);
 
     for z_pix = 1:npz
         for y_pix = 1:npy
@@ -181,11 +187,11 @@ parfor angle = 1:num_rotations
                 scatter_energies(   ignore) = [];
 
                 % Now trace the scattered rays that hit the detector
-                [scatter_ray_lens, scatter_ray_idxs] = ray_tracing_many(...
+                [scatter_ray_lens, scatter_ray_idxs] = ray_tracing(...
                     scatter_starts, scatter_dirs);
 
                 % Need this is needed if we want to do multiple scattering
-                % scatter_mfp_dict = voxels.precalculate_mfps(scatter_energies);
+                % scatter_mfp_dict = phantom.precalculate_mfps(scatter_energies);
 
                 % Now calculate the intensity at each scattered ray that hits the detector array
                 scatter_mu_dict = precalculate_mus(scatter_energies);
@@ -195,7 +201,7 @@ parfor angle = 1:num_rotations
                     % This happens when the scatter ray is scattered outside the phantom
                     if isempty(scatter_ray_idx); continue; end
 
-                    % scatter_mfps = voxels.get_saved_mfp(scatter_ray_idx, scatter_mfp_dict(:, si));
+                    % scatter_mfps = phantom.get_saved_mfp(scatter_ray_idx, scatter_mfp_dict(:, si));
                     scatter_mus  = get_saved_mu(scatter_ray_idx, scatter_mu_dict(:, si));
                     li = lis(si);
 

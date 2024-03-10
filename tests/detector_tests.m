@@ -17,17 +17,17 @@ classdef detector_tests < matlab.unittest.TestCase
     methods (Test)
         % Test methods
         function test_detector_array_init(tc)
-            p1 = parallel_detector([0.1, 0.35], [110, 20]);
+            p1 = flat_detector([0.1, 0.35], [110, 20]);
             tc.assertEqual(p1.pixel_dims, [0.1, 0.35]);
             tc.assertEqual(p1.n_pixels, [110, 20]);
 
-            p2 = parallel_detector([0.34, 0.1], [20, 110]);
+            p2 = flat_detector([0.34, 0.1], [20, 110]);
             tc.assertEqual(p2.pixel_dims, [0.34, 0.1]);
             tc.assertEqual(p2.n_pixels, [20, 110]);
 
-            tc.verifyError(@() parallel_detector([-0.1, 0.35], [110, 20]), "MATLAB:validators:mustBePositive");
-            tc.verifyError(@() parallel_detector([0.1, 0.35], [-110, 20]), "MATLAB:validators:mustBePositive");
-            tc.verifyError(@() parallel_detector([0.1, 0.35], [110.5, 20]), "MATLAB:validators:mustBeInteger");
+            tc.verifyError(@() flat_detector([-0.1, 0.35], [110, 20]), "MATLAB:validators:mustBePositive");
+            tc.verifyError(@() flat_detector([0.1, 0.35], [-110, 20]), "MATLAB:validators:mustBePositive");
+            tc.verifyError(@() flat_detector([0.1, 0.35], [110.5, 20]), "MATLAB:validators:mustBeInteger");
 
             c1 = curved_detector([0.1 0.35], [110, 20]);
             tc.assertEqual(c1.pixel_dims, [0.1, 0.35]);
@@ -45,7 +45,7 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_curved_ray_gen(tc)
             geom = gantry(9, 10, pi);
             c1 = curved_detector([9*pi/60, 0.4], [60, 10]);
-            ray_generator = c1.ray_at_angle(geom, 1);
+            pixel_generator = c1.set_array_angle(geom, 1);
 
             rot_by_pixel = rotz(pi/60);
             unit_vector = rotz(pi/120) * [-1; 0; 0];
@@ -54,12 +54,10 @@ classdef detector_tests < matlab.unittest.TestCase
                 for j = 1:10
                     exp_start = [0; 4.5; 0];
                     exp_dir   = rot_by_pixel^(i-1) * unit_vector .* 9 + [0;0;z_pos(j)*9];
-                    exp_len   = norm(exp_dir);
-                    exp_dir   = exp_dir / exp_len;
-                    [ray_start, ray_dir, ray_length] = ray_generator(i, j);
-                    tc.verifyEqual(ray_start, exp_start, 'RelTol', 1e-14);
-                    tc.verifyEqual(ray_dir, exp_dir, 'RelTol', 1e-14);
-                    tc.verifyEqual(ray_length, exp_len, 'RelTol', 1e-14);
+                    exp_pos   = exp_start + exp_dir;
+
+                    pixel_position = pixel_generator(i, j);
+                    tc.verifyEqual(pixel_position, exp_pos, 'RelTol', 1e-14);
                 end
             end
         end
@@ -67,8 +65,8 @@ classdef detector_tests < matlab.unittest.TestCase
         function test_para_ray_gen(tc)
             unit_vector = [0; -1; 0];
             geom = gantry(2, 10, pi);
-            p1 = parallel_detector([0.1, 0.35], [110, 20]);
-            ray_generator = p1.ray_at_angle(geom, 1);
+            p1 = flat_detector([0.1, 0.35], [110, 20]);
+            pixel_generator = p1.set_array_angle(geom, 1);
 
             y_increment = [1; 0; 0] * 0.1;
             z_increment = [0; 0; 7] / 20;
@@ -76,12 +74,10 @@ classdef detector_tests < matlab.unittest.TestCase
             for i = 50:60
                 for j = 5:15
                     exp_start = start + y_increment*(i-1) + z_increment*(j-1);
-                    exp_dir   = unit_vector;
-                    exp_len   = 2;
-                    [ray_start, ray_dir, ray_length] = ray_generator(i, j);
-                    tc.verifyEqual(ray_start, exp_start, 'RelTol', 1e-14);
-                    tc.verifyEqual(ray_dir, exp_dir, 'RelTol', 1e-14);
-                    tc.verifyEqual(ray_length, exp_len, 'RelTol', 1e-14);
+                    exp_dir   = unit_vector .* 2;
+                    exp_pos   = exp_start + exp_dir;
+                    pixel_position = pixel_generator(i, j);
+                    tc.verifyEqual(pixel_position, exp_pos, 'RelTol', 1e-14);
                 end
             end
         end
@@ -99,34 +95,55 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_hit_para_pixel(tc)
             geom = gantry(2, 10, pi);
-            a1 = parallel_detector([0.1, 0.35], [110, 20]);
-            ray_generator = a1.ray_at_angle(geom, 13);
+            a1 = flat_detector([0.1, 0.35], [110, 20]);
+            pixel_generator = a1.set_array_angle(geom, 13);
             hit_at_angle = a1.hit_pixel(geom, 13);
             for i = 1:110
                 for j = 1:20
-                    [ray_start, ray_dir, exp_ray_len] = ray_generator(i, j);
-                    [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
+                    pixel_pos = pixel_generator(i, j);
+                    ray_start = geom.get_source_pos(13, pixel_pos);
+                    ray_dir   = pixel_pos - ray_start;
+                    exp_ray_len = norm(ray_dir);
+
+                    [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir ./ exp_ray_len);
                     tc.verifyEqual(pixel, [i; j]);
                     tc.verifyEqual(act_ray_len, exp_ray_len, "RelTol", 1e-15);
                     tc.verifyTrue(hit);
                 end
             end 
-            [ray_start, ray_dir, ~] = ray_generator(111, 20);
+            % Test for a ray that just misses the detector
+            pixel_pos = pixel_generator(111, 20);
+            ray_start = geom.get_source_pos(13, pixel_pos);
+            ray_dir   = pixel_pos - ray_start;
+            ray_dir   = ray_dir ./ norm(ray_dir);
             hit_at_angle = a1.hit_pixel(geom, 13);
+
             [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
             tc.verifyEqual(pixel, [0; 0]);
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);
 
-            ray_generator = a1.ray_at_angle(geom, 35);
-            [ray_start, ray_dir, ~] = ray_generator(55, 10);
+            % Test for a ray would hit the detector if it was going the other way
+            pixel_generator = a1.set_array_angle(geom, 35);
+            pixel_pos = pixel_generator(55, 10);
+            ray_start = geom.get_source_pos(35, pixel_pos);
+            ray_dir   = pixel_pos - ray_start;
+            ray_dir   = ray_dir ./ norm(ray_dir);
             hit_at_angle = a1.hit_pixel(geom, 35);
+            
             [pixel, act_ray_len, hit] = hit_at_angle(ray_start, -ray_dir);
             tc.verifyEqual(pixel, [0; 0]);
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);                
             
-            [ray_start, ray_dir, ray_len] = ray_generator(55, 15);
+
+            % [ray_start, ray_dir, ray_len] = pixel_generator(55, 15);
+            pixel_pos = pixel_generator(55, 15);
+            ray_start = geom.get_source_pos(13, pixel_pos);
+            ray_dir   = pixel_pos - ray_start;
+            ray_len   = norm(ray_dir);
+            ray_dir   = ray_dir ./ ray_len;
+            
             ray_dirs = repmat(ray_dir, 1, 10);
             ray_starts = repmat(ray_start, 1, 10);
             [pixels, act_ray_lens, hits] = hit_at_angle(ray_starts, ray_dirs);

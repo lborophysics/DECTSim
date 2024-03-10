@@ -21,16 +21,17 @@ function photon_count = air_scan(xray_source, detector_obj)
     d_array     = detector_obj.detector_array;
     
     num_rotations = gantry.num_rotations;
+    
     npy = d_array.n_pixels(1); 
     npz = d_array.n_pixels(2); 
     pix_size = prod(d_array.pixel_dims);
+    pixel_generator = d_array.set_array_angle(gantry, 1);
     
     num_bins = sensor_unit.num_bins;
     num_esamples = sensor_unit.num_samples;
     sensor_range = sensor_unit.get_range();
 
     single_rotation = zeros(num_bins, npy, npz);
-    ray_generator = d_array.ray_at_angle(gantry, 1);
     air = material_attenuation("air");
     
     energies = xray_source.get_energies(sensor_range);
@@ -45,9 +46,14 @@ function photon_count = air_scan(xray_source, detector_obj)
     
     for z_pix = 1:npz
         for y_pix = 1:npy
-            [~, ~, ray_length] = ray_generator(y_pix, z_pix);
+            pixel_position = pixel_generator(y_pix, z_pix);
+            ray_start = gantry.get_source_pos(1, pixel_position);
+            
+            ray_length2 = sum((pixel_position - ray_start).^2);
+            ray_length = sqrt(ray_length2);
+            
             intensity_list(:, :, y_pix, z_pix) = ...
-                fluences .* pix_size / (ray_length^2);
+                fluences .* pix_size / ray_length2;
             
             for bin = 1:sensor_unit.num_bins    
                 for ei = 1:sensor_unit.num_samples

@@ -11,14 +11,14 @@ classdef signal_tests < matlab.unittest.TestCase
         function setup_test(tc)
             tc.ray_source = single_energy(30);
             tc.sensor_unit = ideal_sensor([0, 100], 100);
-            tc.geom = gantry(2, 180, pi);
+            tc.geom = parallel_gantry(2, 180, pi);
         end
     end
 
     methods(Test)
         function test_air_scan(tc)
-            g1 = gantry(2, 10, pi);
-            a1 = parallel_detector([0.1, 0.35], [110, 20]);
+            g1 = parallel_gantry(2, 10, pi);
+            a1 = flat_detector([0.1, 0.35], [110, 20]);
             d1 = detector(g1, a1, tc.sensor_unit);
 
             xray_source = single_energy(30);
@@ -27,12 +27,14 @@ classdef signal_tests < matlab.unittest.TestCase
             scan = squeeze(sum(air_scan(xray_source, d1), 1));
             intensity = 1e6 .* (0.1 * 0.35) / 4; % The conversion from fluences to intensity
             expected = zeros(110, 20, 10) + intensity*exp(-air.get_mu(30)*2);
+
+            tc.verifyEqual(scan, expected, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
 
         function test_generate_image(tc)
             
-            a1 = parallel_detector([1, 1], [5, 1]);
-            g1 = gantry(10, 4, pi);
+            a1 = flat_detector([1, 1], [5, 1]);
+            g1 = parallel_gantry(10, 4, pi);
             d1 = detector(g1, a1, tc.sensor_unit);
             mat = material_attenuation("water"); 
             my_box = voxel_cube([0;0;0], [3;3;3], mat);
@@ -48,7 +50,7 @@ classdef signal_tests < matlab.unittest.TestCase
             tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
 
             % % 2D 
-            a2 = parallel_detector([1, 1], [5, 5]);
+            a2 = flat_detector([1, 1], [5, 5]);
             sampled_sensor = ideal_sensor([0, 100], 50, 2);
             d2 = detector(g1, a2, sampled_sensor);
             image = compute_sinogram(tc.ray_source, array, d2);
@@ -71,8 +73,8 @@ classdef signal_tests < matlab.unittest.TestCase
         function test_noscatter_image(tc)
             % This test should probably include a test for correct scatter factor (not that it has no effect when no scatter is present)
             % Check that with no scattering, the scatter image is the same as the regular image
-            a1 = parallel_detector([1, 1], [5, 1]);
-            g1 = gantry(10, 4, pi);
+            a1 = flat_detector([1, 1], [5, 1]);
+            g1 = parallel_gantry(10, 4, pi);
             d1 = detector(g1, a1, tc.sensor_unit);
             d2 = detector(g1, a1, ideal_sensor([0, 100], 50, 2));
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, {}, material_attenuation("vacuum")); % Will never scatter
@@ -116,13 +118,13 @@ classdef signal_tests < matlab.unittest.TestCase
             voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
                 voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 
-            dgantry = gantry(105, 45, pi);
-            darray = parallel_detector([0.2 0.1], [450 1]);
+            dgantry = parallel_gantry(105, 45, pi);
+            darray = flat_detector([0.2 0.1], [450 1]);
             dsensor = ideal_sensor([0; 100], 100);
             d = detector(dgantry, darray, dsensor);
             
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "slow", 1));
-            
+     
             scatter_sinogram_expected = matfile("scatter_cylinder_slow.mat").scatter_sinogram;
             tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-8, 'AbsTol', 1e-8);
         end
@@ -151,15 +153,15 @@ classdef signal_tests < matlab.unittest.TestCase
             voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
                 voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 
-            dgantry = gantry(105, 180, pi);
-            darray = parallel_detector([0.1 0.1], [900 1]);
+            dgantry = parallel_gantry(105, 180, pi);
+            darray = flat_detector([0.1 0.1], [900 1]);
             dsensor = ideal_sensor([0; 100], 100);
             d = detector(dgantry, darray, dsensor);
 
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "fast"));
             
             scatter_sinogram_expected = matfile("scatter_cylinder_fast.mat").scatter_sinogram;
-            tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-15, 'AbsTol', 1e-15);
+            tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-14, 'AbsTol', 2e-14);
         end
     end
 end

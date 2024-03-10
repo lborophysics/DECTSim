@@ -36,6 +36,13 @@ classdef gantry < handle
             self.scan_angles = scan_angles(1:end-1);
         end
 
+        function source_pos = get_source_pos(self, index, ~)
+            % Get the position of the source at a given angular index
+            % Third argument is the pixel position, which is not used here, useful for 
+            % parallel beams.
+            source_pos = self.get_rot_mat(index) * (self.to_source_vec .* self.dist_to_detector);
+        end
+
         function rot_mat = get_rot_mat(self, index)
             % Get the rotation matrix for the detector at a given angular index
             if index == 1; rot_mat = eye(3); 
