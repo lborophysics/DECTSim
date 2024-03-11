@@ -13,6 +13,10 @@ function [lengths, indices] = ray_trace_many(ray_start, v1_to_v2, init_plane, v_
     
     % Find the which rays do not intersect the volume
     nan_list = a_max <= a_min; not_nan_list = ~nan_list;
+    if all(nan_list)
+        for i = 1:num_rays; lengths{i} = []; indices{i} = []; end 
+        return  % No rays intersect the volume
+    end
 
     % Filter out any rays that do not intersect the volume
     num_intersecting_rays = num_rays - sum(nan_list, "all");
@@ -20,7 +24,7 @@ function [lengths, indices] = ray_trace_many(ray_start, v1_to_v2, init_plane, v_
     ray_start = ray_start(:, not_nan_list);
     a_min = a_min(not_nan_list);
     a_max = a_max(not_nan_list);
-
+    
     a_min_coord = zeros(3, num_intersecting_rays) + a_min;
     a_max_coord = zeros(3, num_intersecting_rays) + a_max;
     backwards = v1_to_v2 < 0;
@@ -60,7 +64,6 @@ function [lengths, indices] = ray_trace_many(ray_start, v1_to_v2, init_plane, v_
     amax(not_nan_list) = a_max;
     amax(nan_list) = NaN;
        
-
     parfor i = 1:num_rays
         if not_nan_list(i)
             [lengths{i}, indices{i}] = ray_trace_single(...

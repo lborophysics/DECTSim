@@ -30,3 +30,8 @@ primary_domain = 'mat'
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ['_static']
+
+# -- Options for latexpdf output ---------------------------------------------
+latex_elements = {
+  'extraclassoptions': 'openany,oneside'
+}

@@ -37,22 +37,38 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.world_material = world_material;
         end
 
-        function mu_dict = precalculate_mus(self, nrjs)
-            % Create a dictionary of mu values for each material
-            mu_dict = containers.Map();       % Not actually constant, but the reference is
-            for nrj = nrjs
-                mu_dict(num2str(nrj)) = self.get_mu_arr(nrj);
+        function mu_dict = precalculate_mus(self, nrj_arr)
+            % Return a 3D matrix of mu values using the 2D array of nrj values
+            mu_dict = zeros(self.nobj + 1, numel(nrj_arr));
+            lin_nrjs = reshape(nrj_arr, 1, []);
+            for n = 1:self.nobj
+                mu_dict(n, :) = self.voxel_objs{n}.get_mu(lin_nrjs);
             end
+            mu_dict(self.nobj + 1, :) = self.world_material.get_mu(lin_nrjs);
+            mu_dict = reshape(mu_dict, [self.nobj + 1, size(nrj_arr)]);
         end
 
-        function mfp_dict = precalculate_mfps(self, nrjs)
+        function mfp_dict = precalculate_mfps(self, nrj_arr)
             % Create a dictionary of mfp values for each material
-            mfp_dict = containers.Map();       % Not actually constant, but the reference is
-            for nrj = nrjs
-                mfp_dict(num2str(nrj)) = self.get_mfp_arr(nrj);
+            num_nrjs = numel(nrj_arr);
+            mfp_dict = zeros(self.nobj + 1, size(nrj_arr, 1), size(nrj_arr, 2));
+            for n = 1:num_nrjs
+                [i, j] = ind2sub(size(nrj_arr), n);
+                mfp_dict(:, i, j) = self.get_mfp_arr(nrj_arr(i));
             end
         end
 
+        function iobj = get_object_idxs(self, indices)
+            % Convert indices to position at centre of voxel
+            position = self.array_position + (indices - 0.5) .* self.dimensions;
+
+            % Get mus at position
+            iobj = zeros(1, size(indices, 2)) + self.nobj + 1; % Default to air
+            for n = 1:self.nobj
+                iobj(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = n;
+            end
+        end
+    
         function mu_arr = get_mu_arr(self, nrj)
             % Create a dictionary of mu values for each material
             mu_arr(self.nobj + 1) = self.world_material.get_mu(nrj);

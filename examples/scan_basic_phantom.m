@@ -1,13 +1,14 @@
-rng(100);
+rng(200);
 
 % Create source and sensor
-my_source = single_energy(50);
+% my_source = single_energy(50);
+my_source = source_fromfile('spectrum.spk');
 
 % Voxel array constants
 vox_arr_center = zeros(3, 1);
-phantom_radius = 30/2;% In the x-y plane
-phantom_width = 50; % In the z direction
-voxel_size = 0.1/2; % 1 mm
+phantom_radius = 30/2 * units.cm; % In the x-y plane
+phantom_width = 50 * units.cm; % In the z direction
+voxel_size = 0.5 * units.mm;
 
 % Create voxel array
 water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
@@ -26,20 +27,20 @@ voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_widt
     voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
 
 % Detector constants
-dist_to_detector = 105; % cm
-pixel_size = [0.1 0.1]; % cm (so pixel size = 1mm)
+dist_to_detector = 1.05 * units.m;
+pixel_size = [1 1] .* units.mm;
 num_pixels = [900 1];
 num_rotations = 180;
 
-dgantry = gantry(dist_to_detector, num_rotations, pi);
-darray = parallel_detector(pixel_size, num_pixels);
-dsensor = ideal_sensor([0; 100], 100);
+dgantry = parallel_gantry(dist_to_detector, num_rotations, pi);
+darray = flat_detector(pixel_size, num_pixels);
+dsensor = ideal_sensor([1; 80], 30, 1);
 d = detector(dgantry, darray, dsensor);
 
 tic
 sinogram = squeeze(compute_sinogram(my_source, voxels, d));
 toc
-
+    
 imwrite(mat2gray(sinogram), "sinograph_cylinder.png")
 
 scan_angles = rad2deg(dgantry.scan_angles);
@@ -49,7 +50,7 @@ imwrite(mat2gray(R), "cylinder.png")
 
 scatter_type = "fast";
 tic
-scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, "fast"));
+scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, scatter_type));
 toc
 
 if strcmp(scatter_type, "fast")

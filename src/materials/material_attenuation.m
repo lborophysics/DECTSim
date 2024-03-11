@@ -3,10 +3,15 @@ classdef material_attenuation
     % for ray tracing and scattering
 
     properties (SetAccess=immutable)
+        name           % Name of the material
         atomic_numbers % Atomic numbers of the elements in the material
         mass_fractions % Mass fractions of the elements in the material
         density        % Density of the material in g/cm^3
         mu_from_energy % A function handle to get the linear attenuation coefficient from energy. Only used if use_mex is false
+    end
+
+    properties (SetAccess=private)
+        atomic_masses  % Atomic masses of the elements in the material
     end
 
 
@@ -21,6 +26,7 @@ classdef material_attenuation
             %   
             %   mat = material("material_name", atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
             assert(isstring(material_name), 'assert:failure', 'The material name must be a string.');
+            self.name = material_name;
             if nargin == 1
                 material_index = find(mat_consts.known_materials == lower(material_name));
                 if any(material_index)
@@ -44,6 +50,8 @@ classdef material_attenuation
             else
                 error('MATLAB:invalidInput', 'Invalid number of input arguments. Use either material("material_name") or material("material_name", atomic_numbers, mass_fractions, density).');
             end
+            self.density = self.density * units.g / units.cm^3;
+            self.atomic_masses = mat_consts.atomic_masses(self.atomic_numbers) .* units.g; % in g/mol (mol handled by cross_section)
             if ~self.use_mex
                 self.mu_from_energy = get_photon_attenuation(self.atomic_numbers);
             end
@@ -55,7 +63,7 @@ classdef material_attenuation
                 mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, nrj);
             else
                 mus = self.mu_from_energy(log(nrj));
-                mu = sum(exp(mus).*self.mass_fractions) * self.density;
+                mu = sum(exp(mus).*self.mass_fractions, 2) * self.density;
             end
         end
 
@@ -63,7 +71,7 @@ classdef material_attenuation
             % MEAN_FREE_PATH Get the mean free path of the material for a given energy
             mfp = 1 / (constants.N_A * self.density * ...
                 sum(self.mass_fractions .* cross_section(self.atomic_numbers, nrj) ...
-                    ./ mat_consts.atomic_masses(self.atomic_numbers)));
+                    ./ self.atomic_masses));
         end
     end
 end

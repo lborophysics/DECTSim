@@ -75,14 +75,11 @@ Abstract Methods
 Methods
 ~~~~~~~
 
-.. method:: sample_source(self, source)
+.. method:: get_range(self)
 
-    This method samples a :class:`source` object and returns the energies and intensities of the photons sampled from the source.
+    This method returns an Nx2 array representing the range of energies the sensor can detect. This may be converted to an attribute in the future.
 
-    :param source: The xray source to sample.
-    :type source: source
-
-    :returns: :code:`[energies, intensities]` arrays of length [1, num_bins*num_samples], representing the energies and intensities of the photons sampled from the source. 
+    :returns: :code:`range` is an Nx2 array representing the range of energies the sensor can detect.
 
 .. method:: get_energy_bin(self, energy)
 

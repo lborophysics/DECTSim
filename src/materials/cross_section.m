@@ -15,17 +15,17 @@ function cs = cross_section(Z, nrj) % Once tested change this function to evalua
         f1=-3.9178e-7*units.barn; f2= 6.8241e-5*units.barn; % cm^2 (e-24 for the barn)
         f3= 6.0480e-5*units.barn; f4= 3.0274e-4*units.barn; % cm^2 (e-24 for the barn)
     end
-    T0 = zeros(size(Z)) + 40; % Special case for hydrogen (KeV)
-    T0(Z > 1.5) = 15; % KeV
+    T0 = zeros(size(Z)) + 40 * units.keV; % Special case for hydrogen (KeV)
+    T0(Z > 1.5) = 15 * units.keV; % For Z > 1.5, T0 = 15 KeV
     
-    X = max(nrj, T0) ./ constants.em_ee; % Unitless
+    X = max(nrj, T0) ./ constants.me_c2; % Unitless
     p1Z = Z.*(d1 + e1.*Z + f1.*Z.*Z); p2Z = Z.*(d2 + e2.*Z + f2.*Z.*Z); % cm^2
     p3Z = Z.*(d3 + e3.*Z + f3.*Z.*Z); p4Z = Z.*(d4 + e4.*Z + f4.*Z.*Z); % cm^2
 
     cs = p1Z.*log(1.+2.*X)./X + (p2Z + p3Z.*X + p4Z.*X.*X)./(1. + a.*X + b.*X.*X + c.*X.*X.*X); % cm^2
 
     if nrj < T0
-        X = (T0+1) ./ constants.em_ee; % Unitless
+        X = (T0+1) ./ constants.me_c2; % Unitless
         sigma = p1Z.*log(1.+2.*X)./X + (p2Z + p3Z.*X + p4Z.*X.*X)./(1. + a.*X + b.*X.*X + c.*X.*X.*X); % cm^2
         c1 = -T0.*(sigma-cs)./cs; % Unitless
         c2 = zeros(size(Z)) + 0.150;

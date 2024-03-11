@@ -55,29 +55,38 @@ Functions
 Methods
 -------
 
-.. method:: precalculate_mus(self, nrjs)
+.. method:: precalculate_mus(self, nrj_arr)
 
     Pre-calculates the linear attenuation coefficient for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
 
-    :param nrjs: A list of energies in keV.
-    :type nrjs: 1xN double
+    :param nrj_arr: An array of energies in keV. This is an n-Dimensional array of energies, the output is the same shape as the input.
+    :type nrjs: MxN double
   
-    :returns: :code:`mu_dict` is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at that energy.
+    :returns: :code:`mu_dict` is a PxMxN double with the frst dimension representing the index of the voxel object in your array, the other dimensions are the same as the input ``nrj_arr``. The values are the linear attenuation coefficients for each voxel object in ``voxel_objs`` at each energy in ``nrj_arr``. P is the number of voxel objects + 1, the last element is the linear attenuation coefficient of the world material.
 
-.. method:: precalculate_mfps(self, nrjs)
+.. method:: precalculate_mfps(self, nrj_arr)
 
     Pre-calculates the Compton mean free path for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
 
-    :param nrjs: A list of energies in keV.
-    :type nrjs: 1xN double
+    :param nrj_arr: An array of energies in keV. This is an n-Dimensional array of energies, the output is the same shape as the input.
+    :type nrjs: MxN double
 
-    :returns: :code:`mfp_dict` is a dictionary with the keys being the energies in ``nrjs`` as strings and the values being a 1D array of the Compton mean free paths for each voxel object in ``voxel_objs`` at that energy.
+    :returns: :code:`mfp_dict` is a PxMxN double with the frst dimension representing the index of the voxel object in your array, the other dimensions are the same as the input ``nrj_arr``. The values are the Compton mean free paths for each voxel object in ``voxel_objs`` at each energy in ``nrj_arr``. P is the number of voxel objects + 1, the last element is the Compton mean free path of the world material.
+
+.. method:: get_object_idxs(self, indices)
+
+    Obtain the indices of the voxel objects at the indices in ``indices``.
+
+    :param indices: List of indices of voxels to obtain which voxel object they belong to.
+    :type indices: 3xN double
+
+    :returns: :code:`iobj` is a 1xN array of the identifiers of the voxel objects at the indices in ``indices``. This is used along with the output of :meth:`precalculate_mus` and :meth:`precalculate_mfps` to obtain the linear attenuation coefficients and Compton mean free paths at the indices in ``indices``.
 
 .. method:: get_mu_arr(self, nrj)
 
     Obtain all the linear attenuation coefficients for each voxel object in ``voxel_objs`` at the energy ``nrj``.
 
-    :param nrj: The energy in keV.
+    :param nrj: The photon energy (in :math:`keV`).
     :type nrj: double
 
     :returns: :code:`mu_arr` is a 1D array of the linear attenuation coefficients for each voxel object in ``voxel_objs`` at the energy ``nrj``.

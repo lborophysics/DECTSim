@@ -153,7 +153,38 @@ classdef voxel_array_tests < matlab.unittest.TestCase
                 end
             end
         end
-        
+        function test_object_idxs(tc)
+            mat1 = material_attenuation("water");
+            mat2 = material_attenuation("bone");
+            mat3 = material_attenuation("air");
+
+            big_box   = voxel_cube([0,0,0], 10, mat1);
+            med_box   = voxel_cube([0,0,0], 6 , mat2);
+            small_box = voxel_cube([0,0,0], 2 , mat3);
+
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, {big_box, med_box, small_box});
+            get_obj_idx = @(x,y,z,e) my_collection.get_object_idxs([x + 5;y + 5;z + 5]); % coord to index -> + 5
+            for x = -5:5
+                if abs(x) <= 1
+                    tc.verifyEqual(get_obj_idx(x, 0, 0, 1), 3)
+                elseif abs(x) <= 3
+                    tc.verifyEqual(get_obj_idx(x, 0, 0, 1), 2)
+                else
+                    tc.verifyEqual(get_obj_idx(x, 0, 0, 1), 1)
+                end
+            end
+            for y = -5:5
+                if abs(y) <= 1
+                    tc.verifyEqual(get_obj_idx(0, y, 0, 1), 3)
+                elseif abs(y) <= 3
+                    tc.verifyEqual(get_obj_idx(0, y, 0, 1), 2)
+                else
+                    tc.verifyEqual(get_obj_idx(0, y, 0, 1), 1)
+                end
+            end
+        end
+
+        % MISSING TESTS FOR: precalculate_mus, precalculate_mfps
     end
 
 end

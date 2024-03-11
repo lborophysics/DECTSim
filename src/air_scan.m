@@ -21,27 +21,48 @@ function photon_count = air_scan(xray_source, detector_obj)
     d_array     = detector_obj.detector_array;
     
     num_rotations = gantry.num_rotations;
+    
     npy = d_array.n_pixels(1); 
     npz = d_array.n_pixels(2); 
+    pix_size = prod(d_array.pixel_dims);
+    pixel_generator = d_array.set_array_angle(gantry, 1);
+    
     num_bins = sensor_unit.num_bins;
+    num_esamples = sensor_unit.num_samples;
+    sensor_range = sensor_unit.get_range();
 
     single_rotation = zeros(num_bins, npy, npz);
-    ray_generator = d_array.ray_at_angle(gantry, 1);
     air = material_attenuation("air");
-    [energy_list, intensity_list] = sensor_unit.sample_source(xray_source);
+    
+    energies = xray_source.get_energies(sensor_range);
+    energy_list = reshape(energies, num_bins, num_esamples);
+
+    fluences = xray_source.get_fluences(sensor_range);
+    fluences = reshape(fluences, num_esamples, num_bins)';
+    intensity_list = zeros(num_bins, num_esamples, npy, npz);
+    
+    lin_elist = reshape(energy_list, 1, []);
+    mu_arr = reshape(air.get_mu(lin_elist), num_bins, num_esamples);
     
     for z_pix = 1:npz
         for y_pix = 1:npy
-            [~, ~, ray_length] = ray_generator(y_pix, z_pix);
+            pixel_position = pixel_generator(y_pix, z_pix);
+            ray_start = gantry.get_source_pos(1, pixel_position);
+            
+            ray_length2 = sum((pixel_position - ray_start).^2);
+            ray_length = sqrt(ray_length2);
+            
+            intensity_list(:, :, y_pix, z_pix) = ...
+                fluences .* pix_size / ray_length2;
             
             for bin = 1:sensor_unit.num_bins    
                 for ei = 1:sensor_unit.num_samples
-                    nrj = energy_list(bin, ei);
-                    if isnan(nrj); continue; end
-                    intensity = intensity_list(bin, ei);
+                    if isnan(energy_list(bin, ei)); continue; end
+                    intensity = intensity_list(bin, ei, y_pix, z_pix);
 
-                    mu = ray_length*air.get_mu(nrj);
-                    single_rotation(bin, y_pix, z_pix) = intensity*exp(-mu);
+                    mu = ray_length*mu_arr(bin, ei);
+                    single_rotation(bin, y_pix, z_pix) = ...
+                        single_rotation(bin, y_pix, z_pix) + intensity*exp(-mu);
                 end
             end
         end

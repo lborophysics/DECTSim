@@ -4,9 +4,9 @@ function obj = voxel_cube(cube_centre, cube_size, material)
     cube_max = cube_centre + cube_size/2;
     obj = voxel_object(@cube, material);
 
-    function result = cube(i, j, k)
-        result = i >= cube_min(1) & i <= cube_max(1) & ...
-                 j >= cube_min(2) & j <= cube_max(2) & ...
-                 k >= cube_min(3) & k <= cube_max(3);
+    function result = cube(x, y, z) 
+        result = x >= cube_min(1) & x <= cube_max(1) & ...
+                 y >= cube_min(2) & y <= cube_max(2) & ...
+                 z >= cube_min(3) & z <= cube_max(3);
     end
 end

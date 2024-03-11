@@ -26,5 +26,11 @@ classdef units
         keV = 1  ;
         eV  = 1e-3;
         meV = 1e-6;
+
+        % Time
+        s  = 1
+        ms = 1e-3
+        us = 1e-6
+        ns = 1e-9
     end
 end

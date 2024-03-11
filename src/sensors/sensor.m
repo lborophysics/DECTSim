@@ -29,17 +29,10 @@ classdef (Abstract) sensor
             self.energy_bins = energy_range(1):self.bin_width:energy_range(2);
         end
 
-        function [energies, intensities] = sample_source(self, xray_source)
-            arguments
-                self ; xray_source source
-            end
+        function range = get_range(self) % Not sure about the purpose of this function (could it be a property?)
             sub_energy_bins = linspace(self.energy_range(1), self.energy_range(2), ...
                 self.num_bins*self.num_samples+1);
             range = [sub_energy_bins(1:end-1); sub_energy_bins(2:end)]';
-            [energies, intensities] = xray_source.get_energies(range);
-
-            energies = reshape(energies, self.num_bins, self.num_samples);
-            intensities = reshape(intensities, self.num_bins, self.num_samples);
         end
 
         function ebin = get_energy_bin(self, energy)

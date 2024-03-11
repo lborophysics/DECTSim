@@ -7,7 +7,7 @@ Available constants
 -------------------
 
 - ``c`` : speed of light in a vacuum
-- ``em_ee``:  electron mass energy equivalent in keV
+- ``me_c2``:  electron mass energy equivalent in keV
 - ``N_A``: Avogadro's number
 
 The units class is a collection of useful units that converts to the units of the program. This means that the whole program is consistent with the units used, independent of the units used as default.

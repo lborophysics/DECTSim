@@ -6,7 +6,9 @@ classdef (Abstract) source
     end
 
     methods (Abstract)
-        [energies, intensities] = get_energies(self, range) % Using the non-inclusive range [min, max)
+        % Using the non-inclusive range [min, max)
+        energies = get_energies(self, range)
+        intensities = get_fluences(self, range)
     end
 
     methods

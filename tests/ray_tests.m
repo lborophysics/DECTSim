@@ -30,7 +30,6 @@ classdef ray_tests < matlab.unittest.TestCase
             threes = zeros(3, 5) + 3;
 
             voxels = tc.water_array;
-            voxels.array_position, voxels.dimensions, voxels.num_planes
             cached_ray_trace = @(start, v1to2) ray_trace(start, v1to2, ...
                 voxels.array_position, voxels.dimensions, voxels.num_planes);
             [lengths, indices] = cached_ray_trace([-6;0;0], [1;0;0].*22);
@@ -43,7 +42,7 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
 
-           [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*22);
+            [lengths, indices] = cached_ray_trace([0;0;-6], [0;0;1].*22);
             exp = threes; exp(3, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
             tc.assertEqual(indices, exp);
@@ -80,7 +79,7 @@ classdef ray_tests < matlab.unittest.TestCase
             voxels = tc.water_array;
             cached_ray_trace_many = @(start, v1to2) ray_trace_many(start, v1to2, ...
                 voxels.array_position, voxels.dimensions, voxels.num_planes);
-            
+
             [lengths, indices] = cached_ray_trace_many([-6;0;0], [1;0;0].*12);
             exp = threes; exp(1, :) = [1, 2, 3, 4, 5];
             tc.assertEqual(lengths{1}, [1, 1, 1, 1, 1], 'AbsTol', 2e-15);
@@ -127,7 +126,7 @@ classdef ray_tests < matlab.unittest.TestCase
         %     direction = [1;0;0];
         %     dist_to_detector = 100;
         %     r  = ray(start, direction, dist_to_detector, tc.lead_array, energy);
-        % 
+        %
         %     mu = r.calculate_mu();
         %     [lengths, indices] = r.get_intersections(tc.lead_array);
         %     for i = 1:100
@@ -135,18 +134,18 @@ classdef ray_tests < matlab.unittest.TestCase
         %         nrs = rs.calculate_mu();
         %         total_mu = nrs.mu;
         %         if nrs.scatter_event == 1 % Check if it scattered once
-        % 
+        %
         %             mfp_dict = tc.lead_array.get_mfp_arr(energy);
         %             mfp = tc.lead_array.get_saved_mfp(indices, mfp_dict);
-        % 
+        %
         %             mu_dict = tc.lead_array.get_mu_arr(energy);
-        % 
+        %
         %             ray_n_mfp = lengths ./ mfp;
         %             ray_mu = lengths .* tc.lead_array.get_saved_mu(indices, mu_dict);
-        % 
+        %
         %             tc.assertTrue(sum(ray_n_mfp) > rs.n_mfp); % Check it should have scattered
         %             tc.assertTrue(nrs.energy < energy); % energy is lost in scatter
-        % 
+        %
         %             for j = 1:length(ray_n_mfp)
         %                 if sum(ray_n_mfp(1:j)) > rs.n_mfp
         %                     % The length of the scatter should be the sum of the lengths of the voxels minus
@@ -157,11 +156,11 @@ classdef ray_tests < matlab.unittest.TestCase
         %                 end
         %             end
         %             tc.assertEqual(nrs.start_point, start + scatter_length .* direction, 'RelTol', 1e-14, 'AbsTol', 1e-15);
-        % 
+        %
         %             scattered_ray = ray(nrs.start_point, nrs.direction, dist_to_detector, tc.lead_array, nrs.energy);
         %             scatter_mu = scattered_ray.calculate_mu();
         %             tc.assertEqual(total_mu, scatter_mu + uptoscatter_mu, 'RelTol', 1e-14, 'AbsTol', 1e-14);
-        % 
+        %
         %             tc.assertNotEqual(nrs.n_mfp, rs.n_mfp); % n_mfp should have changed
         %             tc.assertNotEqual(nrs.direction, direction); % direction should have changed
         %         elseif nrs.scatter_event == 0 % If no scatter - should be the same
