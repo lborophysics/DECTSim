@@ -81,14 +81,14 @@ assert(vox_init(1)^2 + vox_init(2)^2 <= (d2detector/2)^2, ...
 assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
     'Phantom is not entirely within the detector');
 
-num_angle_samples = 1e2;
+num_angle_samples = 1e7;
 sample_angles = compton_dist(zeros(1, num_angle_samples) + mean_energy);
 
 scatter_count = zeros(num_bins, npy, npz, num_rotations);
 parfor angle = 1:num_rotations
     % Do the linear indexing of scatter
     pixel_generator = feval(set_array_angle, angle);
-    hit_at_angle  = feval(hit_pixel, angle);
+    hit_at_angle = feval(hit_pixel, angle);
     ang_scatter_count = zeros(num_bins, npy, npz);
 
     intensity_list = zeros(num_bins*num_esamples, npy, npz);
@@ -157,17 +157,10 @@ parfor angle = 1:num_rotations
 
                 scatter_starts = repelem(scatter_points, 1, num_scatters);
                 prob_scatter   = repelem(probabilities, 1, num_scatters);
-                ignore = phis > pi | thetas > pi;
 
-                scatter_starts(:, ignore) = [];
-                prob_scatter  (   ignore) = [];
-                thetas        (   ignore) = [];
-                phis          (   ignore) = [];
-
-                num_acute = length(thetas);
-                scatter_dirs     = zeros(3, num_acute); 
-                hit_pixels       = zeros(2, num_acute);
-                scatter_energies = NaN  (1, num_acute);
+                scatter_dirs     = zeros(3, ray_num_scatters); 
+                hit_pixels       = zeros(2, ray_num_scatters);
+                scatter_energies = NaN  (1, ray_num_scatters);
 
                 % Calculate the scatter directions and energies
                 [ndirs, nnrjs] = compton_scatter(ray_dir, mean_energy, thetas, phis);

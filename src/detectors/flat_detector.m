@@ -66,16 +66,22 @@ classdef flat_detector < detector_array
                     ./ sum(ray_dirs .* normal_vec, 1);
                 ray_hits = ray_starts + ray_dirs .* ray_len;
                 
-                zpix = floor((ray_hits(3,:) - corner(3)) ./ pixel_height) + 1;
-                
-                xy_dist = sqrt(sum((ray_hits(1:2,:) - corner(1:2)).^2, 1));
-                xypix = floor(xy_dist ./ pixel_width) + 1;
+                % Calculate the pixel number
+                if abs(detector_vec(1)) > 0
+                    ypix = floor((ray_hits(1, :) - corner(1)) ...
+                        ./ detector_vec(1) ./ pixel_width) + 1;
+                else
+                    ypix = floor((ray_hits(2, :) - corner(2)) ...
+                        ./ detector_vec(2) ./ pixel_width) + 1;
+                end
 
-                hit = hit & (zpix  >= 1) & (zpix  <= npz) & ...
-                            (xypix >= 1) & (xypix <= npy) & (ray_len > 0);
+                zpix = floor((ray_hits(3,:) - corner(3)) ./ pixel_height) + 1;             
+
+                hit = hit & (zpix >= 1) & (zpix <= npz) & ...
+                            (ypix >= 1) & (ypix <= npy) & (ray_len > 0);
 
                 % Is it necessary to return 0s for the pixels which are not hit?
-                pixel(1, hit) = xypix(hit);
+                pixel(1, hit) = ypix(hit);
                 pixel(2, hit) = zpix(hit);
                 ray_len(~hit) = 0;
             end
