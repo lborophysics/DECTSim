@@ -8,7 +8,7 @@ my_source = source_fromfile('spectrum.spk');
 vox_arr_center = zeros(3, 1);
 phantom_radius = 30/2 * units.cm; % In the x-y plane
 phantom_width = 50 * units.cm; % In the z direction
-voxel_size = 0.5 * units.mm;
+voxel_size = 1 * units.mm;
 
 % Create voxel array
 water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
@@ -48,9 +48,9 @@ scan_angles = rad2deg(dgantry.scan_angles);
 
 imwrite(mat2gray(R), "cylinder.png")
 
-scatter_type = "fast";
+scatter_type = "slow";
 tic
-scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, scatter_type));
+scatter_sinogram = squeeze(compute_sinogram(my_source, voxels, d, scatter_type, 1));
 toc
 
 if strcmp(scatter_type, "fast")
