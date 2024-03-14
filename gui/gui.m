@@ -6,9 +6,8 @@ classdef gui < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                        matlab.ui.Figure
         FileMenu                        matlab.ui.container.Menu
-        LoadMenu                        matlab.ui.container.Menu
-        SaveMenu                        matlab.ui.container.Menu
-        SaveasMenu                      matlab.ui.container.Menu
+        LoadStateMenu                   matlab.ui.container.Menu
+        SaveStateMenu                   matlab.ui.container.Menu
         ExportMenu                      matlab.ui.container.Menu
         ResetMenu                       matlab.ui.container.Menu
         HelpMenu                        matlab.ui.container.Menu
@@ -26,8 +25,8 @@ classdef gui < matlab.apps.AppBase
         ScatterImage                    matlab.ui.control.Image
         NumberofRotationsEditField      matlab.ui.control.NumericEditField
         RunButton                       matlab.ui.control.Button
-        DistToDetectorLine              matlab.ui.control.Image
         DetectorArrayImage              matlab.ui.control.Image
+        DistToDetectorLine              matlab.ui.control.Image
         PCImage                         matlab.ui.control.Image
         WireImage                       matlab.ui.control.Image
         SourceImage                     matlab.ui.control.Image
@@ -65,7 +64,6 @@ classdef gui < matlab.apps.AppBase
         ResultsPanel                    matlab.ui.container.Panel
         ShowDropDown                    matlab.ui.control.DropDown
         ShowDropDownLabel               matlab.ui.control.Label
-        SourceNumberSwitch              matlab.ui.control.Switch
         ReconstructedImageLabel         matlab.ui.control.Label
         SinogramLabel                   matlab.ui.control.Label
         SinogramImage                   matlab.ui.control.Image
@@ -93,7 +91,7 @@ classdef gui < matlab.apps.AppBase
         LoadPhantomMenu                 matlab.ui.container.Menu
         PhantomHelpMenu_run             matlab.ui.container.Menu
         SourceContextMenu               matlab.ui.container.ContextMenu
-        LoadPhantomInContextMenu        matlab.ui.container.Menu
+        LoadSourceMenu                  matlab.ui.container.Menu
         SourceHelpMenu_run              matlab.ui.container.Menu
         ReconImageContextMenu           matlab.ui.container.ContextMenu
         ReconSaveImageasMenu            matlab.ui.container.Menu
@@ -114,12 +112,7 @@ classdef gui < matlab.apps.AppBase
         recon_fig    % If the reconstruction figure is open this is a handle
         sinogram_fig % If the sinogram figure is open this is a handle
 
-        recon_image1       % A way to store the most recent reconstruction for source 1
-        sinogram_image1    % A way to store the most recent sinogram for source 1
-        recon_image2       % A way to store the most recent reconstruction for source 2
-        sinogram_image2    % A way to store the most recent sinogram for source 2
-
-        phantom_paths = {} % A cell array of additional phantoms added by the user
+        recons = {[]} % A way to store the most recent reconstruction 
     end
 
     methods (Access = private, Static)
@@ -219,8 +212,7 @@ classdef gui < matlab.apps.AppBase
             elseif source1_idx == 2
                 source1 = HighEnergySource;
             else
-                path = app.Source1DropDown.ItemsData{source1_idx};
-                source1 = load(path, 'source').source;
+                source1 = app.Source1DropDown.ItemsData{source1_idx};
             end
 
             source2_idx = app.Source2DropDown.ValueIndex;
@@ -232,8 +224,7 @@ classdef gui < matlab.apps.AppBase
             elseif source2_idx == 3
                 source2 = HighEnergySource;
             else
-                path = app.Source2DropDown.ItemsData{source2_idx};
-                source2 = load(path, 'source').source;
+                source2 = app.Source2DropDown.ItemsData{source2_idx};
             end
 
             % Get the phantom
@@ -246,8 +237,7 @@ classdef gui < matlab.apps.AppBase
                 phantom = PhantomEx2;
             else % phantom_idx > 2
                 index = app.PhantomListBox.ValueIndex;
-                path = app.PhantomListBox.ItemsData{index};
-                phantom = load(path, 'phantom').phantom;
+                phantom = app.PhantomListBox.ItemsData{index};
             end
             voxel_size = app.VoxelSizeEditField.Value;
             voxel_unit = units.(app.VoxelSizeUnits.Value);
@@ -296,26 +286,36 @@ classdef gui < matlab.apps.AppBase
             interpolation = app.InterpolationDropDown.Value;
             scan_angles = rad2deg(g.scan_angles);
 
-            % Compute the sinogram
+            % Source 1
             sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));
+            recon = iradon(sinogram, scan_angles, interpolation, filter);
+            app.ShowDropDown.ItemsData{1} = app1.greyToColour(mat2gray(sinogram));
+            app.recons{1} = app1.greyToColour(mat2gray(recon));
+
+            % Source 2
             if has_source2
                 sinogram2 = squeeze(compute_sinogram(source2, phantom, d, scatter_type, scatter_factor));
                 
                 % Reconstruct the image
                 recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
-                app.sinogram_image2 = app1.greyToColour(mat2gray(sinogram2));
-                app.recon_image2 = app1.greyToColour(mat2gray(recon2));
+                app.ShowDropDown.ItemsData{2} = app1.greyToColour(mat2gray(sinogram2));
+                app.ShowDropDown.ItemsData{3} = app1.greyToColour(mat2gray(sinogram - sinogram2));
+                app.ShowDropDown.ItemsData{4} = app1.greyToColour(mat2gray(sinogram ./ sinogram2));
+                app.recons{2} = app1.greyToColour(mat2gray(recon2));
+                app.recons{3} = app1.greyToColour(mat2gray(recon2 - recon));
+                app.recons{4} = app1.greyToColour(mat2gray(recon2 ./ recon));
             else
-                app.sinogram_image2 = []; app.recon_image2 = [];
+                app.ShowDropDown.ItemsData{4} = [];
+                app.ShowDropDown.ItemsData{3} = [];
+                app.ShowDropDown.ItemsData{2} = [];
+
+                app.recons{2} = [];
+                app.recons{3} = [];
+                app.recons{4} = [];
             end
-            % Reconstruct the image
-            recon = iradon(sinogram, scan_angles, interpolation, filter);
-            app.sinogram_image1 = app1.greyToColour(mat2gray(sinogram));
-            app.recon_image1 = app1.greyToColour(mat2gray(recon));
             
             % Set the image from the sinogram and reconstruction
-            app.SinogramImage.ImageSource = app.sinogram_image1;
-            app.ReconstructionImage.ImageSource = app.recon_image1;
+            app.ShowDropDownChanged(event); 
 
             % Display the result
             runningdlg.close();
@@ -326,13 +326,7 @@ classdef gui < matlab.apps.AppBase
             type = get(gcbf, 'SelectionType');
             if strcmp(type, 'open')
                 % Handle double-click action here
-                fig_open = ~ishandle(app.recon_fig);
-                if isempty(fig_open) || fig_open
-                    app.recon_fig = figure("Name","Reconstucted Image");
-                    imshow(app.recon_image1);
-                else
-                    figure(app.recon_fig);
-                end
+                app.ReconOpeninNewWindowMenuSelected(event)
             end
         end
 
@@ -341,19 +335,13 @@ classdef gui < matlab.apps.AppBase
             type = get(gcbf, 'SelectionType');
             if strcmp(type, 'open')
                 % Handle double-click action here
-                fig_open = ~ishandle(app.sinogram_fig);
-                if isempty(fig_open) || fig_open
-                    app.sinogram_fig = figure("Name","Sinogram");
-                    imshow(app.sinogram_image1);
-                else
-                    figure(app.sinogram_fig);
-                end
+                app.SinogramOpeninNewWindowMenuSelected(event)
             end
         end
 
         % Menu selected function: ReconSaveImageasMenu
-        function ReconSaveImageasMenuSelected(app, event)
-            if isempty(app.recon_image1)
+        function ReconSaveImageSelected(app, event)
+            if isempty(app.recons{1})
                 errordlg('No file to save', 'Invalid file');
                 return
             end 
@@ -361,12 +349,12 @@ classdef gui < matlab.apps.AppBase
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Reconstructed Image");
             if file == 0 || path == 0; return; end % Nothing selected
-            imwrite(app.recon_image1, fullfile(path, file))
+            imwrite(app.recons{app.ShowDropDown.ValueIndex}, fullfile(path, file))
         end
 
         % Menu selected function: SinogramSaveImageasMenu
-        function SinogramSaveImageasMenuSelected(app, event)
-            if isempty(app.sinogram_image1)
+        function SinogramSaveImageSelected(app, event)
+            if isempty(app.recons{1})
                 errordlg('No file to save', 'Invalid file');
                 return
             end 
@@ -374,7 +362,8 @@ classdef gui < matlab.apps.AppBase
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Sinogram");
             if file == 0 || path == 0; return; end % Nothing selected
-            imwrite(app.sinogram_image1, fullfile(path, file))
+            imwrite(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex},...
+                fullfile(path, file))
         end
 
         % Menu selected function: ReconOpeninNewWindowMenu
@@ -382,7 +371,7 @@ classdef gui < matlab.apps.AppBase
             fig_open = ~ishandle(app.recon_fig);
             if isempty(fig_open) || fig_open
                 app.recon_fig = figure("Name","Reconstucted Image");
-                imshow(app.recon_image1);
+                imshow(app.recons{app.ShowDropDown.ValueIndex});
             else
                 figure(app.recon_fig);
             end
@@ -393,7 +382,7 @@ classdef gui < matlab.apps.AppBase
             fig_open = ~ishandle(app.sinogram_fig);
             if isempty(fig_open) || fig_open
                 app.sinogram_fig = figure("Name","Sinogram");
-                imshow(app.sinogram_image1);
+                imshow(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex});
             else
                 figure(app.sinogram_fig);
             end
@@ -424,22 +413,35 @@ classdef gui < matlab.apps.AppBase
         % Callback function: LoadPhantomMenu, PhantomLoadButton
         function PhantomLoadButtonPushed(app, event)
             [file,path] = uigetfile('*.mat','Load Saved Phantom File');
-            if ~(file == 0 || path == 0)
+            if ischar(file)
                 [~, name, ~] = fileparts(file);
                 app.PhantomListBox.Items{end + 1} = name;
-                app.PhantomListBox.ItemsData{end + 1} = fullfile(path, file);
+                try
+                    app.PhantomListBox.ItemsData{end + 1} = ...
+                        load(fullfile(path, file), 'phantom').phantom;
+                catch ME
+                    % If there is an error loading the phantom - let the user know
+                    uialert(app.UIFigure, ME.message, 'Invalid Phantom File');
+                end
             end
         end
 
-        % Callback function: LoadPhantomInContextMenu, SourceLoadButton
+        % Callback function: LoadSourceMenu, SourceLoadButton
         function SourceLoadButtonPushed(app, event)
             [file,path] = uigetfile('*.mat','Load Saved Source File');
-            if ~(file == 0 || path == 0)
+            if ischar(file)
                 [~, name, ~] = fileparts(file);
                 app.Source1DropDown.Items{end+1} = name;
                 app.Source2DropDown.Items{end+1} = name;
-                app.Source1DropDown.ItemsData{end+1} = fullfile(path, file);
-                app.Source2DropDown.ItemsData{end+1} = fullfile(path, file);
+                try
+                    app.Source1DropDown.ItemsData{end+1} = ...
+                        load(fullfile(path, file), 'source').source;
+                    app.Source2DropDown.ItemsData{end+1} = ...
+                        load(fullfile(path, file), 'source').source;
+                catch ME
+                    % If there is an error loading the source - let the user know
+                    uialert(app.UIFigure, ME.message, 'Invalid Source File');
+                end
             end % Nothing selected
         end
 
@@ -464,16 +466,20 @@ classdef gui < matlab.apps.AppBase
             % Reset the images
             app.RaysImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'parallel_rays.svg');
             app.DetectorArrayImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'flat_detector.svg');
-            app.sinogram_image1 = [];
-            app.recon_image1 = [];
+            
+            app.ShowDropDown.ItemsData = {'Source 1'};
+            app.recons = {[]};
+            
             app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
             app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
             
             % Reset the dropdowns
             app.Source1DropDown.Items = {'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
             app.Source1DropDown.ItemsData = {'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
+            app.Source1DropDown.Value = 'Low Energy (40 kvp)';
             app.Source2DropDown.Items = {'None', 'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
             app.Source2DropDown.ItemsData = {'None', 'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
+            app.Source2DropDown.Value = 'None';
             app.PhantomListBox.Items = {'Example 1', 'Example 2'};
             app.PhantomListBox.ItemsData = {'Example 1', 'Example 2'};
 
@@ -495,18 +501,20 @@ classdef gui < matlab.apps.AppBase
             app.ScatterFactorSpinner.Value = 0;
         end
 
-        % Value changed function: ShowDropDown, SourceNumberSwitch
-        function SourceNumberSwitchValueChanged(app, event)
-            value = app.SourceNumberSwitch.Value;
-            if strcmp(value, 'Source 1') && ~isempty(app.sinogram_image1)
-                app.SinogramImage.ImageSource = app.sinogram_image1;
-                app.ReconstructionImage.ImageSource = app.recon_image1;
-            elseif ~isempty(app.sinogram_image2)
-                app.SinogramImage.ImageSource = app.sinogram_image2;
-                app.ReconstructionImage.ImageSource = app.recon_image2;
+        % Value changed function: ShowDropDown
+        function ShowDropDownChanged(app, event)
+            idx = app.ShowDropDown.ValueIndex;
+            if ~isempty(app.recons{1})
+                if idx > 1 && isempty(app.recons{2})
+                    uialert(app.UIFigure, 'No second source to compare', 'No second source');
+                    app.ShowDropDown.Value = app.ShowDropDown.ItemsData{1};
+                else
+                    app.ReconstructionImage.ImageSource = app.recons{idx};
+                    app.SinogramImage.ImageSource = app.ShowDropDown.ItemsData{idx};
+                end
             else
-                app.SourceNumberSwitch.Value = 'Source 1';
-                uialert(app.UIFigure, 'No Second Source available', 'Invalid Source Selection');
+                uialert(app.UIFigure, 'No images have been created, run the program first', 'No Images');
+                app.ShowDropDown.Value = app.ShowDropDown.ItemsData{1};
             end
         end
 
@@ -518,6 +526,118 @@ classdef gui < matlab.apps.AppBase
                 uialert(app.UIFigure, 'Invalid unit selection', 'Invalid units');
                 event.Source.Value = event.Source.Items{2};
             end
+        end
+
+        % Menu selected function: SaveStateInContextMenu, SaveStateMenu
+        function SaveStateSelected(app, event)
+            [file,path] = uiputfile('*.mat','Save State');
+            if ~ischar(file); return; end % Nothing selected
+            state.recon_visible    = app.ReconstructionPanel.Visible;
+            state.detector_visible = app.DetectorPanel.Visible;
+            state.phantom_visible  = app.PhantomPanel.Visible;
+            state.source_visible   = app.SourcePanel.Visible;
+            state.scatter_visible  = app.ScatterPanel.Visible;
+            
+            % Get the source information
+            state.source1_selected = app.Source1DropDown.Value;
+            state.source2_selected = app.Source2DropDown.Value;
+            state.source1s         = app.Source1DropDown.Items;
+            state.source2s         = app.Source2DropDown.Items;
+            state.source_data1     = app.Source1DropDown.ItemsData;
+            state.source_data2     = app.Source2DropDown.ItemsData;
+            state.source_type      = app.SourceTypeDropDown.Value;
+
+            % Get the detector information
+            state.detector_shape   = app.DetectorShapeDropDown.Value;
+            state.num_pixels       = app.NumberofPixelsEditField.Value;
+            state.pixel_width      = app.PixelWidthField.Value;
+            state.pixel_units      = app.PixelWidthUnits.Value;
+            state.sensor_type      = app.SensorTypeDropDown.Value;
+
+            % Get the phantom information
+            state.phantom_selected = app.PhantomListBox.Value;
+            state.phantoms         = app.PhantomListBox.Items;
+            state.phantom_data     = app.PhantomListBox.ItemsData;
+            state.voxel_size       = app.VoxelSizeEditField.Value;
+            state.voxel_units      = app.VoxelSizeUnits.Value;
+
+            % Get the gantry information
+            state.dist_to_detector = app.DistToDetectorField.Value;
+            state.dist_units       = app.DistToDetectorUnits.Value;
+            state.num_rotations    = app.NumberofRotationsEditField.Value;
+
+            % Get the scatter and reconstruction information
+            state.filter           = app.FilterListBox.Value;
+            state.interpolation    = app.InterpolationDropDown.Value;
+            state.scatter_type     = app.ScatterTypeListBox.Value;
+            state.scatter_factor   = app.ScatterFactorSpinner.Value;
+
+            state.show             = app.ShowDropDown.Value;
+            state.show_data        = app.ShowDropDown.ItemsData;
+            state.recons           = app.recons;
+            
+            state.recon_fig        = app.recon_fig;
+            state.sinogram_fig     = app.sinogram_fig;
+            save(fullfile(path, file), 'state');
+        end
+
+        % Menu selected function: LoadStateInContextMenu, LoadStateMenu
+        function LoadStateSelected(app, event)
+            try
+                state_file = uigetfile('*.mat','Load State');
+                state = load(state_file, 'state').state;
+            catch ME
+                uialert(app.UIFigure, ME.message, 'Invalid State File');
+            end
+            if ~ischar(state_file); return; end % Nothing selected
+            app.ReconstructionPanel.Visible = state.recon_visible;
+            app.DetectorPanel.Visible = state.detector_visible;
+            app.PhantomPanel.Visible = state.phantom_visible;
+            app.SourcePanel.Visible = state.source_visible;
+            app.ScatterPanel.Visible = state.scatter_visible;
+
+            % Set the source information
+            app.Source1DropDown.ItemsData = state.source_data1;
+            app.Source2DropDown.ItemsData = state.source_data2;
+            app.Source1DropDown.Items = state.source1s;
+            app.Source2DropDown.Items = state.source2s;
+            app.Source1DropDown.Value = state.source1_selected;
+            app.Source2DropDown.Value = state.source2_selected;
+            app.SourceTypeDropDown.Value = state.source_type;
+
+            % Set the detector information
+            app.DetectorShapeDropDown.Value = state.detector_shape;
+            app.NumberofPixelsEditField.Value = state.num_pixels;
+            app.PixelWidthField.Value = state.pixel_width;
+            app.PixelWidthUnits.Value = state.pixel_units;
+            app.SensorTypeDropDown.Value = state.sensor_type;
+
+            % Set the phantom information
+            app.PhantomListBox.ItemsData = state.phantom_data;
+            app.PhantomListBox.Items = state.phantoms;
+            app.PhantomListBox.Value = state.phantom_selected;            
+            app.VoxelSizeEditField.Value = state.voxel_size;
+            app.VoxelSizeUnits.Value = state.voxel_units;
+
+            % Set the gantry information
+            app.DistToDetectorField.Value = state.dist_to_detector;
+            app.DistToDetectorUnits.Value = state.dist_units;
+            app.NumberofRotationsEditField.Value = state.num_rotations;
+
+            % Set the scatter and reconstruction information
+            app.FilterListBox.Value = state.filter;
+            app.InterpolationDropDown.Value = state.interpolation;
+            app.ScatterTypeListBox.Value = state.scatter_type;
+            app.ScatterFactorSpinner.Value = state.scatter_factor;
+
+            app.ShowDropDown.ItemsData = state.show_data;
+            app.ShowDropDown.Value = state.show;
+            app.recons = state.recons;
+            
+            app.recon_fig = state.recon_fig;
+            app.sinogram_fig = state.sinogram_fig;
+            
+            app.ShowDropDownChanged(event);
         end
     end
 
@@ -541,17 +661,15 @@ classdef gui < matlab.apps.AppBase
             app.FileMenu = uimenu(app.UIFigure);
             app.FileMenu.Text = 'File';
 
-            % Create LoadMenu
-            app.LoadMenu = uimenu(app.FileMenu);
-            app.LoadMenu.Text = 'Load';
+            % Create LoadStateMenu
+            app.LoadStateMenu = uimenu(app.FileMenu);
+            app.LoadStateMenu.MenuSelectedFcn = createCallbackFcn(app, @LoadStateSelected, true);
+            app.LoadStateMenu.Text = 'Load State';
 
-            % Create SaveMenu
-            app.SaveMenu = uimenu(app.FileMenu);
-            app.SaveMenu.Text = 'Save';
-
-            % Create SaveasMenu
-            app.SaveasMenu = uimenu(app.FileMenu);
-            app.SaveasMenu.Text = 'Save as';
+            % Create SaveStateMenu
+            app.SaveStateMenu = uimenu(app.FileMenu);
+            app.SaveStateMenu.MenuSelectedFcn = createCallbackFcn(app, @SaveStateSelected, true);
+            app.SaveStateMenu.Text = 'Save State';
 
             % Create ExportMenu
             app.ExportMenu = uimenu(app.FileMenu);
@@ -643,25 +761,20 @@ classdef gui < matlab.apps.AppBase
             app.ReconstructedImageLabel.Position = [330 718 176 23];
             app.ReconstructedImageLabel.Text = 'Reconstructed Image';
 
-            % Create SourceNumberSwitch
-            app.SourceNumberSwitch = uiswitch(app.ResultsPanel, 'slider');
-            app.SourceNumberSwitch.Items = {'Source 1', 'Source 2'};
-            app.SourceNumberSwitch.ValueChangedFcn = createCallbackFcn(app, @SourceNumberSwitchValueChanged, true);
-            app.SourceNumberSwitch.FontSize = 18;
-            app.SourceNumberSwitch.Position = [381 0 45 20];
-            app.SourceNumberSwitch.Value = 'Source 1';
-
             % Create ShowDropDownLabel
             app.ShowDropDownLabel = uilabel(app.ResultsPanel);
             app.ShowDropDownLabel.HorizontalAlignment = 'right';
-            app.ShowDropDownLabel.Position = [341 36 38 22];
+            app.ShowDropDownLabel.FontSize = 14;
+            app.ShowDropDownLabel.Position = [344 7 44 22];
             app.ShowDropDownLabel.Text = 'Show:';
 
             % Create ShowDropDown
             app.ShowDropDown = uidropdown(app.ResultsPanel);
             app.ShowDropDown.Items = {'Source 1', 'Source 2', 'Difference', 'Ratio'};
-            app.ShowDropDown.ValueChangedFcn = createCallbackFcn(app, @SourceNumberSwitchValueChanged, true);
-            app.ShowDropDown.Position = [394 36 100 22];
+            app.ShowDropDown.ItemsData = {'Source 1'};
+            app.ShowDropDown.ValueChangedFcn = createCallbackFcn(app, @ShowDropDownChanged, true);
+            app.ShowDropDown.FontSize = 14;
+            app.ShowDropDown.Position = [403 7 100 22];
             app.ShowDropDown.Value = 'Source 1';
 
             % Create DetectorPanel
@@ -694,7 +807,8 @@ classdef gui < matlab.apps.AppBase
 
             % Create PixelWidthField
             app.PixelWidthField = uieditfield(app.DetectorPanel, 'numeric');
-            app.PixelWidthField.Limits = [1 Inf];
+            app.PixelWidthField.LowerLimitInclusive = 'off';
+            app.PixelWidthField.Limits = [0 Inf];
             app.PixelWidthField.FontSize = 14;
             app.PixelWidthField.Position = [138 91 46 22];
             app.PixelWidthField.Value = 1;
@@ -778,7 +892,8 @@ classdef gui < matlab.apps.AppBase
 
             % Create VoxelSizeEditField
             app.VoxelSizeEditField = uieditfield(app.PhantomPanel, 'numeric');
-            app.VoxelSizeEditField.Limits = [1 Inf];
+            app.VoxelSizeEditField.LowerLimitInclusive = 'off';
+            app.VoxelSizeEditField.Limits = [0 Inf];
             app.VoxelSizeEditField.FontSize = 14;
             app.VoxelSizeEditField.Tooltip = {'This determines the resolution of your phantom. '; ''; 'A smaller voxel size increases accuracy, but increases execution time'};
             app.VoxelSizeEditField.Position = [117 10 46 22];
@@ -889,7 +1004,8 @@ classdef gui < matlab.apps.AppBase
 
             % Create DistToDetectorField
             app.DistToDetectorField = uieditfield(app.ImagePanel, 'numeric');
-            app.DistToDetectorField.Limits = [1 Inf];
+            app.DistToDetectorField.LowerLimitInclusive = 'off';
+            app.DistToDetectorField.Limits = [0 Inf];
             app.DistToDetectorField.FontSize = 14;
             app.DistToDetectorField.Position = [54 547 46 22];
             app.DistToDetectorField.Value = 100;
@@ -922,17 +1038,17 @@ classdef gui < matlab.apps.AppBase
             app.PCImage.Position = [405 10 169 157];
             app.PCImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'PC.svg');
 
-            % Create DetectorArrayImage
-            app.DetectorArrayImage = uiimage(app.ImagePanel);
-            app.DetectorArrayImage.ImageClickedFcn = createCallbackFcn(app, @ToggleDetectorPanelVisibility, true);
-            app.DetectorArrayImage.Position = [61 140 502 149];
-            app.DetectorArrayImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'flat_detector.svg');
-
             % Create DistToDetectorLine
             app.DistToDetectorLine = uiimage(app.ImagePanel);
             app.DistToDetectorLine.ImageClickedFcn = createCallbackFcn(app, @DistToDetectorLineImageClicked, true);
             app.DistToDetectorLine.Position = [-17 185 100 449];
             app.DistToDetectorLine.ImageSource = fullfile(pathToMLAPP, 'graphics', 'distance.svg');
+
+            % Create DetectorArrayImage
+            app.DetectorArrayImage = uiimage(app.ImagePanel);
+            app.DetectorArrayImage.ImageClickedFcn = createCallbackFcn(app, @ToggleDetectorPanelVisibility, true);
+            app.DetectorArrayImage.Position = [61 140 502 149];
+            app.DetectorArrayImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'flat_detector.svg');
 
             % Create RunButton
             app.RunButton = uibutton(app.ImagePanel, 'push');
@@ -1037,10 +1153,12 @@ classdef gui < matlab.apps.AppBase
 
             % Create LoadStateInContextMenu
             app.LoadStateInContextMenu = uimenu(app.RunContextMenu);
+            app.LoadStateInContextMenu.MenuSelectedFcn = createCallbackFcn(app, @LoadStateSelected, true);
             app.LoadStateInContextMenu.Text = 'Load State';
 
             % Create SaveStateInContextMenu
             app.SaveStateInContextMenu = uimenu(app.RunContextMenu);
+            app.SaveStateInContextMenu.MenuSelectedFcn = createCallbackFcn(app, @SaveStateSelected, true);
             app.SaveStateInContextMenu.Text = 'Save State';
 
             % Create RunInContextMenu
@@ -1109,10 +1227,10 @@ classdef gui < matlab.apps.AppBase
             % Create SourceContextMenu
             app.SourceContextMenu = uicontextmenu(app.UIFigure);
 
-            % Create LoadPhantomInContextMenu
-            app.LoadPhantomInContextMenu = uimenu(app.SourceContextMenu);
-            app.LoadPhantomInContextMenu.MenuSelectedFcn = createCallbackFcn(app, @SourceLoadButtonPushed, true);
-            app.LoadPhantomInContextMenu.Text = 'Load Source';
+            % Create LoadSourceMenu
+            app.LoadSourceMenu = uimenu(app.SourceContextMenu);
+            app.LoadSourceMenu.MenuSelectedFcn = createCallbackFcn(app, @SourceLoadButtonPushed, true);
+            app.LoadSourceMenu.Text = 'Load Source';
 
             % Create SourceHelpMenu_run
             app.SourceHelpMenu_run = uimenu(app.SourceContextMenu);
@@ -1134,7 +1252,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create ReconSaveImageasMenu
             app.ReconSaveImageasMenu = uimenu(app.ReconImageContextMenu);
-            app.ReconSaveImageasMenu.MenuSelectedFcn = createCallbackFcn(app, @ReconSaveImageasMenuSelected, true);
+            app.ReconSaveImageasMenu.MenuSelectedFcn = createCallbackFcn(app, @ReconSaveImageSelected, true);
             app.ReconSaveImageasMenu.Text = 'Save Image as';
 
             % Create ReconOpeninNewWindowMenu
@@ -1154,7 +1272,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create SinogramSaveImageasMenu
             app.SinogramSaveImageasMenu = uimenu(app.SinogramImageContextMenu);
-            app.SinogramSaveImageasMenu.MenuSelectedFcn = createCallbackFcn(app, @SinogramSaveImageasMenuSelected, true);
+            app.SinogramSaveImageasMenu.MenuSelectedFcn = createCallbackFcn(app, @SinogramSaveImageSelected, true);
             app.SinogramSaveImageasMenu.Text = 'Save Image as';
 
             % Create SinogramOpeninNewWindowMenu
