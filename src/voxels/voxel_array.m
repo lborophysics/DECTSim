@@ -37,6 +37,12 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.world_material = world_material;
         end
 
+        function self = update_voxel_size(self, new_voxel_size)
+            % Update the voxel size
+            self.num_planes = (self.num_planes - 1) .* (self.dimensions ./ new_voxel_size) + 1;
+            self.dimensions = zeros(3, 1) + new_voxel_size;
+        end
+
         function mu_dict = precalculate_mus(self, nrj_arr)
             % Return a 3D matrix of mu values using the 2D array of nrj values
             mu_dict = zeros(self.nobj + 1, numel(nrj_arr));

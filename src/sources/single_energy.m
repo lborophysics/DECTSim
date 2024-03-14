@@ -29,6 +29,11 @@ classdef single_energy < source
             intensities = zeros(1, size(range,1)) + 1e6;
             intensities(self.energy < range(:,1) | self.energy >= range(:,2)) = 0;
         end 
+
+        function [min, max] = get_energy_range(self)
+            min = self.energy;
+            max = self.energy;
+        end
     end
 
 end

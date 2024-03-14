@@ -73,5 +73,10 @@ classdef source_fromfile < source
              % Convert from ph/cm^2 to ph/m^2 and then move the point fluence is measured from 1 m to 1 cm
             fluences = flist / units.m2 * (1 * units.m)^2;
         end
+
+        function [emin, emax] = get_energy_range(self)
+            emin = min(self.ebins);
+            emax = max(self.ebins);
+        end
     end
 end
