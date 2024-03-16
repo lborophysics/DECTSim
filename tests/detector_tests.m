@@ -44,18 +44,16 @@ classdef detector_tests < matlab.unittest.TestCase
 
         function test_curved_ray_gen(tc)
             geom = gantry(9, 10, pi);
-            c1 = curved_detector([9*pi/60, 0.4], [60, 10]);
+            c1 = curved_detector([4.5*pi/60, 0.4], [60, 10]);
             pixel_generator = c1.set_array_angle(geom, 1);
 
             rot_by_pixel = rotz(pi/60);
             unit_vector = rotz(pi/120) * [-1; 0; 0];
             z_pos = @(i) (-2 + 0.2 + (0.4 .* (i-1)))/9;
-            for i = 30:40
+            for i = 20:40
                 for j = 1:10
-                    exp_start = [0; 4.5; 0];
-                    exp_dir   = rot_by_pixel^(i-1) * unit_vector .* 9 + [0;0;z_pos(j)*9];
-                    exp_pos   = exp_start + exp_dir;
-
+                    exp_pos   = (rot_by_pixel^(i-1) * unit_vector) .* 4.5 + [0;0;z_pos(j)*9];
+                    
                     pixel_position = pixel_generator(i, j);
                     tc.verifyEqual(pixel_position, exp_pos, 'RelTol', 1e-14);
                 end

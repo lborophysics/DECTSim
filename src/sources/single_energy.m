@@ -31,8 +31,8 @@ classdef single_energy < source
         end 
 
         function [min, max] = get_energy_range(self)
-            min = self.energy;
-            max = self.energy;
+            min = self.energy-1;
+            max = self.energy+1;
         end
     end
 

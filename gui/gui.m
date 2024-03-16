@@ -6,6 +6,7 @@ classdef gui < matlab.apps.AppBase
     properties (Access = public)
         UIFigure                        matlab.ui.Figure
         FileMenu                        matlab.ui.container.Menu
+        RunMenu                         matlab.ui.container.Menu
         LoadStateMenu                   matlab.ui.container.Menu
         SaveStateMenu                   matlab.ui.container.Menu
         ExportMenu                      matlab.ui.container.Menu
@@ -26,7 +27,6 @@ classdef gui < matlab.apps.AppBase
         NumberofRotationsEditField      matlab.ui.control.NumericEditField
         RunButton                       matlab.ui.control.Button
         DetectorArrayImage              matlab.ui.control.Image
-        DistToDetectorLine              matlab.ui.control.Image
         PCImage                         matlab.ui.control.Image
         WireImage                       matlab.ui.control.Image
         SourceImage                     matlab.ui.control.Image
@@ -36,6 +36,7 @@ classdef gui < matlab.apps.AppBase
         ClickonanobjecttochangeitLabel  matlab.ui.control.Label
         RotationImage                   matlab.ui.control.Image
         RaysImage                       matlab.ui.control.Image
+        DistToDetectorLine              matlab.ui.control.Image
         SourcePanel                     matlab.ui.container.Panel
         Source2DropDown                 matlab.ui.control.DropDown
         Source2DropDownLabel            matlab.ui.control.Label
@@ -113,6 +114,8 @@ classdef gui < matlab.apps.AppBase
         sinogram_fig % If the sinogram figure is open this is a handle
 
         recons = {[]} % A way to store the most recent reconstruction 
+        source_files = {'SourceExample40kvp.mat', 'SourceExample80kvp.mat'}
+        phantom_files = {'PhantomExample1.mat', 'PhantomExample2.mat'}
     end
 
     methods (Access = private, Static)
@@ -195,7 +198,7 @@ classdef gui < matlab.apps.AppBase
             end
         end
 
-        % Callback function: RunButton, RunInContextMenu
+        % Callback function: RunButton, RunInContextMenu, RunMenu
         function RunButtonPushed(app, event)
              % Run the simulation
              % Get the file path for locating examples
@@ -204,13 +207,10 @@ classdef gui < matlab.apps.AppBase
             drawnow;
 
             % Get the source
-            LowEnergySource = load(fullfile(pathToMLAPP, 'SourceExample40kvp.mat'), 'source').source;
-            HighEnergySource = load(fullfile(pathToMLAPP, 'SourceExample80kvp.mat'), 'source').source;
             source1_idx = app.Source1DropDown.ValueIndex;
-            if source1_idx == 1
-                source1 = LowEnergySource;
-            elseif source1_idx == 2
-                source1 = HighEnergySource;
+            if source1_idx <= 2
+                source1 = load(fullfile(pathToMLAPP, ...
+                    app.source_files{source1_idx}), 'source').source;
             else
                 source1 = app.Source1DropDown.ItemsData{source1_idx};
             end
@@ -219,22 +219,18 @@ classdef gui < matlab.apps.AppBase
             has_source2 = true;
             if source2_idx == 1
                 has_source2 = false;
-            elseif source2_idx == 2
-                source2 = LowEnergySource;
-            elseif source2_idx == 3
-                source2 = HighEnergySource;
+            elseif source2_idx <= 3
+                source2 = load(fullfile(pathToMLAPP, ...
+                    app.source_files{source2_idx}), 'source').source;
             else
                 source2 = app.Source2DropDown.ItemsData{source2_idx};
             end
 
             % Get the phantom
             phantom_idx = app.PhantomListBox.ValueIndex;
-            PhantomEx1 = load(fullfile(pathToMLAPP, 'PhantomExample1.mat'), 'phantom').phantom;
-            PhantomEx2 = load(fullfile(pathToMLAPP, 'PhantomExample2.mat'), 'phantom').phantom;
-            if phantom_idx == 1
-                phantom = PhantomEx1;
-            elseif phantom_idx == 2
-                phantom = PhantomEx2;
+            if phantom_idx <= 2
+                phantom = load(fullfile(pathToMLAPP, ...
+                    app.phantom_files{phantom_idx}), 'phantom').phantom;
             else % phantom_idx > 2
                 index = app.PhantomListBox.ValueIndex;
                 phantom = app.PhantomListBox.ItemsData{index};
@@ -248,27 +244,30 @@ classdef gui < matlab.apps.AppBase
             detector_type = app.DetectorShapeDropDown.Value;           
             num_rotations = app.NumberofRotationsEditField.Value;
 
-            dist_to_detector = app.DistToDetectorField.Value;
-            dist_unit = units.(app.DistToDetectorUnits.Value);
-            dist_to_detector = dist_to_detector * dist_unit;
+            dist_to_detector = app.DistToDetectorField.Value * ...
+                units.(app.DistToDetectorUnits.Value);
             
+            % Get the pixel information
+            pixel_size = app.PixelWidthField.Value * units.(app.PixelWidthUnits.Value);
+            
+            pixel_dims = [pixel_size pixel_size];
+            num_pixels = [app.NumberofPixelsEditField.Value, 1];
             
             source_type = app.SourceTypeDropDown.Value;
             if strcmp(source_type, 'Parallel Beam')
                 g = parallel_gantry(dist_to_detector, num_rotations);
+                do_fan2para = false;
             else
                 g = gantry(dist_to_detector, num_rotations); % Should be cone beam
+                do_fan2para = true;
             end
 
-            pixel_size = app.PixelWidthField.Value;
-            pixel_unit = units.(app.PixelWidthUnits.Value);
-            
-            pixel_dims = [pixel_size pixel_size] .* pixel_unit;
-            num_pixels = [app.NumberofPixelsEditField.Value, 1];
             if strcmp(detector_type, 'Flat')
                 darray = flat_detector(pixel_dims, num_pixels);
+                sensor_geom = 'line';
             else
                 darray = curved_detector(pixel_dims, num_pixels);
+                sensor_geom = 'arc';
             end
             
             [emin, emax] = source1.get_energy_range();
@@ -284,20 +283,45 @@ classdef gui < matlab.apps.AppBase
             % Get the reconstruction information
             filter = app.FilterListBox.Value;
             interpolation = app.InterpolationDropDown.Value;
-            scan_angles = rad2deg(g.scan_angles);
 
             % Source 1
             sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));
-            recon = iradon(sinogram, scan_angles, interpolation, filter);
+            if do_fan2para
+                pixel_angle    = rad2deg(pixel_size / dist_to_detector / 2);
+                rotation_angle = rad2deg(g.scan_angles(1)); % Assumes even spacing 
+                [P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...
+                    'FanSensorSpacing', pixel_angle, "Interpolation", interpolation, ...
+                    'FanRotationIncrement', rotation_angle, ...
+                    "FanSensorGeometry", sensor_geom ... 
+                    , "ParallelCoverage", "cycle");
+                recon = iradon(P, paraRotAngles, interpolation, filter);
+            else
+                recon = iradon(sinogram, rad2deg(g.scan_angles), interpolation, filter);
+            end
             app.ShowDropDown.ItemsData{1} = app1.greyToColour(mat2gray(sinogram));
             app.recons{1} = app1.greyToColour(mat2gray(recon));
 
             % Source 2
             if has_source2
-                sinogram2 = squeeze(compute_sinogram(source2, phantom, d, scatter_type, scatter_factor));
+                [emin, emax] = source2.get_energy_range();
+                num_bins = ceil(emax - emin);
+                sensor2 = ideal_sensor([emin, emax], num_bins);
+                d2 = detector(g, darray, sensor2);
+                sinogram2 = squeeze(compute_sinogram(source2, phantom, d2, scatter_type, scatter_factor));
                 
                 % Reconstruct the image
-                recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
+                % recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
+                if do_fan2para
+                    [P,~,paraRotAngles] = fan2para(sinogram2, dist_to_detector/2, ...
+                        'FanSensorSpacing', pixel_angle, "Interpolation", interpolation, ...
+                        'FanRotationIncrement', rotation_angle, ...
+                        "FanSensorGeometry", sensor_geom ...
+                        );%, "ParallelCoverage", "cycle");
+                    recon2 = iradon(P, paraRotAngles, interpolation, filter);
+                else
+                    recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
+                end
+
                 app.ShowDropDown.ItemsData{2} = app1.greyToColour(mat2gray(sinogram2));
                 app.ShowDropDown.ItemsData{3} = app1.greyToColour(mat2gray(sinogram - sinogram2));
                 app.ShowDropDown.ItemsData{4} = app1.greyToColour(mat2gray(sinogram ./ sinogram2));
@@ -419,6 +443,7 @@ classdef gui < matlab.apps.AppBase
                 try
                     app.PhantomListBox.ItemsData{end + 1} = ...
                         load(fullfile(path, file), 'phantom').phantom;
+                    app.phantom_files{end+1} = fullfile(path, file);
                 catch ME
                     % If there is an error loading the phantom - let the user know
                     uialert(app.UIFigure, ME.message, 'Invalid Phantom File');
@@ -438,6 +463,7 @@ classdef gui < matlab.apps.AppBase
                         load(fullfile(path, file), 'source').source;
                     app.Source2DropDown.ItemsData{end+1} = ...
                         load(fullfile(path, file), 'source').source;
+                    app.source_files{end+1} = fullfile(path, file);
                 catch ME
                     % If there is an error loading the source - let the user know
                     uialert(app.UIFigure, ME.message, 'Invalid Source File');
@@ -638,6 +664,158 @@ classdef gui < matlab.apps.AppBase
             app.sinogram_fig = state.sinogram_fig;
             
             app.ShowDropDownChanged(event);
+            app.DetectorShapeDropDownValueChanged(event);
+            app.SourceTypeDropDownValueChanged(event);
+        end
+
+        % Menu selected function: ReconstructionHelpMenu
+        function ReconstructionHelpMenuSelected(app, event)
+            doc iradon
+        end
+
+        % Menu selected function: ExportMenu, ExporttoScriptMenu
+        function ExporttoScriptMenuSelected(app, event)
+                        % Create a script to run the simulation
+            [file,path] = uiputfile('*.m','Save Script');
+            if ~ischar(file); return; end % Nothing selected
+            fid = fopen(fullfile(path, file), 'w');
+
+            pathToMLAPP = fileparts(mfilename('fullpath'));
+            
+            fprintf(fid, "%% Run the simulation\n");
+            fprintf(fid, "\n%% Get the source\n");
+            source1_selected = app.Source1DropDown.ValueIndex;
+            if source1_selected <= 2
+                fprintf(fid, "source1 = load('%s', 'source').source;\n", ...
+                    fullfile(pathToMLAPP, app.source_files{source1_selected}));
+            else
+                fprintf(fid, "source1 = load('%s', 'source').source;\n", ...
+                    app.source_files{source1_selected});
+            end
+
+            source2_selected = app.Source2DropDown.ValueIndex;
+            has_source2 = source2_selected > 1;
+            if has_source2 && source2_selected <= 3
+                fprintf(fid, "source2 = load('%s', 'source').source;\n", ...
+                    fullfile(pathToMLAPP, app.source_files{source2_selected}));
+            elseif source2_selected > 3
+                fprintf(fid, "source2 = load('%s', 'source').source;\n", ...
+                    app.source_files{source2_selected});
+            end
+
+            % Get the phantom
+            phantom_selected = app.PhantomListBox.ValueIndex;
+            fprintf(fid, "\n%% Get the phantom\n");
+            if phantom_selected <= 2
+                fprintf(fid, "phantom = load('%s', 'phantom').phantom;\n", ...
+                    fullfile(pathToMLAPP, app.phantom_files{phantom_selected}));
+            else % phantom_selected > 2
+                fprintf(fid, "phantom = load('%s', 'phantom').phantom;\n", ...
+                    app.phantom_files{phantom_selected});
+            end
+            fprintf(fid, "phantom = phantom.update_voxel_size(%f * units.%s);\n", ...
+                app.VoxelSizeEditField.Value, app.VoxelSizeUnits.Value);
+            
+            % Get the detector
+            fprintf(fid, "\n%% Get the detector movement\n");
+            detector_type = app.DetectorShapeDropDown.Value;
+            num_rotations = app.NumberofRotationsEditField.Value;
+            fprintf(fid, "num_rotations = %d;\n", num_rotations);
+
+            dist_to_detector = app.DistToDetectorField.Value;
+            fprintf(fid, "dist_to_detector = %f * units.%s;\n", ...
+                dist_to_detector, app.DistToDetectorUnits.Value);
+            
+
+            source_type = app.SourceTypeDropDown.Value;
+            if strcmp(source_type, 'Parallel Beam')
+                fprintf(fid, "the_gantry = parallel_gantry(dist_to_detector, num_rotations);\n");
+            else
+                fprintf(fid, "the_gantry = gantry(dist_to_detector, num_rotations);\n");
+            end
+
+            fprintf(fid, "\n%% Get the detector pixel configuration (i.e. detector array)\n");
+            pixel_size = app.PixelWidthField.Value;
+            fprintf(fid, "pixel_dims = [%f %f] .* units.%s;\n", ...
+                pixel_size, pixel_size, app.PixelWidthUnits.Value);
+            num_pixels = app.NumberofPixelsEditField.Value;
+            fprintf(fid, "num_pixels = [%d, 1];\n", num_pixels);
+            if strcmp(detector_type, 'Flat')
+                fprintf(fid, "darray = flat_detector(pixel_dims, num_pixels);\n");
+                sensor_geom = 'line';
+            else
+                fprintf(fid, "darray = curved_detector(pixel_dims, num_pixels);\n");
+                sensor_geom = 'arc';
+            end
+
+            fprintf(fid, "\n%% Get the sensor on the detector\n");
+            fprintf(fid, "[emin, emax] = source1.get_energy_range();\n");
+            fprintf(fid, "num_bins = ceil(emax - emin);\n");
+            fprintf(fid, "sensor = ideal_sensor([emin, emax], num_bins);\n");
+
+            fprintf(fid, "\n%% Build the detector\n");
+            fprintf(fid, "d = detector(the_gantry, darray, sensor);\n");
+            
+            % Get the scatter settings
+            fprintf(fid, "\n%% Get the scatter settings\n");
+            scatter_type = lower(app.ScatterTypeListBox.Value);
+            scatter_factor = app.ScatterFactorSpinner.Value;
+            fprintf(fid, "scatter_type = '%s';\n", scatter_type);
+            fprintf(fid, "scatter_factor = %d;\n", scatter_factor);
+
+            % Get the reconstruction information
+            filter = app.FilterListBox.Value;
+            interpolation = app.InterpolationDropDown.Value;
+            fprintf(fid, "\n%% Compute the sinogram for source 1\n");
+            fprintf(fid, "sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));\n");
+
+            if has_source2
+                fprintf(fid, "\n%% Compute the sinogram for source 2\n");
+                fprintf(fid, "[emin, emax] = source2.get_energy_range();\n");
+                fprintf(fid, "num_bins = ceil(emax - emin);\n");
+                fprintf(fid, "sensor2 = ideal_sensor([emin, emax], num_bins);\n");
+                fprintf(fid, "d2 = detector(the_gantry, darray, sensor2);\n");
+                fprintf(fid, "sinogram2 = squeeze(compute_sinogram(source2, phantom, d2, scatter_type, scatter_factor));\n");
+            end
+
+            fprintf(fid, "\n%% Get the reconstruction information\n");
+            fprintf(fid, "filter = '%s';\n", filter);
+            fprintf(fid, "interpolation = '%s';\n", interpolation);
+            fprintf(fid, "scan_angles = rad2deg(the_gantry.scan_angles);\n");
+            fprintf(fid, "\n%% Reconstruct the image for source 1\n");
+            if strcmp(source_type, 'Parallel Beam')
+                fprintf(fid, "recon = iradon(sinogram, scan_angles, interpolation, filter);\n");
+            else
+                fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...\n");
+                fprintf(fid, "    'FanSensorSpacing', pixel_dims(1) / dist_to_detector/2, ...\n");
+                fprintf(fid, "    'Interpolation', interpolation, ...\n");
+                fprintf(fid, "    'FanRotationIncrement', 2*pi / num_rotations, ...\n");
+                fprintf(fid, "    'FanSensorGeometry', '%s' ...\n", sensor_geom);
+                fprintf(fid, "    );\n");
+                fprintf(fid, "recon = iradon(P, paraRotAngles, interpolation, filter);\n");
+            end
+
+            if has_source2
+                fprintf(fid, "\n%% Reconstruct the image for source 2\n");
+                if strcmp(source_type, 'Parallel Beam')
+                    fprintf(fid, "recon2 = iradon(sinogram2, scan_angles, interpolation, filter);\n");
+                else
+                    fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram2, dist_to_detector/2, ...\n");
+                    fprintf(fid, "    'FanSensorSpacing', pixel_dims(1) / dist_to_detector/2, ...\n");
+                    fprintf(fid, "    'Interpolation', interpolation, ...\n");
+                    fprintf(fid, "    'FanRotationIncrement', 2*pi / num_rotations, ...\n");
+                    fprintf(fid, "    'FanSensorGeometry', '%s' ...\n", sensor_geom);
+                    fprintf(fid, "    );\n");
+                    fprintf(fid, "recon2 = iradon(P, paraRotAngles, interpolation, filter);\n");
+                end
+            end
+            
+            fprintf(fid, "\n%% Display the result\n");
+            fprintf(fid, "figure; imshow(mat2gray(recon));\n");
+            if has_source2
+                fprintf(fid, "figure; imshow(mat2gray(recon2));\n");
+            end
+            fclose(fid);
         end
     end
 
@@ -661,6 +839,11 @@ classdef gui < matlab.apps.AppBase
             app.FileMenu = uimenu(app.UIFigure);
             app.FileMenu.Text = 'File';
 
+            % Create RunMenu
+            app.RunMenu = uimenu(app.FileMenu);
+            app.RunMenu.MenuSelectedFcn = createCallbackFcn(app, @RunButtonPushed, true);
+            app.RunMenu.Text = 'Run';
+
             % Create LoadStateMenu
             app.LoadStateMenu = uimenu(app.FileMenu);
             app.LoadStateMenu.MenuSelectedFcn = createCallbackFcn(app, @LoadStateSelected, true);
@@ -673,6 +856,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create ExportMenu
             app.ExportMenu = uimenu(app.FileMenu);
+            app.ExportMenu.MenuSelectedFcn = createCallbackFcn(app, @ExporttoScriptMenuSelected, true);
             app.ExportMenu.Text = 'Export';
 
             % Create ResetMenu
@@ -714,6 +898,7 @@ classdef gui < matlab.apps.AppBase
             % Create FilterListBox
             app.FilterListBox = uilistbox(app.ReconstructionPanel);
             app.FilterListBox.Items = {'None', 'Ram-Lak', 'Shepp-Logan', 'Cosine', 'Hamming', 'Hann'};
+            app.FilterListBox.Tooltip = {'Filter to use for frequency domain filtering, specified as one of these values.'};
             app.FilterListBox.FontSize = 14;
             app.FilterListBox.Position = [95 78 126 66];
             app.FilterListBox.Value = 'None';
@@ -727,7 +912,8 @@ classdef gui < matlab.apps.AppBase
 
             % Create InterpolationDropDown
             app.InterpolationDropDown = uidropdown(app.ReconstructionPanel);
-            app.InterpolationDropDown.Items = {'linear', 'nearest', 'spline', 'pchip', 'v5cubic'};
+            app.InterpolationDropDown.Items = {'nearest', 'linear', 'spline', 'pchip'};
+            app.InterpolationDropDown.Tooltip = {'Type of interpolation to use in the back projection, specified as one of these values. The values are listed in order of increasing accuracy and computational complexity.'};
             app.InterpolationDropDown.FontSize = 14;
             app.InterpolationDropDown.Position = [127 33 100 22];
             app.InterpolationDropDown.Value = 'linear';
@@ -740,13 +926,15 @@ classdef gui < matlab.apps.AppBase
             % Create ReconstructionImage
             app.ReconstructionImage = uiimage(app.ResultsPanel);
             app.ReconstructionImage.ImageClickedFcn = createCallbackFcn(app, @ReconstructionImageClicked, true);
+            app.ReconstructionImage.Tooltip = {'The reconstructed image from the sinogram. '; ''; 'Double-click to get in a MATLAB viewer.'};
             app.ReconstructionImage.Position = [157 30 345 683];
             app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
 
             % Create SinogramImage
             app.SinogramImage = uiimage(app.ResultsPanel);
             app.SinogramImage.ImageClickedFcn = createCallbackFcn(app, @SinogramImageClicked, true);
-            app.SinogramImage.Position = [1 0 153 713];
+            app.SinogramImage.Tooltip = {'The sinogram created from running the simulation.'; ''; 'Double-click to get in a MATLAB viewer.'};
+            app.SinogramImage.Position = [1 1 153 713];
             app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
 
             % Create SinogramLabel
@@ -773,6 +961,7 @@ classdef gui < matlab.apps.AppBase
             app.ShowDropDown.Items = {'Source 1', 'Source 2', 'Difference', 'Ratio'};
             app.ShowDropDown.ItemsData = {'Source 1'};
             app.ShowDropDown.ValueChangedFcn = createCallbackFcn(app, @ShowDropDownChanged, true);
+            app.ShowDropDown.Tooltip = {'Select which combination of sinogram and reconstruction to view'};
             app.ShowDropDown.FontSize = 14;
             app.ShowDropDown.Position = [403 7 100 22];
             app.ShowDropDown.Value = 'Source 1';
@@ -794,6 +983,7 @@ classdef gui < matlab.apps.AppBase
             % Create SensorTypeDropDown
             app.SensorTypeDropDown = uidropdown(app.DetectorPanel);
             app.SensorTypeDropDown.Items = {'Ideal'};
+            app.SensorTypeDropDown.Tooltip = {'This determines how your sensor reacts to exposure to X-rays'};
             app.SensorTypeDropDown.FontSize = 14;
             app.SensorTypeDropDown.Position = [140 14 110 22];
             app.SensorTypeDropDown.Value = 'Ideal';
@@ -802,6 +992,7 @@ classdef gui < matlab.apps.AppBase
             app.PixelWidthLabel = uilabel(app.DetectorPanel);
             app.PixelWidthLabel.HorizontalAlignment = 'center';
             app.PixelWidthLabel.FontSize = 14;
+            app.PixelWidthLabel.Tooltip = {'This determines the size of each of the sensors (and therefore pixels) in the detector. '; ''; 'A smaller pixel width increases the resolution of the image.'};
             app.PixelWidthLabel.Position = [36 93 75 22];
             app.PixelWidthLabel.Text = 'Pixel Width';
 
@@ -810,6 +1001,7 @@ classdef gui < matlab.apps.AppBase
             app.PixelWidthField.LowerLimitInclusive = 'off';
             app.PixelWidthField.Limits = [0 Inf];
             app.PixelWidthField.FontSize = 14;
+            app.PixelWidthField.Tooltip = {'This determines the size of each of the sensors (and therefore pixels) in the detector. '; ''; 'A smaller pixel width increases the resolution of the image.'};
             app.PixelWidthField.Position = [138 91 46 22];
             app.PixelWidthField.Value = 1;
 
@@ -818,6 +1010,7 @@ classdef gui < matlab.apps.AppBase
             app.PixelWidthUnits.Items = {'mm', 'um'};
             app.PixelWidthUnits.Editable = 'on';
             app.PixelWidthUnits.ValueChangedFcn = createCallbackFcn(app, @UnitsValueChanged, true);
+            app.PixelWidthUnits.Tooltip = {'This determines the size of each of the sensors (and therefore pixels) in the detector. '; ''; 'A smaller pixel width increases the resolution of the image.'};
             app.PixelWidthUnits.FontSize = 14;
             app.PixelWidthUnits.BackgroundColor = [1 1 1];
             app.PixelWidthUnits.Position = [190 91 56 22];
@@ -835,6 +1028,7 @@ classdef gui < matlab.apps.AppBase
             app.NumberofPixelsEditField.Limits = [1 Inf];
             app.NumberofPixelsEditField.RoundFractionalValues = 'on';
             app.NumberofPixelsEditField.FontSize = 14;
+            app.NumberofPixelsEditField.Tooltip = {'This, along with the pixel size determines the size of the array of sensors. '; ''; 'More pixels means the detector with have greater breadth'};
             app.NumberofPixelsEditField.Position = [162 49 56 22];
             app.NumberofPixelsEditField.Value = 900;
 
@@ -849,12 +1043,14 @@ classdef gui < matlab.apps.AppBase
             app.DetectorShapeDropDown = uidropdown(app.DetectorPanel);
             app.DetectorShapeDropDown.Items = {'Flat', 'Cylindrical'};
             app.DetectorShapeDropDown.ValueChangedFcn = createCallbackFcn(app, @DetectorShapeDropDownValueChanged, true);
+            app.DetectorShapeDropDown.Tooltip = {'This is the shape of the arrangement of sensors used to detect the X-rays.'};
             app.DetectorShapeDropDown.FontSize = 14;
             app.DetectorShapeDropDown.Position = [139 129 110 22];
             app.DetectorShapeDropDown.Value = 'Flat';
 
             % Create PhantomPanel
             app.PhantomPanel = uipanel(app.RunTab);
+            app.PhantomPanel.Tooltip = {'A phantom is the irradiated object used in the simulation'};
             app.PhantomPanel.Title = 'Phantom';
             app.PhantomPanel.Visible = 'off';
             app.PhantomPanel.FontSize = 18;
@@ -864,6 +1060,7 @@ classdef gui < matlab.apps.AppBase
             app.PhantomListBoxLabel = uilabel(app.PhantomPanel);
             app.PhantomListBoxLabel.HorizontalAlignment = 'right';
             app.PhantomListBoxLabel.FontSize = 14;
+            app.PhantomListBoxLabel.Tooltip = {'A phantom is the irradiated object used in the simulation'};
             app.PhantomListBoxLabel.Position = [19 101 61 22];
             app.PhantomListBoxLabel.Text = 'Phantom';
 
@@ -871,6 +1068,7 @@ classdef gui < matlab.apps.AppBase
             app.PhantomListBox = uilistbox(app.PhantomPanel);
             app.PhantomListBox.Items = {'Example 1', 'Example 2'};
             app.PhantomListBox.ItemsData = {'Example 1', 'Example 2'};
+            app.PhantomListBox.Tooltip = {'Select the available phantoms'};
             app.PhantomListBox.FontSize = 14;
             app.PhantomListBox.Position = [95 51 158 74];
             app.PhantomListBox.Value = 'Example 1';
@@ -879,6 +1077,7 @@ classdef gui < matlab.apps.AppBase
             app.PhantomLoadButton = uibutton(app.PhantomPanel, 'push');
             app.PhantomLoadButton.ButtonPushedFcn = createCallbackFcn(app, @PhantomLoadButtonPushed, true);
             app.PhantomLoadButton.FontSize = 14;
+            app.PhantomLoadButton.Tooltip = {'Load a ''.mat'' file containing the variable ''phantom'', to run the simulation with.'};
             app.PhantomLoadButton.Position = [21 51 66 25];
             app.PhantomLoadButton.Text = 'Load';
 
@@ -928,6 +1127,7 @@ classdef gui < matlab.apps.AppBase
             app.SourceTypeDropDown = uidropdown(app.SourcePanel);
             app.SourceTypeDropDown.Items = {'Parallel Beam', 'Cone Beam'};
             app.SourceTypeDropDown.ValueChangedFcn = createCallbackFcn(app, @SourceTypeDropDownValueChanged, true);
+            app.SourceTypeDropDown.Tooltip = {'This selects the type of ray configuration. '; ''; 'Change this value to observe the effect on the figure (left).'};
             app.SourceTypeDropDown.FontSize = 14;
             app.SourceTypeDropDown.Position = [107 25 150 22];
             app.SourceTypeDropDown.Value = 'Parallel Beam';
@@ -936,6 +1136,7 @@ classdef gui < matlab.apps.AppBase
             app.Source1DropDownLabel = uilabel(app.SourcePanel);
             app.Source1DropDownLabel.HorizontalAlignment = 'right';
             app.Source1DropDownLabel.FontSize = 14;
+            app.Source1DropDownLabel.Tooltip = {'The X-ray source used to irradiate the phantom with X-rays and detect on the other side.'};
             app.Source1DropDownLabel.Position = [6 95 61 22];
             app.Source1DropDownLabel.Text = 'Source 1';
 
@@ -951,6 +1152,7 @@ classdef gui < matlab.apps.AppBase
             app.SourceLoadButton = uibutton(app.SourcePanel, 'push');
             app.SourceLoadButton.ButtonPushedFcn = createCallbackFcn(app, @SourceLoadButtonPushed, true);
             app.SourceLoadButton.FontSize = 14;
+            app.SourceLoadButton.Tooltip = {'Load a ''.mat'' file containing the variable ''source'', to run the simulation with.'};
             app.SourceLoadButton.Position = [205 69 66 23];
             app.SourceLoadButton.Text = 'Load';
 
@@ -975,15 +1177,24 @@ classdef gui < matlab.apps.AppBase
             app.ImagePanel.AutoResizeChildren = 'off';
             app.ImagePanel.Position = [0 7 582 738];
 
+            % Create DistToDetectorLine
+            app.DistToDetectorLine = uiimage(app.ImagePanel);
+            app.DistToDetectorLine.ImageClickedFcn = createCallbackFcn(app, @DistToDetectorLineImageClicked, true);
+            app.DistToDetectorLine.Tooltip = {'Select this to view the distance between source and detector selection'};
+            app.DistToDetectorLine.Position = [-17 185 100 449];
+            app.DistToDetectorLine.ImageSource = fullfile(pathToMLAPP, 'graphics', 'distance.svg');
+
             % Create RaysImage
             app.RaysImage = uiimage(app.ImagePanel);
             app.RaysImage.ImageClickedFcn = createCallbackFcn(app, @ToggleSourcePanelVisibility, true);
+            app.RaysImage.Tooltip = {'Select this to view the source options'};
             app.RaysImage.Position = [72 210 464 416];
             app.RaysImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'parallel_rays.svg');
 
             % Create RotationImage
             app.RotationImage = uiimage(app.ImagePanel);
             app.RotationImage.ImageClickedFcn = createCallbackFcn(app, @RotationImageClicked, true);
+            app.RotationImage.Tooltip = {'Select this to view the number of rotations input.'; ''; 'The source and detector will be rotated around the phantom at a set angle. '; ''; 'This is set to be 360 degrees.'};
             app.RotationImage.Position = [43 646 217 89];
             app.RotationImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'rotation_arrow.svg');
 
@@ -1023,30 +1234,28 @@ classdef gui < matlab.apps.AppBase
             % Create SourceImage
             app.SourceImage = uiimage(app.ImagePanel);
             app.SourceImage.ImageClickedFcn = createCallbackFcn(app, @ToggleSourcePanelVisibility, true);
+            app.SourceImage.Tooltip = {'Select this to view the source options'};
             app.SourceImage.Position = [254 633 100 100];
             app.SourceImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'source.svg');
 
             % Create WireImage
             app.WireImage = uiimage(app.ImagePanel);
             app.WireImage.ImageClickedFcn = createCallbackFcn(app, @ToggleReconstructionPanelVisibility, true);
+            app.WireImage.Tooltip = {'Select this to view the reconstruction options'};
             app.WireImage.Position = [322 76 100 109];
             app.WireImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'wire.svg');
 
             % Create PCImage
             app.PCImage = uiimage(app.ImagePanel);
             app.PCImage.ImageClickedFcn = createCallbackFcn(app, @ToggleReconstructionPanelVisibility, true);
+            app.PCImage.Tooltip = {'Select this to view the reconstruction options'};
             app.PCImage.Position = [405 10 169 157];
             app.PCImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'PC.svg');
-
-            % Create DistToDetectorLine
-            app.DistToDetectorLine = uiimage(app.ImagePanel);
-            app.DistToDetectorLine.ImageClickedFcn = createCallbackFcn(app, @DistToDetectorLineImageClicked, true);
-            app.DistToDetectorLine.Position = [-17 185 100 449];
-            app.DistToDetectorLine.ImageSource = fullfile(pathToMLAPP, 'graphics', 'distance.svg');
 
             % Create DetectorArrayImage
             app.DetectorArrayImage = uiimage(app.ImagePanel);
             app.DetectorArrayImage.ImageClickedFcn = createCallbackFcn(app, @ToggleDetectorPanelVisibility, true);
+            app.DetectorArrayImage.Tooltip = {'Select this to view the detector options'};
             app.DetectorArrayImage.Position = [61 140 502 149];
             app.DetectorArrayImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'flat_detector.svg');
 
@@ -1055,6 +1264,7 @@ classdef gui < matlab.apps.AppBase
             app.RunButton.ButtonPushedFcn = createCallbackFcn(app, @RunButtonPushed, true);
             app.RunButton.Icon = fullfile(pathToMLAPP, 'Play.png');
             app.RunButton.FontSize = 36;
+            app.RunButton.Tooltip = {'Run the simulation!'};
             app.RunButton.Position = [402 608 158 58];
             app.RunButton.Text = 'Run';
 
@@ -1063,12 +1273,14 @@ classdef gui < matlab.apps.AppBase
             app.NumberofRotationsEditField.Limits = [1 Inf];
             app.NumberofRotationsEditField.RoundFractionalValues = 'on';
             app.NumberofRotationsEditField.FontSize = 14;
+            app.NumberofRotationsEditField.Tooltip = {'Number of rotations that will be simulated. The source and detector will be rotated around the phantom at a set angle. This is set to be 360 degrees.'};
             app.NumberofRotationsEditField.Position = [218 660 50 22];
             app.NumberofRotationsEditField.Value = 180;
 
             % Create ScatterImage
             app.ScatterImage = uiimage(app.ImagePanel);
             app.ScatterImage.ImageClickedFcn = createCallbackFcn(app, @ToggleScatterPanelVisibility, true);
+            app.ScatterImage.Tooltip = {'Select this to view the scatter options'};
             app.ScatterImage.Position = [181 306 100 100];
             app.ScatterImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'scatter_rays.svg');
 
@@ -1090,6 +1302,7 @@ classdef gui < matlab.apps.AppBase
             % Create ScatterTypeListBox
             app.ScatterTypeListBox = uilistbox(app.ScatterPanel);
             app.ScatterTypeListBox.Items = {'None', 'Fast', 'Slow'};
+            app.ScatterTypeListBox.Tooltip = {'This determines which scatter algorithm to use. '; ''; 'Fast is a convolutional algorithm that is based on Monte Carlo simulations.'; ''; 'Slow is an experimental implementation, estimating the scatter through sampling along each ray.'};
             app.ScatterTypeListBox.FontSize = 14;
             app.ScatterTypeListBox.Position = [148 60 100 74];
             app.ScatterTypeListBox.Value = 'None';
@@ -1106,18 +1319,21 @@ classdef gui < matlab.apps.AppBase
             app.ScatterFactorSpinner.Limits = [0 10];
             app.ScatterFactorSpinner.RoundFractionalValues = 'on';
             app.ScatterFactorSpinner.FontSize = 14;
+            app.ScatterFactorSpinner.Tooltip = {'How much scatter to use. '; ''; 'For Fast, this increases the amplitude of the scatter in the image. Increasing this value has no effect on the accuracy of the scatter estimation.'; ''; 'For slow, this increases how many samples we take at each point. Increasing this increases the accuracy of the scatter estimation.'};
             app.ScatterFactorSpinner.Position = [172 21 56 22];
             app.ScatterFactorSpinner.Value = 1;
 
             % Create NumberofRotationsLabel
             app.NumberofRotationsLabel = uilabel(app.ImagePanel);
             app.NumberofRotationsLabel.FontSize = 14;
+            app.NumberofRotationsLabel.Tooltip = {'Number of rotations that will be simulated. The source and detector will be rotated around the phantom at a set angle. '; ''; 'With a cone beam, this is the number of rotations within 360 degrees.'; ''; 'For a parallel beam, this is the number of rotations in 180 degrees.'};
             app.NumberofRotationsLabel.Position = [87 660 133 22];
             app.NumberofRotationsLabel.Text = 'Number of Rotations';
 
             % Create PhantomImage
             app.PhantomImage = uiimage(app.ImagePanel);
             app.PhantomImage.ImageClickedFcn = createCallbackFcn(app, @TogglePhantomPanelVisibility, true);
+            app.PhantomImage.Tooltip = {'Select this to view the phantom options.'; ''; 'A phantom is the irradiated object used in the simulation.'};
             app.PhantomImage.Position = [252 342 104 174];
             app.PhantomImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'SheppLogan_Phantom.svg');
 
@@ -1173,6 +1389,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create ExporttoScriptMenu
             app.ExporttoScriptMenu = uimenu(app.RunContextMenu);
+            app.ExporttoScriptMenu.MenuSelectedFcn = createCallbackFcn(app, @ExporttoScriptMenuSelected, true);
             app.ExporttoScriptMenu.Text = 'Export to Script';
             
             % Assign app.RunContextMenu
@@ -1200,8 +1417,8 @@ classdef gui < matlab.apps.AppBase
             app.DetectorShapeDropDownLabel.ContextMenu = app.DetectorContextMenu;
             app.DetectorShapeDropDown.ContextMenu = app.DetectorContextMenu;
             app.RotationImage.ContextMenu = app.DetectorContextMenu;
-            app.DetectorArrayImage.ContextMenu = app.DetectorContextMenu;
             app.DistToDetectorLine.ContextMenu = app.DetectorContextMenu;
+            app.DetectorArrayImage.ContextMenu = app.DetectorContextMenu;
 
             % Create PhantomContextMenu
             app.PhantomContextMenu = uicontextmenu(app.UIFigure);
@@ -1292,6 +1509,8 @@ classdef gui < matlab.apps.AppBase
 
             % Create ReconstructionHelpMenu
             app.ReconstructionHelpMenu = uimenu(app.ReconstructionContextMenu);
+            app.ReconstructionHelpMenu.MenuSelectedFcn = createCallbackFcn(app, @ReconstructionHelpMenuSelected, true);
+            app.ReconstructionHelpMenu.Tooltip = {'Get help on the reconstruction'};
             app.ReconstructionHelpMenu.Text = 'Reconstruction Help';
             
             % Assign app.ReconstructionContextMenu
