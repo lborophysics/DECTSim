@@ -20,8 +20,8 @@ classdef curved_detector < detector_array
                 * -detect_geom.to_source_vec;
             
             % Get the pixel information
-            % pixel_angle  = self.pixel_dims(1) / rot_radius; % angle = arc_length / radius
-            pixel_angle  = chord2ang(self.pixel_dims(1), dist_to_detector); % angle = 2 * asin(arc_length / (2 * radius))
+            pixel_angle  = self.pixel_dims(1) / rot_radius; % angle = arc_length / radius
+            % pixel_angle  = chord2ang(self.pixel_dims(1), dist_to_detector); % angle = 2 * asin(arc_length / (2 * radius))
             pixel_height = self.pixel_dims(2);
             ny_pixels    = self.n_pixels(1);
             nz_pixels    = self.n_pixels(2);
