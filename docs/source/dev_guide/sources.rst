@@ -47,6 +47,14 @@ Abstract Methods
 
     :returns: :code:`fluences` lists of length N of the fluences in units of photons/cm^2 at 1m. (Use the units library to ensure the conversion is correct).
 
+.. method:: get_energy_range(self)
+
+    This method is meant to be overridden by the child classes. It should return the range of energies that the source will generate.
+
+    :returns: 
+        - :code:`min` a double indicating the minimum energy that the source will generate. 
+        - :code:`max` a double indicating the maximum energy that the source will generate.
+
     
 Single Energy Source
 --------------------
@@ -92,6 +100,14 @@ Methods
         :type range: Nx2 double
     
         :returns: :code:`fluences` is a list of length N, with the fluence being :math:`1\times10^6` if the energy is within the range, and 0 if it is not.
+
+.. method:: single_energy.get_energy_range(self)
+
+    This method returns the range of energies that the source will generate. It is the same as the energy of the xray :math:`\pm 1` keV.
+
+    :returns: 
+        - :code:`min` The energy of the xray minus 1 keV.
+        - :code:`max` The energy of the xray plus 1 keV.
 
 
 Source from Spectrum File
@@ -153,5 +169,13 @@ Methods
     :type range: Nx2 double
 
     :returns: :code:`fluences` is a list of length N, returning the sum of the fluences of the xrays within the range in units of photons/cm^2 at 1m. (This function uses the units library to ensure the conversion is correct).
+
+.. method:: source_fromfile.get_energy_range(self)
+    
+        This method returns the range of energies that the source will generate. It is the same as the energy bins of the spectrum file.
+    
+        :returns: 
+            - :code:`min` The minimum energy bin of the spectrum file.
+            - :code:`max` The maximum energy bin of the spectrum file.
 
 

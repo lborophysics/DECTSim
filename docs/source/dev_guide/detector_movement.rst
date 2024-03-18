@@ -20,6 +20,10 @@ Properties
     
     Distance from source to detector
 
+.. attribute:: rot_radius
+
+    The radius of rotation of the gantry. This is calculated as ``dist_to_detector/2``. This is a precalculation to save time in the method :meth:`get_rot_mat`.
+
 .. attribute:: to_source_vec = [0;1;0]
     
     Vector from source to centre of detector. The initial value is [0;1;0] as the source will always start above the detector pixel array. This is used in the `detector_array` classes to calculate the ray paths for each projection.

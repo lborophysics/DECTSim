@@ -55,6 +55,13 @@ Functions
 Methods
 -------
 
+.. method:: update_voxel_size(self, new_voxel_size)
+
+    Updates the voxel size of the array to ``new_voxel_size`` by changing the number of planes and the dimensions of the array.
+
+    :param new_voxel_size: The new dimensions of each voxel in the array in the x, y and z directions.
+    :type new_voxel_size: double
+
 .. method:: precalculate_mus(self, nrj_arr)
 
     Pre-calculates the linear attenuation coefficient for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
