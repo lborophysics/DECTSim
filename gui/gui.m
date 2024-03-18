@@ -205,141 +205,145 @@ classdef gui < matlab.apps.AppBase
             pathToMLAPP = fileparts(mfilename('fullpath'));
             runningdlg = uiprogressdlg(app.UIFigure, 'Title', 'Running Simulation', 'Indeterminate', 'on');
             drawnow;
-
-            % Get the source
-            source1_idx = app.Source1DropDown.ValueIndex;
-            if source1_idx <= 2
-                source1 = load(fullfile(pathToMLAPP, ...
-                    app.source_files{source1_idx}), 'source').source;
-            else
-                source1 = app.Source1DropDown.ItemsData{source1_idx};
-            end
-
-            source2_idx = app.Source2DropDown.ValueIndex;
-            has_source2 = true;
-            if source2_idx == 1
-                has_source2 = false;
-            elseif source2_idx <= 3
-                source2 = load(fullfile(pathToMLAPP, ...
-                    app.source_files{source2_idx}), 'source').source;
-            else
-                source2 = app.Source2DropDown.ItemsData{source2_idx};
-            end
-
-            % Get the phantom
-            phantom_idx = app.PhantomListBox.ValueIndex;
-            if phantom_idx <= 2
-                phantom = load(fullfile(pathToMLAPP, ...
-                    app.phantom_files{phantom_idx}), 'phantom').phantom;
-            else % phantom_idx > 2
-                index = app.PhantomListBox.ValueIndex;
-                phantom = app.PhantomListBox.ItemsData{index};
-            end
-            voxel_size = app.VoxelSizeEditField.Value;
-            voxel_unit = units.(app.VoxelSizeUnits.Value);
-            
-            phantom = phantom.update_voxel_size(voxel_size * voxel_unit);
-
-            % Get the detector
-            detector_type = app.DetectorShapeDropDown.Value;           
-            num_rotations = app.NumberofRotationsEditField.Value;
-
-            dist_to_detector = app.DistToDetectorField.Value * ...
-                units.(app.DistToDetectorUnits.Value);
-            
-            % Get the pixel information
-            pixel_size = app.PixelWidthField.Value * units.(app.PixelWidthUnits.Value);
-            
-            pixel_dims = [pixel_size pixel_size];
-            num_pixels = [app.NumberofPixelsEditField.Value, 1];
-            
-            source_type = app.SourceTypeDropDown.Value;
-            if strcmp(source_type, 'Parallel Beam')
-                g = parallel_gantry(dist_to_detector, num_rotations);
-                do_fan2para = false;
-            else
-                g = gantry(dist_to_detector, num_rotations); % Should be cone beam
-                do_fan2para = true;
-            end
-
-            if strcmp(detector_type, 'Flat')
-                darray = flat_detector(pixel_dims, num_pixels);
-                sensor_geom = 'line';
-            else
-                darray = curved_detector(pixel_dims, num_pixels);
-                sensor_geom = 'arc';
-            end
-            
-            [emin, emax] = source1.get_energy_range();
-            num_bins = ceil(emax - emin);
-            sensor = ideal_sensor([emin, emax], num_bins);
-            
-            d = detector(g, darray, sensor);
-
-            % Get the scatter settings
-            scatter_type = lower(app.ScatterTypeListBox.Value);
-            scatter_factor = app.ScatterFactorSpinner.Value;
-
-            % Get the reconstruction information
-            filter = app.FilterListBox.Value;
-            interpolation = app.InterpolationDropDown.Value;
-
-            % Source 1
-            sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));
-            if do_fan2para
-                pixel_angle    = rad2deg(pixel_size / dist_to_detector / 2);
-                rotation_angle = rad2deg(g.scan_angles(1)); % Assumes even spacing 
-                [P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...
-                    'FanSensorSpacing', pixel_angle, "Interpolation", interpolation, ...
-                    'FanRotationIncrement', rotation_angle, ...
-                    "FanSensorGeometry", sensor_geom ... 
-                    , "ParallelCoverage", "cycle");
-                recon = iradon(P, paraRotAngles, interpolation, filter);
-            else
-                recon = iradon(sinogram, rad2deg(g.scan_angles), interpolation, filter);
-            end
-            app.ShowDropDown.ItemsData{1} = app1.greyToColour(mat2gray(sinogram));
-            app.recons{1} = app1.greyToColour(mat2gray(recon));
-
-            % Source 2
-            if has_source2
-                [emin, emax] = source2.get_energy_range();
-                num_bins = ceil(emax - emin);
-                sensor2 = ideal_sensor([emin, emax], num_bins);
-                d2 = detector(g, darray, sensor2);
-                sinogram2 = squeeze(compute_sinogram(source2, phantom, d2, scatter_type, scatter_factor));
-                
-                % Reconstruct the image
-                % recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
-                if do_fan2para
-                    [P,~,paraRotAngles] = fan2para(sinogram2, dist_to_detector/2, ...
-                        'FanSensorSpacing', pixel_angle, "Interpolation", interpolation, ...
-                        'FanRotationIncrement', rotation_angle, ...
-                        "FanSensorGeometry", sensor_geom ...
-                        );%, "ParallelCoverage", "cycle");
-                    recon2 = iradon(P, paraRotAngles, interpolation, filter);
+            try
+                % Get the source
+                source1_idx = app.Source1DropDown.ValueIndex;
+                if source1_idx <= 2
+                    source1 = load(fullfile(pathToMLAPP, ...
+                        app.source_files{source1_idx}), 'source').source;
                 else
-                    recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
+                    source1 = app.Source1DropDown.ItemsData{source1_idx};
                 end
 
-                app.ShowDropDown.ItemsData{2} = app1.greyToColour(mat2gray(sinogram2));
-                app.ShowDropDown.ItemsData{3} = app1.greyToColour(mat2gray(sinogram - sinogram2));
-                app.ShowDropDown.ItemsData{4} = app1.greyToColour(mat2gray(sinogram ./ sinogram2));
-                app.recons{2} = app1.greyToColour(mat2gray(recon2));
-                app.recons{3} = app1.greyToColour(mat2gray(recon2 - recon));
-                app.recons{4} = app1.greyToColour(mat2gray(recon2 ./ recon));
-            else
-                app.ShowDropDown.ItemsData{4} = [];
-                app.ShowDropDown.ItemsData{3} = [];
-                app.ShowDropDown.ItemsData{2} = [];
+                source2_idx = app.Source2DropDown.ValueIndex;
+                has_source2 = true;
+                if source2_idx == 1
+                    has_source2 = false;
+                elseif source2_idx <= 3
+                    source2 = load(fullfile(pathToMLAPP, ...
+                        app.source_files{source2_idx}), 'source').source;
+                else
+                    source2 = app.Source2DropDown.ItemsData{source2_idx};
+                end
 
-                app.recons{2} = [];
-                app.recons{3} = [];
-                app.recons{4} = [];
+                % Get the phantom
+                phantom_idx = app.PhantomListBox.ValueIndex;
+                if phantom_idx <= 2
+                    phantom = load(fullfile(pathToMLAPP, ...
+                        app.phantom_files{phantom_idx}), 'phantom').phantom;
+                else % phantom_idx > 2
+                    index = app.PhantomListBox.ValueIndex;
+                    phantom = app.PhantomListBox.ItemsData{index};
+                end
+                voxel_size = app.VoxelSizeEditField.Value;
+                voxel_unit = units.(app.VoxelSizeUnits.Value);
+                
+                phantom = phantom.update_voxel_size(voxel_size * voxel_unit);
+
+                % Get the detector
+                detector_type = app.DetectorShapeDropDown.Value;           
+                num_rotations = app.NumberofRotationsEditField.Value;
+
+                dist_to_detector = app.DistToDetectorField.Value * ...
+                    units.(app.DistToDetectorUnits.Value);
+                
+                % Get the pixel information
+                pixel_size = app.PixelWidthField.Value * units.(app.PixelWidthUnits.Value);
+                
+                pixel_dims = [pixel_size pixel_size];
+                num_pixels = [app.NumberofPixelsEditField.Value, 1];
+                
+                source_type = app.SourceTypeDropDown.Value;
+                if strcmp(source_type, 'Parallel Beam')
+                    g = parallel_gantry(dist_to_detector, num_rotations);
+                    do_fan2para = false;
+                else
+                    g = gantry(dist_to_detector, num_rotations); % Should be cone beam
+                    do_fan2para = true;
+                end
+
+                if strcmp(detector_type, 'Flat')
+                    darray = flat_detector(pixel_dims, num_pixels);
+                    sensor_geom = 'line';
+                    sensor_spacing = pixel_size / 2;
+                else
+                    darray = curved_detector(pixel_dims, num_pixels);
+                    sensor_geom = 'arc';
+                    sensor_spacing = chord2ang(pixel_size, dist_to_detector);
+                end
+                
+                [emin, emax] = source1.get_energy_range();
+                num_bins = ceil(emax - emin);
+                sensor = ideal_sensor([emin, emax], num_bins);
+                
+                d = detector(g, darray, sensor);
+
+                % Get the scatter settings
+                scatter_type = lower(app.ScatterTypeListBox.Value);
+                scatter_factor = app.ScatterFactorSpinner.Value;
+
+                % Get the reconstruction information
+                filter = app.FilterListBox.Value;
+                interpolation = app.InterpolationDropDown.Value;
+
+                % Source 1
+                sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));       
+                if do_fan2para
+                    rotation_angle = rad2deg(g.scan_angles(1)); % Assumes even spacing 
+                    [P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...
+                        'FanSensorSpacing', sensor_spacing, "Interpolation", interpolation, ...
+                        'FanRotationIncrement', rotation_angle, ...
+                        "FanSensorGeometry", sensor_geom ... 
+                        , "ParallelCoverage", "cycle");
+                    recon = iradon(P, paraRotAngles, interpolation, filter);
+                else
+                    recon = iradon(sinogram, rad2deg(g.scan_angles), interpolation, filter);
+                end
+                app.ShowDropDown.ItemsData{1} = app1.greyToColour(mat2gray(sinogram));
+                app.recons{1} = app1.greyToColour(mat2gray(recon));
+
+                % Source 2
+                if has_source2
+                    [emin, emax] = source2.get_energy_range();
+                    num_bins = ceil(emax - emin);
+                    sensor2 = ideal_sensor([emin, emax], num_bins);
+                    d2 = detector(g, darray, sensor2);
+                    sinogram2 = squeeze(compute_sinogram(source2, phantom, d2, scatter_type, scatter_factor));
+                    
+                    % Reconstruct the image
+                    % recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
+                    if do_fan2para
+                        [P,~,paraRotAngles] = fan2para(sinogram2, dist_to_detector/2, ...
+                            'FanSensorSpacing', sensor_spacing, "Interpolation", interpolation, ...
+                            'FanRotationIncrement', rotation_angle, ...
+                            "FanSensorGeometry", sensor_geom ...
+                            );%, "ParallelCoverage", "cycle");
+                        recon2 = iradon(P, paraRotAngles, interpolation, filter);
+                    else
+                        recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
+                    end
+
+                    app.ShowDropDown.ItemsData{2} = app1.greyToColour(mat2gray(sinogram2));
+                    app.ShowDropDown.ItemsData{3} = app1.greyToColour(mat2gray(sinogram - sinogram2));
+                    app.ShowDropDown.ItemsData{4} = app1.greyToColour(mat2gray(sinogram ./ sinogram2));
+                    app.recons{2} = app1.greyToColour(mat2gray(recon2));
+                    app.recons{3} = app1.greyToColour(mat2gray(recon2 - recon));
+                    app.recons{4} = app1.greyToColour(mat2gray(recon2 ./ recon));
+                else
+                    app.ShowDropDown.ItemsData{4} = [];
+                    app.ShowDropDown.ItemsData{3} = [];
+                    app.ShowDropDown.ItemsData{2} = [];
+
+                    app.recons{2} = [];
+                    app.recons{3} = [];
+                    app.recons{4} = [];
+                end
+                
+                % Set the image from the sinogram and reconstruction
+                app.ShowDropDownChanged(event); 
+            catch ME
+                uialert(app.UIFigure, ME.message, 'Error Running Simulation');
             end
-            
-            % Set the image from the sinogram and reconstruction
-            app.ShowDropDownChanged(event); 
 
             % Display the result
             runningdlg.close();
@@ -675,7 +679,7 @@ classdef gui < matlab.apps.AppBase
 
         % Menu selected function: ExportMenu, ExporttoScriptMenu
         function ExporttoScriptMenuSelected(app, event)
-                        % Create a script to run the simulation
+            % Create a script to run the simulation
             [file,path] = uiputfile('*.m','Save Script');
             if ~ischar(file); return; end % Nothing selected
             fid = fopen(fullfile(path, file), 'w');
@@ -742,10 +746,12 @@ classdef gui < matlab.apps.AppBase
             fprintf(fid, "num_pixels = [%d, 1];\n", num_pixels);
             if strcmp(detector_type, 'Flat')
                 fprintf(fid, "darray = flat_detector(pixel_dims, num_pixels);\n");
-                sensor_geom = 'line';
+                fprintf(fid, "sensor_geom = 'line';\n");
+                fprintf(fid, "sensor_spacing = pixel_dims(1) / 2;\n");
             else
                 fprintf(fid, "darray = curved_detector(pixel_dims, num_pixels);\n");
-                sensor_geom = 'arc';
+                fprintf(fid, "sensor_geom = 'arc';\n");
+                fprintf(fid, "sensor_spacing = chord2ang(pixel_dims(1), dist_to_detector);\n");
             end
 
             fprintf(fid, "\n%% Get the sensor on the detector\n");
@@ -786,11 +792,12 @@ classdef gui < matlab.apps.AppBase
             if strcmp(source_type, 'Parallel Beam')
                 fprintf(fid, "recon = iradon(sinogram, scan_angles, interpolation, filter);\n");
             else
-                fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...\n");
-                fprintf(fid, "    'FanSensorSpacing', pixel_dims(1) / dist_to_detector/2, ...\n");
+                fprintf(fid, "radius = dist_to_detector/2;\n");
+                fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram, radius, ...\n");
+                fprintf(fid, "    'FanSensorSpacing', sensor_spacing, ...\n");
                 fprintf(fid, "    'Interpolation', interpolation, ...\n");
                 fprintf(fid, "    'FanRotationIncrement', 2*pi / num_rotations, ...\n");
-                fprintf(fid, "    'FanSensorGeometry', '%s' ...\n", sensor_geom);
+                fprintf(fid, "    'FanSensorGeometry', sensor_geom ...\n");
                 fprintf(fid, "    );\n");
                 fprintf(fid, "recon = iradon(P, paraRotAngles, interpolation, filter);\n");
             end
@@ -800,11 +807,11 @@ classdef gui < matlab.apps.AppBase
                 if strcmp(source_type, 'Parallel Beam')
                     fprintf(fid, "recon2 = iradon(sinogram2, scan_angles, interpolation, filter);\n");
                 else
-                    fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram2, dist_to_detector/2, ...\n");
-                    fprintf(fid, "    'FanSensorSpacing', pixel_dims(1) / dist_to_detector/2, ...\n");
+                    fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram2, radius, ...\n");
+                    fprintf(fid, "    'FanSensorSpacing', sensor_spacing, ...\n");
                     fprintf(fid, "    'Interpolation', interpolation, ...\n");
                     fprintf(fid, "    'FanRotationIncrement', 2*pi / num_rotations, ...\n");
-                    fprintf(fid, "    'FanSensorGeometry', '%s' ...\n", sensor_geom);
+                    fprintf(fid, "    'FanSensorGeometry', sensor_geom ...\n");
                     fprintf(fid, "    );\n");
                     fprintf(fid, "recon2 = iradon(P, paraRotAngles, interpolation, filter);\n");
                 end
@@ -928,14 +935,14 @@ classdef gui < matlab.apps.AppBase
             app.ReconstructionImage.ImageClickedFcn = createCallbackFcn(app, @ReconstructionImageClicked, true);
             app.ReconstructionImage.Tooltip = {'The reconstructed image from the sinogram. '; ''; 'Double-click to get in a MATLAB viewer.'};
             app.ReconstructionImage.Position = [157 30 345 683];
-            app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
+            app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'Initial Image.png');
 
             % Create SinogramImage
             app.SinogramImage = uiimage(app.ResultsPanel);
             app.SinogramImage.ImageClickedFcn = createCallbackFcn(app, @SinogramImageClicked, true);
             app.SinogramImage.Tooltip = {'The sinogram created from running the simulation.'; ''; 'Double-click to get in a MATLAB viewer.'};
             app.SinogramImage.Position = [1 1 153 713];
-            app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
+            app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'Initial Image.png');
 
             % Create SinogramLabel
             app.SinogramLabel = uilabel(app.ResultsPanel);
@@ -1262,7 +1269,7 @@ classdef gui < matlab.apps.AppBase
             % Create RunButton
             app.RunButton = uibutton(app.ImagePanel, 'push');
             app.RunButton.ButtonPushedFcn = createCallbackFcn(app, @RunButtonPushed, true);
-            app.RunButton.Icon = fullfile(pathToMLAPP, 'Play.png');
+            app.RunButton.Icon = fullfile(pathToMLAPP, 'graphics', 'Play.png');
             app.RunButton.FontSize = 36;
             app.RunButton.Tooltip = {'Run the simulation!'};
             app.RunButton.Position = [402 608 158 58];
@@ -1416,8 +1423,8 @@ classdef gui < matlab.apps.AppBase
             app.NumberofPixelsEditField.ContextMenu = app.DetectorContextMenu;
             app.DetectorShapeDropDownLabel.ContextMenu = app.DetectorContextMenu;
             app.DetectorShapeDropDown.ContextMenu = app.DetectorContextMenu;
-            app.RotationImage.ContextMenu = app.DetectorContextMenu;
             app.DistToDetectorLine.ContextMenu = app.DetectorContextMenu;
+            app.RotationImage.ContextMenu = app.DetectorContextMenu;
             app.DetectorArrayImage.ContextMenu = app.DetectorContextMenu;
 
             % Create PhantomContextMenu
@@ -1548,11 +1555,23 @@ classdef gui < matlab.apps.AppBase
         % Construct app
         function app = gui
 
-            % Create UIFigure and components
-            createComponents(app)
+            runningApp = getRunningApp(app);
 
-            % Register the app with App Designer
-            registerApp(app, app.UIFigure)
+            % Check for running singleton app
+            if isempty(runningApp)
+
+                % Create UIFigure and components
+                createComponents(app)
+
+                % Register the app with App Designer
+                registerApp(app, app.UIFigure)
+            else
+
+                % Focus the running singleton app
+                figure(runningApp.UIFigure)
+
+                app = runningApp;
+            end
 
             if nargout == 0
                 clear app
