@@ -675,6 +675,7 @@ classdef gui < matlab.apps.AppBase
         % Menu selected function: ReconstructionHelpMenu
         function ReconstructionHelpMenuSelected(app, event)
             doc iradon
+            web('docs/build/html/user_guide/gui.html#reconstruction')
         end
 
         % Menu selected function: ExportMenu, ExporttoScriptMenu
@@ -824,6 +825,31 @@ classdef gui < matlab.apps.AppBase
             end
             fclose(fid);
         end
+
+        % Menu selected function: DocumentationMenu
+        function DocumentationMenuSelected(app, event)
+            web('docs\build\html\index.html')
+        end
+
+        % Menu selected function: SourceHelpMenu_run
+        function SourceHelpMenu_runSelected(app, event)
+            web('docs/build/html/user_guide/gui.html#source')
+        end
+
+        % Menu selected function: PhantomHelpMenu_run
+        function PhantomHelpMenu_runSelected(app, event)
+            web('docs/build/html/user_guide/gui.html#phantom')
+        end
+
+        % Menu selected function: DetectorHelpMenu_run
+        function DetectorContextMenuSelected(app, event)
+            web('docs/build/html/user_guide/gui.html#detector')
+        end
+
+        % Menu selected function: ScatterHelpMenu
+        function ScatterContextMenuSelected(app, event)
+            web('docs/build/html/user_guide/gui.html#scatter')
+        end
     end
 
     % Component initialization
@@ -877,6 +903,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create DocumentationMenu
             app.DocumentationMenu = uimenu(app.HelpMenu);
+            app.DocumentationMenu.MenuSelectedFcn = createCallbackFcn(app, @DocumentationMenuSelected, true);
             app.DocumentationMenu.Text = 'Documentation';
 
             % Create TabGroup
@@ -1411,6 +1438,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create DetectorHelpMenu_run
             app.DetectorHelpMenu_run = uimenu(app.DetectorContextMenu);
+            app.DetectorHelpMenu_run.MenuSelectedFcn = createCallbackFcn(app, @DetectorContextMenuSelected, true);
             app.DetectorHelpMenu_run.Text = 'Detector Help';
             
             % Assign app.DetectorContextMenu
@@ -1437,6 +1465,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create PhantomHelpMenu_run
             app.PhantomHelpMenu_run = uimenu(app.PhantomContextMenu);
+            app.PhantomHelpMenu_run.MenuSelectedFcn = createCallbackFcn(app, @PhantomHelpMenu_runSelected, true);
             app.PhantomHelpMenu_run.Text = 'Phantom Help';
             
             % Assign app.PhantomContextMenu
@@ -1458,6 +1487,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create SourceHelpMenu_run
             app.SourceHelpMenu_run = uimenu(app.SourceContextMenu);
+            app.SourceHelpMenu_run.MenuSelectedFcn = createCallbackFcn(app, @SourceHelpMenu_runSelected, true);
             app.SourceHelpMenu_run.Text = 'Source Help';
             
             % Assign app.SourceContextMenu
@@ -1534,6 +1564,7 @@ classdef gui < matlab.apps.AppBase
 
             % Create ScatterHelpMenu
             app.ScatterHelpMenu = uimenu(app.ScatterContextMenu);
+            app.ScatterHelpMenu.MenuSelectedFcn = createCallbackFcn(app, @ScatterContextMenuSelected, true);
             app.ScatterHelpMenu.Text = 'Scatter Help';
             
             % Assign app.ScatterContextMenu

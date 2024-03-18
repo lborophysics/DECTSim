@@ -1,10 +1,10 @@
-# Running your first simulation
+# Running a script (No GUI)
 
 To run a simulation, there are 5 main ingredients required:
-1. The x-ray source, giving information about the energy and intensity of the x-rays at given positions. Currently, only `single_energy` is available, but more will be added in the future.
+1. The x-ray source, giving information about the energy and intensity of the x-rays at given positions. Currently, only `single_energy` and `source_fromfile` is available, but more will be added in the future.
 2. The phantom, which is the object being imaged. 
 3. The movement of your detector - controlled by the `gantry` object
-4. Your detector array, indicating the geometry of the sources and sensors. There are currently only two types available: `curved_detector` and `parallel_detector` (more to come in the future, such as `flat_detector`)
+4. Your detector array, indicating the geometry of the sources and sensors. There are currently only two types available: `curved_detector` and `flat_detector`.
 5. The sensor, controlling how intensities and energies are converted into signals and then to sinograms. Currently, only `ideal_sensor` is available, but more will be added in the future.
 
 There is one more optional ingredient, which is whether you would like to include scatter in the simulation. There exists three types of scatter models: `"none"`, `"fast"` and `"slow"`. The default is `"none"`, but can be changed.
@@ -16,6 +16,24 @@ To create a single energy source, you only need to specify the energy of the x-r
 
 ```MATLAB
 src = single_energy(80);
+```
+
+### Source from file
+To create a source from a file, you need to specify the path to the file. The file must be a '.spk' file created using the SpekPy package. To create the spectrum file using SpekPy, you would use the following code in Python:
+
+```python
+    import spekpy as sp
+
+    s = sp.Spek(kvp=80,th=12, dk=1) # Generate a spectrum (80 kV, 12 degree tube angle)
+    s.filter('Al', 4.0) # Filter by 4 mm of Al
+
+    s.export_spectrum('spectrum.spk') # Export the spectrum to a file
+```
+
+Then once this spectrum file has been created, you can use the following code to create a source from the file:
+
+```MATLAB
+src = source_fromfile("spectrum.spk");
 ```
 
 ## Step 2: The phantom
@@ -88,18 +106,18 @@ The movement of the detector is controlled by the `gantry` object. This object i
 - `num_rotations`: a scalar representing the number steps the detector will take as it rotates around the phantom.
 - `total_angle`: a scalar representing the total angle the detector will rotate through in degrees in radians. (Default: 2*pi) 
 
-For example, to create a gantry with a detector 100cm from the source, rotating 180 degrees in 10 steps, you would use the following code:
+There are currently two types of gantries available: `gantry` and `parallel_gantry`. The `gantry` object is used for cone beam simulations, and the `parallel_gantry` object is used for parallel beam simulations.
+
+For example, to create a cone beam gantry with a detector 100cm from the source, rotating 180 degrees in 10 steps, you would use the following code:
 
 ```MATLAB
 g = gantry(100, 10, pi);
 ```
 
-This object contains a useful function for reconstructing the sinogram into an image, `get_scan_angles`. This function returns a 1xN vector of the angles the detector will be at for each rotation.
-
-```MATLAB
+This object contains useful attributes for reconstructing the sinogram into an image, such as `scan_angles`. This function returns a 1xN vector of the angles the detector will be at for each rotation.
 
 ## Step 4: Your detector array
-The detector array specifies the geometry of the sources and sensors. There are currently only two types available: `curved_detector` and `parallel_detector`. A `curved_detector` can be thought of as a section of a cylinder with a point source in the centre of rotation, and a `parallel_detector` can be thought of as a section of a plane with a line source.
+The detector array specifies the geometry of the sources and sensors. There are currently only two types available: `curved_detector` and `flat_detector`. A `curved_detector` can be thought of as a section of a cylinder with a point source in the centre of rotation, and a `flat_detector` can be thought of as a section of a plane.
 
 ### Curved detector
 The `curved_detector` object is created by specifying the following parameters:
@@ -112,15 +130,15 @@ For example, to create a curved detector with 900 pixels in the x direction and 
 cd = curved_detector([0.1, 0.1], [900, 64]);
 ```
 
-### Parallel detector
-The `parallel_detector` object is created by specifying the following parameters:
+### Flat detector
+The `flat_detector` object is created by specifying the following parameters:
 - `pixel_dims`: a 1x2 vector representing the dimensions of each pixel in the detector in cm
 - `num_pixels`: a 1x2 vector representing the number of pixels in the detector in the x and y directions
 
-For example, to create a parallel detector with 900 pixels in the x direction and 64 pixels in the y direction, with each pixel being 0.1x0.1cm, you would use the following code:
+For example, to create a flat detector with 900 pixels in the x direction and 64 pixels in the y direction, with each pixel being 0.1x0.1cm, you would use the following code:
 
 ```MATLAB
-pd = parallel_detector([0.1, 0.1], [900, 64]);
+pd = flat_detector([0.1, 0.1], [900, 64]);
 ```
 
 ## Step 5: The sensor
@@ -144,10 +162,10 @@ Now that we have all the ingredients, we can put them together to run the simula
 
 For the validation of the input objects, it is necessary to first create a `detector` object. This is done by specifying the following parameters:
 - gantry: a `gantry` object
-- detector_array: a `curved_detector` or `parallel_detector` object
+- detector_array: a `curved_detector` or `flat_detector` object
 - sensor: an `ideal_sensor` object
 
-For example, to create a detector with the gantry, parallel detector and ideal sensor we created earlier, you would use the following code:
+For example, to create a detector with the gantry, flat detector and ideal sensor we created earlier, you would use the following code:
 
 ```MATLAB
 d = detector(g, pd, s);
