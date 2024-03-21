@@ -66,20 +66,14 @@ classdef gui < matlab.apps.AppBase
         ShowDropDown                    matlab.ui.control.DropDown
         ShowDropDownLabel               matlab.ui.control.Label
         ReconstructedImageLabel         matlab.ui.control.Label
-        SinogramLabel                   matlab.ui.control.Label
-        SinogramImage                   matlab.ui.control.Image
+        Label                           matlab.ui.control.Label
         ReconstructionImage             matlab.ui.control.Image
+        UIAxes                          matlab.ui.control.UIAxes
         ReconstructionPanel             matlab.ui.container.Panel
         InterpolationDropDown           matlab.ui.control.DropDown
         InterpolationDropDownLabel      matlab.ui.control.Label
         FilterListBox                   matlab.ui.control.ListBox
         FilterListBoxLabel              matlab.ui.control.Label
-        SourceTab                       matlab.ui.container.Tab
-        PhantomTab                      matlab.ui.container.Tab
-        DetectorTab                     matlab.ui.container.Tab
-        SensorsPanel                    matlab.ui.container.Panel
-        PixelArrayPanel                 matlab.ui.container.Panel
-        MovementPanel                   matlab.ui.container.Panel
         RunContextMenu                  matlab.ui.container.ContextMenu
         LoadStateInContextMenu          matlab.ui.container.Menu
         SaveStateInContextMenu          matlab.ui.container.Menu
@@ -95,13 +89,17 @@ classdef gui < matlab.apps.AppBase
         LoadSourceMenu                  matlab.ui.container.Menu
         SourceHelpMenu_run              matlab.ui.container.Menu
         ReconImageContextMenu           matlab.ui.container.ContextMenu
+        RunSimulationMenu               matlab.ui.container.Menu
         ReconSaveImageasMenu            matlab.ui.container.Menu
+        ReconstructionMenu              matlab.ui.container.Menu
+        SinogramMenu                    matlab.ui.container.Menu
         ReconOpeninNewWindowMenu        matlab.ui.container.Menu
+        ReconstructionMenu_2            matlab.ui.container.Menu
+        SinogramMenu_2                  matlab.ui.container.Menu
+        OpeninImageViewerMenu           matlab.ui.container.Menu
+        ReconstructionMenu_3            matlab.ui.container.Menu
+        SinogramMenu_3                  matlab.ui.container.Menu
         ReconImageHelpMenu              matlab.ui.container.Menu
-        SinogramImageContextMenu        matlab.ui.container.ContextMenu
-        SinogramSaveImageasMenu         matlab.ui.container.Menu
-        SinogramOpeninNewWindowMenu     matlab.ui.container.Menu
-        SinogramImageHelpMenu           matlab.ui.container.Menu
         ReconstructionContextMenu       matlab.ui.container.ContextMenu
         ReconstructionHelpMenu          matlab.ui.container.Menu
         ScatterContextMenu              matlab.ui.container.ContextMenu
@@ -115,7 +113,7 @@ classdef gui < matlab.apps.AppBase
 
         recons = {[]} % A way to store the most recent reconstruction 
         source_files = {'SourceExample40kvp.mat', 'SourceExample80kvp.mat'}
-        phantom_files = {'PhantomExample1.mat', 'PhantomExample2.mat'}
+        phantom_files = {'PhantomExample1.mat', 'PhantomExample2.mat', 'PhantomExample3.mat', 'PhantomExample4.mat'}
     end
 
     methods (Access = private, Static)
@@ -198,7 +196,8 @@ classdef gui < matlab.apps.AppBase
             end
         end
 
-        % Callback function: RunButton, RunInContextMenu, RunMenu
+        % Callback function: RunButton, RunInContextMenu, RunMenu, 
+        % ...and 1 other component
         function RunButtonPushed(app, event)
              % Run the simulation
              % Get the file path for locating examples
@@ -221,17 +220,17 @@ classdef gui < matlab.apps.AppBase
                     has_source2 = false;
                 elseif source2_idx <= 3
                     source2 = load(fullfile(pathToMLAPP, ...
-                        app.source_files{source2_idx}), 'source').source;
+                        app.source_files{source2_idx-1}), 'source').source;
                 else
-                    source2 = app.Source2DropDown.ItemsData{source2_idx};
+                    source2 = app.Source2DropDown.ItemsData{source2_idx-1};
                 end
 
                 % Get the phantom
                 phantom_idx = app.PhantomListBox.ValueIndex;
-                if phantom_idx <= 2
+                if phantom_idx <= 4
                     phantom = load(fullfile(pathToMLAPP, ...
                         app.phantom_files{phantom_idx}), 'phantom').phantom;
-                else % phantom_idx > 2
+                else % phantom_idx > 4
                     index = app.PhantomListBox.ValueIndex;
                     phantom = app.PhantomListBox.ItemsData{index};
                 end
@@ -261,6 +260,7 @@ classdef gui < matlab.apps.AppBase
                     g = gantry(dist_to_detector, num_rotations); % Should be cone beam
                     do_fan2para = true;
                 end
+                scan_angles = rad2deg(g.scan_angles);
 
                 if strcmp(detector_type, 'Flat')
                     darray = flat_detector(pixel_dims, num_pixels);
@@ -289,7 +289,7 @@ classdef gui < matlab.apps.AppBase
                 % Source 1
                 sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));       
                 if do_fan2para
-                    rotation_angle = rad2deg(g.scan_angles(1)); % Assumes even spacing 
+                    rotation_angle = scan_angles(1); % Assumes even spacing 
                     [P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...
                         'FanSensorSpacing', sensor_spacing, "Interpolation", interpolation, ...
                         'FanRotationIncrement', rotation_angle, ...
@@ -297,7 +297,7 @@ classdef gui < matlab.apps.AppBase
                         , "ParallelCoverage", "cycle");
                     recon = iradon(P, paraRotAngles, interpolation, filter);
                 else
-                    recon = iradon(sinogram, rad2deg(g.scan_angles), interpolation, filter);
+                    recon = iradon(sinogram, scan_angles, interpolation, filter);
                 end
                 app.ShowDropDown.ItemsData{1} = app1.greyToColour(mat2gray(sinogram));
                 app.recons{1} = app1.greyToColour(mat2gray(recon));
@@ -342,7 +342,10 @@ classdef gui < matlab.apps.AppBase
                 % Set the image from the sinogram and reconstruction
                 app.ShowDropDownChanged(event); 
             catch ME
-                uialert(app.UIFigure, ME.message, 'Error Running Simulation');
+                uialert(app.UIFigure, getReport(ME,'extended','hyperlinks','off'), 'Error Running Simulation');
+                % ME.stack.line
+                % ME.stack.name
+                % ME.stack.file
             end
 
             % Display the result
@@ -358,16 +361,7 @@ classdef gui < matlab.apps.AppBase
             end
         end
 
-        % Image clicked function: SinogramImage
-        function SinogramImageClicked(app, event)
-            type = get(gcbf, 'SelectionType');
-            if strcmp(type, 'open')
-                % Handle double-click action here
-                app.SinogramOpeninNewWindowMenuSelected(event)
-            end
-        end
-
-        % Menu selected function: ReconSaveImageasMenu
+        % Menu selected function: ReconstructionMenu
         function ReconSaveImageSelected(app, event)
             if isempty(app.recons{1})
                 errordlg('No file to save', 'Invalid file');
@@ -376,11 +370,11 @@ classdef gui < matlab.apps.AppBase
             [file,path] = uiputfile(...
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Reconstructed Image");
-            if file == 0 || path == 0; return; end % Nothing selected
-            imwrite(app.recons{app.ShowDropDown.ValueIndex}, fullfile(path, file))
+            if ischar(file); return; end % Nothing selected
+            imwrite(app.recons{app.ShowDropDown.ValueIndex}, fullfile(path, file)) % Could use event.ContextObject.ImageSource
         end
 
-        % Menu selected function: SinogramSaveImageasMenu
+        % Menu selected function: SinogramMenu
         function SinogramSaveImageSelected(app, event)
             if isempty(app.recons{1})
                 errordlg('No file to save', 'Invalid file');
@@ -389,13 +383,16 @@ classdef gui < matlab.apps.AppBase
             [file,path] = uiputfile(...
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Sinogram");
-            if file == 0 || path == 0; return; end % Nothing selected
+            if ischar(file); return; end % Nothing selected
             imwrite(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex},...
                 fullfile(path, file))
         end
 
-        % Menu selected function: ReconOpeninNewWindowMenu
+        % Menu selected function: ReconstructionMenu_2
         function ReconOpeninNewWindowMenuSelected(app, event)
+            if isempty(app.recons{1}) % Check if reconstruction available
+                errordlg('No reconstruction to view', 'Invalid Reconstruction');return;
+            end
             fig_open = ~ishandle(app.recon_fig);
             if isempty(fig_open) || fig_open
                 app.recon_fig = figure("Name","Reconstucted Image");
@@ -405,8 +402,12 @@ classdef gui < matlab.apps.AppBase
             end
         end
 
-        % Menu selected function: SinogramOpeninNewWindowMenu
+        % Menu selected function: SinogramMenu_2
         function SinogramOpeninNewWindowMenuSelected(app, event)
+            if isempty(app.recons{1}) % Check if reconstruction available (I will always create a reconstruction with a sinogram)
+                errordlg('No sinogram to view', 'Invalid Sinogram');return;
+            end
+
             fig_open = ~ishandle(app.sinogram_fig);
             if isempty(fig_open) || fig_open
                 app.sinogram_fig = figure("Name","Sinogram");
@@ -500,8 +501,9 @@ classdef gui < matlab.apps.AppBase
             app.ShowDropDown.ItemsData = {'Source 1'};
             app.recons = {[]};
             
-            app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
-            app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
+            % app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'Initial Image.png');
+            clf(app.UIAxes);
+            app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'Initial Image.png');
             
             % Reset the dropdowns
             app.Source1DropDown.Items = {'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
@@ -540,7 +542,13 @@ classdef gui < matlab.apps.AppBase
                     app.ShowDropDown.Value = app.ShowDropDown.ItemsData{1};
                 else
                     app.ReconstructionImage.ImageSource = app.recons{idx};
-                    app.SinogramImage.ImageSource = app.ShowDropDown.ItemsData{idx};
+                    num_pixels = size(app.ShowDropDown.ItemsData{idx}, 1);
+                    
+                    imagesc(app.UIAxes, [0 360], [0 num_pixels], app.ShowDropDown.ItemsData{idx});
+                    app.UIAxes.YLim = [0, num_pixels];
+                    app.UIAxes.YTick = [0, num_pixels/2, num_pixels];
+                    % Scale the x-axis, so that the rotation number is correct to the angle
+                    % num_rotations = app.NumberofRotationsEditField.Value;
                 end
             else
                 uialert(app.UIFigure, 'No images have been created, run the program first', 'No Images');
@@ -711,7 +719,7 @@ classdef gui < matlab.apps.AppBase
             % Get the phantom
             phantom_selected = app.PhantomListBox.ValueIndex;
             fprintf(fid, "\n%% Get the phantom\n");
-            if phantom_selected <= 2
+            if phantom_selected <= 4
                 fprintf(fid, "phantom = load('%s', 'phantom').phantom;\n", ...
                     fullfile(pathToMLAPP, app.phantom_files{phantom_selected}));
             else % phantom_selected > 2
@@ -850,6 +858,25 @@ classdef gui < matlab.apps.AppBase
         function ScatterContextMenuSelected(app, event)
             web('docs/build/html/user_guide/gui.html#scatter')
         end
+
+        % Menu selected function: ReconstructionMenu_3, SinogramMenu_3
+        function OpeninImageViewerMenuSelected(app, event)
+            show_sinogram = strcmp(event.Source.Text, 'Sinogram');
+            if isempty(app.recons{1})
+                errordlg('No sinogram to view', 'Invalid Sinogram');return;
+            end
+            try
+                if show_sinogram
+                    imageViewer(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex});
+                else
+                    imageViewer(app.recons{app.ShowDropDown.ValueIndex})
+                end
+            catch ME
+                % If there is an error opening the image viewer - tell the user the error and suggest they install the image processing toolbox
+                message = sprintf('Error opening the image viewer: %s\nIt is possible that the image processing toolbox is not installed. You can install it from the Add-Ons menu.', ME.message);
+                uialert(app.UIFigure, message, 'Error opening image viewer');
+            end
+        end
     end
 
     % Component initialization
@@ -957,37 +984,50 @@ classdef gui < matlab.apps.AppBase
             app.ResultsPanel.FontSize = 18;
             app.ResultsPanel.Position = [858 1 508 744];
 
+            % Create UIAxes
+            app.UIAxes = uiaxes(app.ResultsPanel);
+            title(app.UIAxes, 'Sinogram')
+            xlabel(app.UIAxes, 'Angle')
+            ylabel(app.UIAxes, 'Pixel')
+            app.UIAxes.LabelFontSizeMultiplier = 1;
+            app.UIAxes.XLim = [0 360];
+            app.UIAxes.YLim = [0 900];
+            app.UIAxes.XLimitMethod = 'tight';
+            app.UIAxes.YLimitMethod = 'tight';
+            app.UIAxes.XTick = [0 60 120 180 240 300 360];
+            app.UIAxes.YTick = [0 450 900];
+            app.UIAxes.ZTick = [];
+            app.UIAxes.Color = 'none';
+            app.UIAxes.TitleHorizontalAlignment = 'left';
+            app.UIAxes.TickDir = 'in';
+            app.UIAxes.FontSize = 14;
+            app.UIAxes.TitleFontSizeMultiplier = 1;
+            app.UIAxes.Position = [4 4 499 290];
+
             % Create ReconstructionImage
             app.ReconstructionImage = uiimage(app.ResultsPanel);
             app.ReconstructionImage.ImageClickedFcn = createCallbackFcn(app, @ReconstructionImageClicked, true);
             app.ReconstructionImage.Tooltip = {'The reconstructed image from the sinogram. '; ''; 'Double-click to get in a MATLAB viewer.'};
-            app.ReconstructionImage.Position = [157 30 345 683];
+            app.ReconstructionImage.Position = [4 294 499 424];
             app.ReconstructionImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'Initial Image.png');
 
-            % Create SinogramImage
-            app.SinogramImage = uiimage(app.ResultsPanel);
-            app.SinogramImage.ImageClickedFcn = createCallbackFcn(app, @SinogramImageClicked, true);
-            app.SinogramImage.Tooltip = {'The sinogram created from running the simulation.'; ''; 'Double-click to get in a MATLAB viewer.'};
-            app.SinogramImage.Position = [1 1 153 713];
-            app.SinogramImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'Initial Image.png');
-
-            % Create SinogramLabel
-            app.SinogramLabel = uilabel(app.ResultsPanel);
-            app.SinogramLabel.FontSize = 18;
-            app.SinogramLabel.Position = [3 718 82 23];
-            app.SinogramLabel.Text = 'Sinogram';
+            % Create Label
+            app.Label = uilabel(app.ResultsPanel);
+            app.Label.FontSize = 18;
+            app.Label.Position = [212 287 25 23];
+            app.Label.Text = '';
 
             % Create ReconstructedImageLabel
             app.ReconstructedImageLabel = uilabel(app.ResultsPanel);
             app.ReconstructedImageLabel.FontSize = 18;
-            app.ReconstructedImageLabel.Position = [330 718 176 23];
+            app.ReconstructedImageLabel.Position = [4 717 176 23];
             app.ReconstructedImageLabel.Text = 'Reconstructed Image';
 
             % Create ShowDropDownLabel
             app.ShowDropDownLabel = uilabel(app.ResultsPanel);
             app.ShowDropDownLabel.HorizontalAlignment = 'right';
             app.ShowDropDownLabel.FontSize = 14;
-            app.ShowDropDownLabel.Position = [344 7 44 22];
+            app.ShowDropDownLabel.Position = [347 718 44 22];
             app.ShowDropDownLabel.Text = 'Show:';
 
             % Create ShowDropDown
@@ -997,7 +1037,7 @@ classdef gui < matlab.apps.AppBase
             app.ShowDropDown.ValueChangedFcn = createCallbackFcn(app, @ShowDropDownChanged, true);
             app.ShowDropDown.Tooltip = {'Select which combination of sinogram and reconstruction to view'};
             app.ShowDropDown.FontSize = 14;
-            app.ShowDropDown.Position = [403 7 100 22];
+            app.ShowDropDown.Position = [406 718 100 22];
             app.ShowDropDown.Value = 'Source 1';
 
             % Create DetectorPanel
@@ -1100,12 +1140,11 @@ classdef gui < matlab.apps.AppBase
 
             % Create PhantomListBox
             app.PhantomListBox = uilistbox(app.PhantomPanel);
-            app.PhantomListBox.Items = {'Example 1', 'Example 2'};
-            app.PhantomListBox.ItemsData = {'Example 1', 'Example 2'};
+            app.PhantomListBox.Items = {'Modified Shepp Logan', 'Example 2', 'Example 3', 'Example 4'};
+            app.PhantomListBox.ItemsData = {'Modified Shepp Logan', 'Example 2', 'Example 3', 'Example 4'};
             app.PhantomListBox.Tooltip = {'Select the available phantoms'};
-            app.PhantomListBox.FontSize = 14;
             app.PhantomListBox.Position = [95 51 158 74];
-            app.PhantomListBox.Value = 'Example 1';
+            app.PhantomListBox.Value = 'Modified Shepp Logan';
 
             % Create PhantomLoadButton
             app.PhantomLoadButton = uibutton(app.PhantomPanel, 'push');
@@ -1371,33 +1410,6 @@ classdef gui < matlab.apps.AppBase
             app.PhantomImage.Position = [252 342 104 174];
             app.PhantomImage.ImageSource = fullfile(pathToMLAPP, 'graphics', 'SheppLogan_Phantom.svg');
 
-            % Create SourceTab
-            app.SourceTab = uitab(app.TabGroup);
-            app.SourceTab.Title = 'Source';
-
-            % Create PhantomTab
-            app.PhantomTab = uitab(app.TabGroup);
-            app.PhantomTab.Title = 'Phantom';
-
-            % Create DetectorTab
-            app.DetectorTab = uitab(app.TabGroup);
-            app.DetectorTab.Title = 'Detector';
-
-            % Create MovementPanel
-            app.MovementPanel = uipanel(app.DetectorTab);
-            app.MovementPanel.Title = 'Movement';
-            app.MovementPanel.Position = [0 49 295 695];
-
-            % Create PixelArrayPanel
-            app.PixelArrayPanel = uipanel(app.DetectorTab);
-            app.PixelArrayPanel.Title = 'Pixel Array';
-            app.PixelArrayPanel.Position = [294 49 345 695];
-
-            % Create SensorsPanel
-            app.SensorsPanel = uipanel(app.DetectorTab);
-            app.SensorsPanel.Title = 'Sensors';
-            app.SensorsPanel.Position = [638 49 321 695];
-
             % Create RunContextMenu
             app.RunContextMenu = uicontextmenu(app.UIFigure);
 
@@ -1504,15 +1516,52 @@ classdef gui < matlab.apps.AppBase
             % Create ReconImageContextMenu
             app.ReconImageContextMenu = uicontextmenu(app.UIFigure);
 
+            % Create RunSimulationMenu
+            app.RunSimulationMenu = uimenu(app.ReconImageContextMenu);
+            app.RunSimulationMenu.MenuSelectedFcn = createCallbackFcn(app, @RunButtonPushed, true);
+            app.RunSimulationMenu.Text = 'Run Simulation';
+
             % Create ReconSaveImageasMenu
             app.ReconSaveImageasMenu = uimenu(app.ReconImageContextMenu);
-            app.ReconSaveImageasMenu.MenuSelectedFcn = createCallbackFcn(app, @ReconSaveImageSelected, true);
             app.ReconSaveImageasMenu.Text = 'Save Image as';
+
+            % Create ReconstructionMenu
+            app.ReconstructionMenu = uimenu(app.ReconSaveImageasMenu);
+            app.ReconstructionMenu.MenuSelectedFcn = createCallbackFcn(app, @ReconSaveImageSelected, true);
+            app.ReconstructionMenu.Text = 'Reconstruction';
+
+            % Create SinogramMenu
+            app.SinogramMenu = uimenu(app.ReconSaveImageasMenu);
+            app.SinogramMenu.MenuSelectedFcn = createCallbackFcn(app, @SinogramSaveImageSelected, true);
+            app.SinogramMenu.Text = 'Sinogram';
 
             % Create ReconOpeninNewWindowMenu
             app.ReconOpeninNewWindowMenu = uimenu(app.ReconImageContextMenu);
-            app.ReconOpeninNewWindowMenu.MenuSelectedFcn = createCallbackFcn(app, @ReconOpeninNewWindowMenuSelected, true);
             app.ReconOpeninNewWindowMenu.Text = 'Open in New Window';
+
+            % Create ReconstructionMenu_2
+            app.ReconstructionMenu_2 = uimenu(app.ReconOpeninNewWindowMenu);
+            app.ReconstructionMenu_2.MenuSelectedFcn = createCallbackFcn(app, @ReconOpeninNewWindowMenuSelected, true);
+            app.ReconstructionMenu_2.Text = 'Reconstruction';
+
+            % Create SinogramMenu_2
+            app.SinogramMenu_2 = uimenu(app.ReconOpeninNewWindowMenu);
+            app.SinogramMenu_2.MenuSelectedFcn = createCallbackFcn(app, @SinogramOpeninNewWindowMenuSelected, true);
+            app.SinogramMenu_2.Text = 'Sinogram';
+
+            % Create OpeninImageViewerMenu
+            app.OpeninImageViewerMenu = uimenu(app.ReconImageContextMenu);
+            app.OpeninImageViewerMenu.Text = 'Open in Image Viewer';
+
+            % Create ReconstructionMenu_3
+            app.ReconstructionMenu_3 = uimenu(app.OpeninImageViewerMenu);
+            app.ReconstructionMenu_3.MenuSelectedFcn = createCallbackFcn(app, @OpeninImageViewerMenuSelected, true);
+            app.ReconstructionMenu_3.Text = 'Reconstruction';
+
+            % Create SinogramMenu_3
+            app.SinogramMenu_3 = uimenu(app.OpeninImageViewerMenu);
+            app.SinogramMenu_3.MenuSelectedFcn = createCallbackFcn(app, @OpeninImageViewerMenuSelected, true);
+            app.SinogramMenu_3.Text = 'Sinogram';
 
             % Create ReconImageHelpMenu
             app.ReconImageHelpMenu = uimenu(app.ReconImageContextMenu);
@@ -1520,26 +1569,6 @@ classdef gui < matlab.apps.AppBase
             
             % Assign app.ReconImageContextMenu
             app.ReconstructionImage.ContextMenu = app.ReconImageContextMenu;
-
-            % Create SinogramImageContextMenu
-            app.SinogramImageContextMenu = uicontextmenu(app.UIFigure);
-
-            % Create SinogramSaveImageasMenu
-            app.SinogramSaveImageasMenu = uimenu(app.SinogramImageContextMenu);
-            app.SinogramSaveImageasMenu.MenuSelectedFcn = createCallbackFcn(app, @SinogramSaveImageSelected, true);
-            app.SinogramSaveImageasMenu.Text = 'Save Image as';
-
-            % Create SinogramOpeninNewWindowMenu
-            app.SinogramOpeninNewWindowMenu = uimenu(app.SinogramImageContextMenu);
-            app.SinogramOpeninNewWindowMenu.MenuSelectedFcn = createCallbackFcn(app, @SinogramOpeninNewWindowMenuSelected, true);
-            app.SinogramOpeninNewWindowMenu.Text = 'Open in New Window';
-
-            % Create SinogramImageHelpMenu
-            app.SinogramImageHelpMenu = uimenu(app.SinogramImageContextMenu);
-            app.SinogramImageHelpMenu.Text = 'Help';
-            
-            % Assign app.SinogramImageContextMenu
-            app.SinogramImage.ContextMenu = app.SinogramImageContextMenu;
 
             % Create ReconstructionContextMenu
             app.ReconstructionContextMenu = uicontextmenu(app.UIFigure);

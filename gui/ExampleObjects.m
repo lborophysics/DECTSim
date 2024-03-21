@@ -53,7 +53,7 @@ phantom = voxel_array([0;0;0], zeros(3, 1)+2*phantom_scale, ...
 % Save the phantom
 save gui/PhantomExample1.mat phantom
 
-% Now create the second example!
+% Example 2!
 
 % Voxel array constants
 vox_arr_center = zeros(3, 1);
@@ -68,16 +68,59 @@ rot_mat_pos = rotz(2*pi/num_materials);
 init_mat_pos = [0; phantom_radius/2; 0];
 bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("bone"));
 init_mat_pos = rot_mat_pos * init_mat_pos;
-blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("fat"));
+fat_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("fat"));
 init_mat_pos = rot_mat_pos * init_mat_pos;
-lung_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
+blood_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("blood"));
 init_mat_pos = rot_mat_pos * init_mat_pos;
 muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
 
 phantom = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
-    voxel_size, {water_cylinder, bone_cylinder, blood_cylinder, lung_cylinder, muscle_cylinder});
+    voxel_size, {water_cylinder, bone_cylinder, fat_cylinder, blood_cylinder, muscle_cylinder});
 
 save gui/PhantomExample2.mat phantom
+
+% Example 3!
+% Voxel array constants
+vox_arr_center = zeros(3, 1);
+phantom_radius = 30/2 * units.cm; % In the x-y plane
+phantom_width = 50 * units.cm; % In the z direction
+voxel_size = 0.5 * units.mm;
+
+% Create voxel array
+water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
+num_materials = 4;
+rot_mat_pos = rotz(2*pi/num_materials);
+init_mat_pos = [0; phantom_radius/2; 0];
+bone_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("bone"));
+init_mat_pos = rot_mat_pos * init_mat_pos;
+fat_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("fat"));
+init_mat_pos = rot_mat_pos * init_mat_pos;
+ti_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("titanium"));
+init_mat_pos = rot_mat_pos * init_mat_pos;
+muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, material_attenuation("muscle"));
+
+phantom = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
+    voxel_size, {water_cylinder, bone_cylinder, fat_cylinder, ti_cylinder, muscle_cylinder});
+
+save gui/PhantomExample3.mat phantom
+
+% Example 4!
+% Voxel array constants
+vox_arr_center = zeros(3, 1);
+phantom_radius = 30 * units.cm; % In the x-y plane
+phantom_width = 50 * units.cm; % In the z direction
+voxel_size = 0.5 * units.mm;
+
+% Create voxel array
+water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
+bone_cylinder = voxel_cylinder(vox_arr_center, phantom_radius*3/4, phantom_width, material_attenuation("bone"));
+fat_cylinder = voxel_cylinder(vox_arr_center, phantom_radius/2, phantom_width, material_attenuation("fat"));
+ti_cylinder = voxel_cylinder(vox_arr_center, phantom_radius/4, phantom_width, material_attenuation("titanium"));
+
+phantom = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
+    voxel_size, {water_cylinder, bone_cylinder, fat_cylinder, ti_cylinder});
+
+save gui/PhantomExample4.mat phantom
 
 source_40kvp = source_fromfile('40kvp.spk');
 source_80kvp = source_fromfile('80kvp.spk');

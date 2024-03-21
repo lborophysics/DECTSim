@@ -5,7 +5,7 @@ classdef mat_consts
     properties (Constant)
         % Add new materials to the list alphabetically, this will allow the
         % material_attenuation class to "know" about the new material.
-        known_materials = {'air'    ,'blood','bone','fat','lung','muscle','titanium','water','vacuum'};
+        known_materials  = {'air'    ,'blood','bone','fat','lung','muscle','titanium','water','vacuum'};
         known_densities  = [1.205E-03, 1.06  , 1.92 , 0.95, 1.05 , 1.05   , 4.506    , 1.00  , 0      ] .* units.g / units.cm^3;
         known_atomic_numbers = {...
             [6, 7, 8, 18],...                         % air

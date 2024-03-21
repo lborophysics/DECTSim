@@ -97,9 +97,9 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mfp_arr = get_mfp_arr(self, nrj)
             % Create a dictionary of mfp values for each material
-            mfp_arr(self.nobj + 1) = self.world_material.mean_free_path(nrj);
+            mfp_arr(self.nobj) = self.world_material.mean_free_path(nrj);
             % mfp_arr = zeros(1, self.nobj + 1);
-            for n = 1:self.nobj
+            for n = 1:self.nobj-1
                 mfp_arr(n) = self.voxel_objs{n}.material.mean_free_path(nrj);
             end
         end

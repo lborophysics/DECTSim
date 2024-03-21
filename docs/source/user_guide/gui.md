@@ -35,6 +35,22 @@ The voxel size is the size of each cube in the phantom, therefore, the smaller t
 
 It is possible to load a custom phantom, this must be a '.mat' file containing an object called `phantom`, using the objects within the DECTSim backend. In the future, you should be able to create this new phantom within the GUI.
 
+### Phantom Examples
+
+In the GUI, there are currently four phantom examples available, these are:
+    - Modified Shepp-Logan
+    - Example 2
+    - Example 3
+    - Example 4
+
+The Modified Shepp-Logan phantom is a modified version of the Shepp-Logan phantom, which is a standard phantom used in medical imaging. The Modified Shepp-Logan phantom has been modified to include real materials, such as bone, brain matter, air and alanine. It is also three dimensional, so there are no actual overlapping of the materials (unlike the Shepp-Logan phantom).
+
+Example two contains a cylinder of water with a radius of 15 cm and with a length of 30 cm. This cylinder has 4 different smaller cylinders inside it, each with a different material. The materials are, going from the top of the cylinder clockwise, bone, muscle, blood and fat. 
+
+Example three contains a cylinder of water with a radius of 15 cm and with a length of 30 cm. This cylinder has 4 different smaller cylinders inside it, each with a different material. The materials are, going from the top of the cylinder clockwise, bone, muscle, titanium and fat.
+
+Example four contains a cylinder of water with a radius of 30 cm and with a length of 30 cm. This cylinder has 3 different smaller cylinders inside it, each with a different material, getting smaller and smaller like a russian doll. The materials are, going from the top of the cylinder to the centre, bone, fat, titanium.
+
 ## Detector
 The detector is the object that measures the x-rays after they have passed through the phantom. The detector is represented as a 1D or 2D array of pixels, each pixel measures the intensity of the x-rays that have passed through it. The detector also controls the sensor, which is the object that converts the intensity of the x-rays into a signal that can be used to create the sinogram.
 
