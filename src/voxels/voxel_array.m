@@ -28,7 +28,7 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
             % In the future, I need to create this array based on the get_voxel_mu
             % nobj = nargin - 3;
-            self.nobj = length(voxel_objs);
+            self.nobj = length(voxel_objs) + 1; % +1 for the world material
             for obj = voxel_objs
                 assert(isa(obj{1}, 'voxel_object'), 'All objects must be of type voxel_object')
             end
@@ -45,19 +45,19 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mu_dict = precalculate_mus(self, nrj_arr)
             % Return a 3D matrix of mu values using the 2D array of nrj values
-            mu_dict = zeros(self.nobj + 1, numel(nrj_arr));
+            mu_dict = zeros(self.nobj, numel(nrj_arr));
             lin_nrjs = reshape(nrj_arr, 1, []);
-            for n = 1:self.nobj
+            for n = 1:self.nobj-1
                 mu_dict(n, :) = self.voxel_objs{n}.get_mu(lin_nrjs);
             end
-            mu_dict(self.nobj + 1, :) = self.world_material.get_mu(lin_nrjs);
-            mu_dict = reshape(mu_dict, [self.nobj + 1, size(nrj_arr)]);
+            mu_dict(self.nobj, :) = self.world_material.get_mu(lin_nrjs);
+            mu_dict = reshape(mu_dict, [self.nobj, size(nrj_arr)]);
         end
 
         function mfp_dict = precalculate_mfps(self, nrj_arr)
             % Create a dictionary of mfp values for each material
             num_nrjs = numel(nrj_arr);
-            mfp_dict = zeros(self.nobj + 1, size(nrj_arr, 1), size(nrj_arr, 2));
+            mfp_dict = zeros(self.nobj, size(nrj_arr, 1), size(nrj_arr, 2));
             for n = 1:num_nrjs
                 [i, j] = ind2sub(size(nrj_arr), n);
                 mfp_dict(:, i, j) = self.get_mfp_arr(nrj_arr(i));
@@ -69,17 +69,16 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get mus at position
-            iobj = zeros(1, size(indices, 2)) + self.nobj + 1; % Default to air
-            for n = 1:self.nobj
+            iobj = zeros(1, size(indices, 2)) + self.nobj; % Default to air
+            for n = 1:self.nobj-1
                 iobj(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = n;
             end
         end
     
         function mu_arr = get_mu_arr(self, nrj)
             % Create a dictionary of mu values for each material
-            mu_arr(self.nobj + 1) = self.world_material.get_mu(nrj);
-            % mu_arr = zeros(1, self.nobj + 1);
-            for n = 1:self.nobj
+            mu_arr(self.nobj) = self.world_material.get_mu(nrj);
+            for n = 1:self.nobj-1
                 mu_arr(n) = self.voxel_objs{n}.get_mu(nrj);
             end
         end
@@ -89,8 +88,8 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get mus at position
-            mus = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
-            for n = 1:self.nobj
+            mus = zeros(1, size(indices, 2)) + dict(self.nobj); % Default to air
+            for n = 1:self.nobj-1
                 mus(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
                     dict(n);
             end
@@ -110,8 +109,8 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             position = self.array_position + (indices - 0.5) .* self.dimensions;
 
             % Get material at position
-            mfps = zeros(1, size(indices, 2)) + dict(self.nobj + 1); % Default to air
-            for n = 1:self.nobj
+            mfps = zeros(1, size(indices, 2)) + dict(self.nobj); % Default to air
+            for n = 1:self.nobj-1
                 mfps(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = ...
                     dict(n);
             end

@@ -27,7 +27,7 @@ Properties
 
 .. attribute:: nobj
 
-    The number of voxel objects in the array, equivalent to ``length(voxel_objs)``.
+    The number of voxel objects in the array, equivalent to ``length(voxel_objs) + 1``. The last element is the world material.
 
 .. attribute:: world_material
 

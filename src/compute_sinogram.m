@@ -134,8 +134,8 @@ parfor angle = 1:num_rotations
                 obj_idxs = get_object_idxs(idxs);
 
                 % Get a the length of the ray in each object
-                obj_lens = zeros(num_obj + 1, 1);
-                for i = 1:num_obj+1
+                obj_lens = zeros(num_obj, 1);
+                for i = 1:num_obj
                     obj_lens(i) = sum(ls(obj_idxs == i));
                 end
 
