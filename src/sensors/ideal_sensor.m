@@ -11,7 +11,7 @@ classdef ideal_sensor < sensor
             % Normalize the intensity array before taking the log 
             % (Should really use I0 for normalisation, but this is a simplification for now.)
             signal = signal ./ max(signal, [], 'all');
-            image = -log(signal);
+            image = -reallog(signal);
         end
     end
 end

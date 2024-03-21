@@ -49,7 +49,7 @@ function photon_count = air_scan(xray_source, detector_obj)
             pixel_position = pixel_generator(y_pix, z_pix);
             ray_start = gantry.get_source_pos(1, pixel_position);
             
-            ray_length2 = sum((pixel_position - ray_start).^2);
+            ray_length2 = sum((ray_start - pixel_position).^2);
             ray_length = sqrt(ray_length2);
             
             intensity_list(:, :, y_pix, z_pix) = ...
