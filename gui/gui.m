@@ -265,7 +265,7 @@ classdef gui < matlab.apps.AppBase
                 if strcmp(detector_type, 'Flat')
                     darray = flat_detector(pixel_dims, num_pixels);
                     sensor_geom = 'line';
-                    sensor_spacing = pixel_size / 2;
+                    sensor_spacing = 1 / 2;
                 else
                     darray = curved_detector(pixel_dims, num_pixels);
                     sensor_geom = 'arc';
@@ -342,10 +342,7 @@ classdef gui < matlab.apps.AppBase
                 % Set the image from the sinogram and reconstruction
                 app.ShowDropDownChanged(event); 
             catch ME
-                uialert(app.UIFigure, getReport(ME,'extended','hyperlinks','off'), 'Error Running Simulation');
-                % ME.stack.line
-                % ME.stack.name
-                % ME.stack.file
+                uialert(app.UIFigure, getReport(ME,'extended','hyperlinks','off'), 'Error Running Simulation'); 
             end
 
             % Display the result
@@ -370,7 +367,7 @@ classdef gui < matlab.apps.AppBase
             [file,path] = uiputfile(...
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Reconstructed Image");
-            if ischar(file); return; end % Nothing selected
+            if ~ischar(file); return; end % Nothing selected
             imwrite(app.recons{app.ShowDropDown.ValueIndex}, fullfile(path, file)) % Could use event.ContextObject.ImageSource
         end
 
@@ -383,7 +380,7 @@ classdef gui < matlab.apps.AppBase
             [file,path] = uiputfile(...
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Sinogram");
-            if ischar(file); return; end % Nothing selected
+            if ~ischar(file); return; end % Nothing selected
             imwrite(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex},...
                 fullfile(path, file))
         end

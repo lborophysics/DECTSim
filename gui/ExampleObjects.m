@@ -30,13 +30,13 @@ brain = material_attenuation("brain", [1, 6, 7, 8, 11, 15, 16, 17, 19], ...
 alanine = material_attenuation("alanine", [1, 6, 7, 8], ...
     [0.079192, 0.404437, 0.157213, 0.359157], 1.424);
 bone = material_attenuation("bone");
-air = material_attenuation("air");
+fat = material_attenuation("fat");
 
 % Create voxel array
 ellipse_a = voxel_ellipse(efields_a.center, efields_a.a, efields_a.b, efields_a.c, bone);
 ellipse_b = voxel_ellipse(efields_b.center, efields_b.a, efields_b.b, efields_b.c, brain);
-ellipse_c = voxel_ellipse_rotated(efields_c.center, efields_c.a, efields_c.b, efields_c.c, efields_c.phi, air);
-ellipse_d = voxel_ellipse_rotated(efields_d.center, efields_d.a, efields_d.b, efields_d.c, efields_d.phi, air);
+ellipse_c = voxel_ellipse_rotated(efields_c.center, efields_c.a, efields_c.b, efields_c.c, efields_c.phi, fat);
+ellipse_d = voxel_ellipse_rotated(efields_d.center, efields_d.a, efields_d.b, efields_d.c, efields_d.phi, fat);
 ellipse_e = voxel_ellipse(efields_e.center, efields_e.a, efields_e.b, efields_e.c, alanine);
 ellipse_f = voxel_ellipse(efields_f.center, efields_f.a, efields_f.b, efields_f.c, alanine);
 ellipse_g = voxel_ellipse(efields_g.center, efields_g.a, efields_g.b, efields_g.c, alanine);
