@@ -39,8 +39,7 @@ classdef sensor_tests < matlab.unittest.TestCase
 
             % test get_image
             image = rand(100, 100);
-            image(50, 50) = 2;
-            tc.verifyEqual(is.get_image(image), -log(image./2))
+            tc.verifyEqual(sensor.get_image(image, 4), -log(image./4))
 
             % test get_signal
             image = rand(100, 10, 10, 10);
