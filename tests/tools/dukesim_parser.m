@@ -20,7 +20,10 @@ function [sinogram, params] = dukesim_parser(MainDir)
     % Read the sinogram file
     fileID = fopen(strcat(dir,".xcat"), "r");
     sinogram = fread(fileID, 'float32');  
-    sinogram = reshape(sinogram, str2double(params('scanner_Y_pixels')), str2double(params('scanner_Z_pixels')), str2double(params("P")));
+    ny_pixels = str2double(params('scanner_Y_pixels'));
+    nz_pixels = str2double(params('scanner_Z_pixels'));
+    num_rotations = str2double(params("P"));
+    sinogram = reshape(sinogram, [ny_pixels, nz_pixels, num_rotations]);
     fclose(fileID);
 end
 
