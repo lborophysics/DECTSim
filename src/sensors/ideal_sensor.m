@@ -6,12 +6,5 @@ classdef ideal_sensor < sensor
             average_energy = (lower_energy + upper_energy) / 2;
             signal = count_array .* average_energy;
         end
-
-        function image = get_image(~, signal)
-            % Normalize the intensity array before taking the log 
-            % (Should really use I0 for normalisation, but this is a simplification for now.)
-            signal = signal ./ max(signal, [], 'all');
-            image = -reallog(signal);
-        end
     end
 end

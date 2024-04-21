@@ -10,7 +10,6 @@ classdef (Abstract) sensor
 
     methods (Abstract) % These need to be implemented by the child class
         signal = detector_response(self, energy_bin, count_array)
-        image = get_image(self, signal) 
     end
 
     methods
@@ -47,6 +46,15 @@ classdef (Abstract) sensor
                 signal = signal + ...
                     self.detector_response(i, reshape(array(i,:,:,:), new_size));
             end
+        end
+    end
+    
+    methods (Static)
+        function image = get_image(signal, I0)
+            % Normalize the intensity array before taking the log 
+            % (Will I want any different behavior?) - Change this to add guassian noise
+            signal = signal ./ I0;
+            image = -reallog(signal);
         end
    end
 end

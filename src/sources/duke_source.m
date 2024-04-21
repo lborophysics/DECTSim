@@ -1,38 +1,22 @@
-classdef source_fromfile < source
+classdef duke_source < source
     %SOUCE_FROMFILE Create a source object from a file
 
     properties (SetAccess=immutable)
         ebins
-        fluences
+        spectrum
     end
 
     methods
-        function self = source_fromfile(filename)
-            % Read the file as a string
-            file = fileread(filename);
-
-            %Remove the header
-            file = regexprep(file, '#[^\n]*\n', '');
-
-            % Replace the semi-colons with spaces and new lines with semi-colons
-            file = regexprep(file, ';', ' ');
-            file = regexprep(file, '\n', ';');
-
-            % Add matrix brackets
-            file = ['[', file, ']'];
-
-            % Evaluate the string as a matrix
-            data = eval(file);
-
-            % Extract the energy, fluence columns
-            ebins = data(:,1);
-            fluences = data(:,2);
-
-            num_energies = length(ebins);
-            
+        function self = duke_source(filename, num_energies, num_ypixels, msecs_per_frame)
             self = self@source(num_energies);
-            self.ebins = ebins;
-            self.fluences = fluences;
+            
+            % Read the file to matrix
+            fileID = fopen(filename, 'r');
+            spectrum = fread(fileID, 'float32');
+            fclose(fileID);
+            self.ebins = linspace(1, num_energies, num_energies);
+            % self.spectrum = reshape(spectrum, [num_ypixels, num_energies]);
+            self.spectrum = reshape(spectrum, [num_energies, num_ypixels])'*msecs_per_frame;
         end
 
         function energies = get_energies(self, range)
@@ -48,7 +32,7 @@ classdef source_fromfile < source
                 if isempty(indices)
                     error('No energies found in the range [%f, %f)', range(i,1), range(i,2));
                 end
-                weights = self.fluences(indices);
+                weights = sum(self.spectrum(:, indices), 1);
                 
                 % If all weights are zero, set them all to 1, we will not use them anyway
                 if sum(weights) == 0; weights = ones(size(weights)); end
@@ -58,18 +42,19 @@ classdef source_fromfile < source
             end
         end
 
-        function fluences = get_fluences(self, range, ~)
+        function fluences = get_fluences(self, range, ypixel)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
                 self
-                range (:,2) double
-                ~ % We do not use the ypixel argument
+                range  (:,2) double
+                ypixel (1, 1) double
             end
             num_ranges = size(range,1);
             flist = zeros(1, num_ranges);
+            spectrum_slice = self.spectrum(ypixel, :);
             for i = 1:num_ranges
                 indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
-                flist(i) = sum(self.fluences(indices).* self.ebins(indices));
+                flist(i) = sum(spectrum_slice(indices).* self.ebins(indices));
             end
              % Convert from ph/cm^2 to ph/m^2 and then move the point fluence is measured from 1 m to 1 cm
             fluences = flist / units.m2 * (1 * units.m)^2;

@@ -63,15 +63,6 @@ Abstract Methods
 
     :returns: :code:`signal` should be of the same shape as ``count_array``, and should represent the signal from the sensor in response to the counts in the energy bin.
 
-.. method:: get_image(self, signal)
-
-    This method is meant to be overridden by the child class. It should take in the signal from the sensor and return an image from the signal. The parameters are as follows:
-
-    :param signal: An array of dimensions [ny_pix, nz_pix, nrotation] representing the signal from the sensor.
-    :type signal: MxNxP double
-
-    :returns: :code:`image` should be of the same shape as ``signal``, and should represent the image from the sensor in response to the signal.
-
 Methods
 ~~~~~~~
 
@@ -99,6 +90,18 @@ Methods
 
     :returns: :code:`signal` will be [ny_pix, nz_pix, nrotation], and will represent the signal from the sensor in response to the counts in each energy bin.
 
+Static Methods
+~~~~~~~~~~~~~~
+
+.. method:: get_image(signal, I0)
+
+    This method takes in the final signal and the air scan and returns :math:`-\ln{\frac{S}{I0}}`, where ``S`` is the signal from primary and scatter rays and ``I0`` is the total unattenuated signal.
+
+    :param signal: An array of dimensions [ny_pix, nz_pix, nrotation] representing the signal from the sensor.
+    :type signal: MxNxP double
+
+    :returns: :code:`image` should be of the same shape as ``signal``, and should represent the image from the sensor in response to the signal.
+
 
 Ideal Sensor
 ------------
@@ -117,5 +120,4 @@ Methods
 
 .. method:: ideal_sensor.get_image(self, signal)
     
-    This method takes in the final signal and returns :math:`-\ln{S}`, where ``S`` is the signal. See the parameters and return values from :meth:`get_image`.
 

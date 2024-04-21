@@ -37,8 +37,9 @@ function photon_count = air_scan(xray_source, detector_obj)
     energies = xray_source.get_energies(sensor_range);
     energy_list = reshape(energies, num_bins, num_esamples);
 
-    fluences = xray_source.get_fluences(sensor_range);
-    fluences = reshape(fluences, num_esamples, num_bins)';
+    % fluences = xray_source.get_fluences(sensor_range);
+    % fluences = reshape(fluences, num_esamples, num_bins)';
+    get_fluences = @(ypixel) xray_source.get_fluences(sensor_range, ypixel);
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
     
     lin_elist = reshape(energy_list, 1, []);
@@ -51,6 +52,10 @@ function photon_count = air_scan(xray_source, detector_obj)
             
             ray_length2 = sum((ray_start - pixel_position).^2);
             ray_length = sqrt(ray_length2);
+
+            % Get the fluences for the pixel
+            fluences = get_fluences(y_pix);
+            fluences = reshape(fluences, num_esamples, num_bins)';
             
             intensity_list(:, :, y_pix, z_pix) = ...
                 fluences .* pix_size / ray_length2;

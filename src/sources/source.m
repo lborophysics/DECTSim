@@ -8,7 +8,7 @@ classdef (Abstract) source
     methods (Abstract)
         % Using the non-inclusive range [min, max)
         energies = get_energies(self, range)
-        intensities = get_fluences(self, range)
+        intensities = get_fluences(self, range, ypixel)
         [emin, emax] = get_energy_range(self)
     end
 

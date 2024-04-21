@@ -82,8 +82,7 @@ energies = xray_source.get_energies(sensor_range);
 energy_list = reshape(energies, num_esamples, num_bins)';
 
 % Now the fluences
-fluences = xray_source.get_fluences(sensor_range);
-fluences = reshape(fluences, num_esamples, num_bins)';
+get_fluences = @(ypixel) xray_source.get_fluences(sensor_range, ypixel);
 
 % Pre-calculate the mu values for the energy list
 mu_dict = phantom.precalculate_mus(energy_list);
@@ -117,6 +116,11 @@ parfor angle = 1:num_rotations
             % Here you are missing a call to the source dependent of the pixel position
             ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
             ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir;
+
+            % Get the fluences for the pixel
+            fluences = get_fluences(y_pix);
+            fluences = reshape(fluences, num_esamples, num_bins)';
+
             intensity_list(:, :, y_pix, z_pix) = ...
                 fluences .* pix_size / ray_length2;
         end
@@ -151,7 +155,7 @@ end
 
 % Calculate the scatter signal
 if scatter_type == 1
-    scatter_count = 0;
+    scatter_count = zeros(size(photon_count));
 elseif scatter_type == 2 % Fast scatter
     scatter_count = ...
         convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
@@ -160,8 +164,12 @@ else
         monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
 end
 % Convert the photon count (rays + scatter) to a signal
-signal = sensor_unit.get_signal(photon_count + scatter_count);
+photon_signal = sensor_unit.get_signal(photon_count);
+scatter_signal = sensor_unit.get_signal(scatter_count);
+
+air = air_scan(xray_source, detector_obj);
+air_signal = sensor_unit.get_signal(air);
 
 % Convert the signal to a sinogram
-sinogram = sensor_unit.get_image(signal);
+sinogram = sensor.get_image(photon_signal + scatter_signal, air_signal);
 end
