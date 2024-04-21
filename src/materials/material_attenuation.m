@@ -74,4 +74,28 @@ classdef material_attenuation
                     ./ self.atomic_masses));
         end
     end
+
+    methods (Static)
+        function materials = get_materials(filename)
+            % GET_MATERIALS Get the materials from a file, such as an excel file - used for DukeSim robustness
+            assert(isfile(filename), 'assert:failure', 'The file %s does not exist.', filename);
+            data = readtable(filename);
+            
+            materials = cell(1, height(data)-1);
+            atomic_numbers = data{1, 2:end-2};
+            for i = 2:height(data)
+                material_name = string(data{i, 1});
+                mass_fractions = data{i, 2:end-2};
+                density = data{i, end-1};
+
+                zero_fraction = mass_fractions == 0;
+                z_numbers = atomic_numbers(~zero_fraction);
+                mass_fractions(zero_fraction) = [];
+
+                id = data{i, end};
+                materials{id+1} = material_attenuation(material_name, z_numbers, mass_fractions, density);
+            end
+        end
+    end
+            
 end
