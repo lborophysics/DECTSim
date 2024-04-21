@@ -11,11 +11,11 @@ classdef detector
     end
 
     methods
-        function self = detector(gantry, detector_array, sensor)
-            assert(isa(gantry, 'gantry'), 'gantry must be a gantry object');
+        function self = detector(the_gantry, detector_array, sensor)
+            assert(isa(the_gantry, 'gantry'), 'gantry must be a gantry object');
             assert(isa(detector_array, 'detector_array'), 'detector_array must be a detector_array object');
             assert(isa(sensor, 'sensor'), 'sensor must be a sensor object');
-            self.gantry = gantry;
+            self.gantry = the_gantry;
             self.detector_array = detector_array;
             self.sensor = sensor;
         end

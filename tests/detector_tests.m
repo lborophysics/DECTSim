@@ -161,5 +161,50 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(act_ray_lens([1,5:end]), repmat(ray_len, 1, 7), "RelTol", 1e-15);
             tc.verifyTrue(all(hits([1,5:end])));
         end
+
+        function test_hit_curved_pixel(tc)
+            geom = gantry(9, 10, pi);
+            c1 = curved_detector([4.5*pi/60, 0.4], [60, 10]);
+            pixel_generator = c1.set_array_angle(geom, 1);
+            hit_at_angle = c1.hit_pixel(geom, 1);
+            for i = 1:60
+                for j = 1:10
+                    pixel_pos = pixel_generator(i, j);
+                    ray_start = geom.get_source_pos(1, pixel_pos);
+                    ray_dir   = pixel_pos - ray_start;
+                    exp_ray_len = norm(ray_dir);
+
+                    [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir ./ exp_ray_len);
+                    tc.verifyEqual(pixel, [i; j]);
+                    tc.verifyEqual(act_ray_len, exp_ray_len, "RelTol", 2e-15);
+                    tc.verifyTrue(hit);
+                end
+            end
+
+            % Test for a ray that just misses the detector  
+            pixel_pos = pixel_generator(61, 10);
+            ray_start = geom.get_source_pos(1, pixel_pos);
+            ray_dir   = pixel_pos - ray_start;
+            ray_dir   = ray_dir ./ norm(ray_dir);
+            hit_at_angle = c1.hit_pixel(geom, 1);
+
+            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
+            tc.verifyEqual(pixel, [0; 0]);
+            tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
+            tc.verifyFalse(hit);
+
+            % Test for a ray would hit the detector if it was going the other way
+            pixel_generator = c1.set_array_angle(geom, 35);
+            pixel_pos = pixel_generator(30, 5);
+            ray_start = geom.get_source_pos(35, pixel_pos);
+            ray_dir   = pixel_pos - ray_start;
+            ray_dir   = ray_dir ./ norm(ray_dir);
+            hit_at_angle = c1.hit_pixel(geom, 35);
+            
+            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, -ray_dir);
+            tc.verifyEqual(pixel, [0; 0]);
+            tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
+            tc.verifyFalse(hit);                
+        end
     end
 end
