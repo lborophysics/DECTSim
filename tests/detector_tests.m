@@ -21,7 +21,7 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.assertEqual(p1.pixel_dims, [0.1, 0.35]);
             tc.assertEqual(p1.n_pixels, [110, 20]);
 
-            p2 = flat_detector([0.34, 0.1], [20, radius110]);
+            p2 = flat_detector([0.34, 0.1], [20, 110]);
             tc.assertEqual(p2.pixel_dims, [0.34, 0.1]);
             tc.assertEqual(p2.n_pixels, [20, 110]);
 
