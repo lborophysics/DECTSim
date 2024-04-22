@@ -68,7 +68,7 @@ energy_list = xray_source.get_energies(sensor_range);
 % Now the fluences
 % fluences = xray_source.get_fluences(sensor_range);
 get_fluences = @(ypixel) xray_source.get_fluences(sensor_range, ypixel);
-sum_fluences = zeros(1, num_bins);
+sum_fluences = zeros(1, num_bins * num_esamples);
 for i = 1:npy
     fluences = get_fluences(i);
     sum_fluences = sum_fluences + sum(fluences, 1);
@@ -118,8 +118,6 @@ parfor angle = 1:num_rotations
 
             % Get the fluences for the pixel
             fluences = get_fluences(y_pix);
-            fluences = reshape(fluences, num_esamples, num_bins)';
-
             intensity_list(:, y_pix, z_pix) = ...
                 fluences .* pix_size ./ ray_length2 ./sfactor;
         end

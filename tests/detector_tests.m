@@ -21,7 +21,7 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.assertEqual(p1.pixel_dims, [0.1, 0.35]);
             tc.assertEqual(p1.n_pixels, [110, 20]);
 
-            p2 = flat_detector([0.34, 0.1], [20, 110]);
+            p2 = flat_detector([0.34, 0.1], [20, radius110]);
             tc.assertEqual(p2.pixel_dims, [0.34, 0.1]);
             tc.assertEqual(p2.n_pixels, [20, 110]);
 
@@ -43,16 +43,20 @@ classdef detector_tests < matlab.unittest.TestCase
         end
 
         function test_curved_ray_gen(tc)
-            geom = gantry(9, 10, pi);
-            c1 = curved_detector([4.5*pi/60, 0.4], [60, 10]);
+            d2d = 9; radius = d2d/2;
+            geom = gantry(d2d, 10, pi);
+            pixel_width = radius * pi / 60;
+            c1 = curved_detector([pixel_width, 0.4], [60, 10]);
             pixel_generator = c1.set_array_angle(geom, 1);
 
-            rot_by_pixel = rotz(pi/60);
-            unit_vector = rotz(pi/120) * [-1; 0; 0];
-            z_pos = @(i) (-2 + 0.2 + (0.4 .* (i-1)))/9;
+            angle = chord2ang(pixel_width, d2d);
+            chord_radius = realsqrt(radius^2 - (pixel_width/2)^2);
+            rot_by_pixel = rotz(angle);
+            vector = rotz(-61*angle/2) * [0; -chord_radius; 0];
+            z_pos = @(i) (-2 + 0.2 + (0.4 .* (i-1)));
             for i = 20:40
                 for j = 1:10
-                    exp_pos   = (rot_by_pixel^(i-1) * unit_vector) .* 4.5 + [0;0;z_pos(j)*9];
+                    exp_pos   = rot_by_pixel^i * vector + [0;0;z_pos(j)];
                     
                     pixel_position = pixel_generator(i, j);
                     tc.verifyEqual(pixel_position, exp_pos, 'RelTol', 1e-14);

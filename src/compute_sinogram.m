@@ -101,7 +101,8 @@ parfor angle = 1:num_rotations
     % For each rotation, we calculate the image for the source
     pixel_generator = feval(set_array_angle, angle);
     ray_starts = zeros(3, npy*npz);
-    ray_dirs = zeros(3, npy*npz);
+    ray_dirs   = zeros(3, npy*npz);
+    ray_lens   = zeros(npy, npz);
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
 
     for z_pix = 1:npz
@@ -116,6 +117,7 @@ parfor angle = 1:num_rotations
             % Here you are missing a call to the source dependent of the pixel position
             ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
             ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir;
+            ray_lens(y_pix, z_pix) = sqrt(ray_length2);
 
             % Get the fluences for the pixel
             fluences = get_fluences(y_pix);
@@ -126,29 +128,31 @@ parfor angle = 1:num_rotations
         end
     end
 
-    [ray_lens, ray_idxs] = ray_tracing(ray_starts, ray_dirs);
+    [traced_ls, traced_idxs] = ray_tracing(ray_starts, ray_dirs);
     for z_pix = 1:npz
         for y_pix = 1:npy
-            ls = ray_lens{(z_pix-1)*npy + y_pix};
+            ls = traced_ls{(z_pix-1)*npy + y_pix};
+            obj_lens = zeros(num_obj, 1);
             if isempty(ls)
-                photon_count(:, y_pix, z_pix, angle) = ...
-                    sum(intensity_list(:, :, y_pix, z_pix), 2);
+                % If no ray tracing inside the world, then the ray is entirely in the world material (probably air)
+                obj_lens(end) = ray_lens(y_pix, z_pix);
             else
-                idxs = ray_idxs{(z_pix-1)*npy + y_pix};
+                idxs = traced_idxs{(z_pix-1)*npy + y_pix};
                 obj_idxs = get_object_idxs(idxs);
 
                 % Get a the length of the ray in each object
-                obj_lens = zeros(num_obj, 1);
                 for i = 1:num_obj
                     obj_lens(i) = sum(ls(obj_idxs == i));
                 end
 
-                % Now we calculate the attenuation
-                mus = sum(mu_dict .* obj_lens, 1);
-                photons = intensity_list(:, :, y_pix, z_pix) .* ...
-                    reshape(exp(-mus), num_bins, num_esamples);
-                photon_count(:, y_pix, z_pix, angle) = sum(photons, 2); % Sum over the sample dimension
-            end
+                % Add the residual length in air
+                obj_lens(end) = obj_lens(end) + ray_lens(y_pix, z_pix) - sum(obj_lens);
+            end 
+            % Now we calculate the attenuation
+            mus = sum(mu_dict .* obj_lens, 1);
+            photons = intensity_list(:, :, y_pix, z_pix) .* ...
+                reshape(exp(-mus), num_bins, num_esamples);
+            photon_count(:, y_pix, z_pix, angle) = sum(photons, 2); % Sum over the sample dimension
         end
     end
 end
