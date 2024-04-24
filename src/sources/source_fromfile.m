@@ -32,7 +32,7 @@ classdef source_fromfile < source
             
             self = self@source(num_energies);
             self.ebins = ebins;
-            self.fluences = fluences;
+            self.fluences = fluences .* ebins;
         end
 
         function energies = get_energies(self, range)
@@ -66,13 +66,11 @@ classdef source_fromfile < source
                 ~ % We do not use the ypixel argument
             end
             num_ranges = size(range,1);
-            flist = zeros(1, num_ranges);
+            fluences = zeros(1, num_ranges);
             for i = 1:num_ranges
                 indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
-                flist(i) = sum(self.fluences(indices).* self.ebins(indices));
+                fluences(i) = sum(self.fluences(indices));%.* self.ebins(indices));
             end
-             % Convert from ph/cm^2 to ph/m^2 and then move the point fluence is measured from 1 m to 1 cm
-            fluences = flist / units.m2 * (1 * units.m)^2;
         end
 
         function [emin, emax] = get_energy_range(self)
