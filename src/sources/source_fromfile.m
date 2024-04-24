@@ -1,4 +1,4 @@
-classdef source_fromfile < source
+classdef source_fromfile < source % could create a spectrum super class.
     %SOUCE_FROMFILE Create a source object from a file
 
     properties (SetAccess=immutable)

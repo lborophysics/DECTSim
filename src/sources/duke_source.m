@@ -50,14 +50,14 @@ classdef duke_source < source
                 ypixel (1, 1) double
             end
             num_ranges = size(range,1);
-            flist = zeros(1, num_ranges);
+            fluences = zeros(1, num_ranges);
             spectrum_slice = self.spectrum(ypixel, :);
             for i = 1:num_ranges
-                indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
-                flist(i) = sum(spectrum_slice(indices).* self.ebins(indices));
+                % indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
+                % fluences(i) = sum(spectrum_slice(indices));%.* self.ebins(indices));
+                fluences(i) = sum(spectrum_slice(self.ebins >= range(i,1) & self.ebins < range(i,2)));%.* self.ebins(indices));
+                % fluences(i) = sum(spectrum_slice(indices));%.* self.ebins(indices));
             end
-             % Convert from ph/cm^2 to ph/m^2 and then move the point fluence is measured from 1 m to 1 cm
-            fluences = flist / units.m2 * (1 * units.m)^2;
         end
 
         function [emin, emax] = get_energy_range(self)
