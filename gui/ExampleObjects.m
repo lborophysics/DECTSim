@@ -33,16 +33,16 @@ bone = material_attenuation("bone");
 fat = material_attenuation("fat");
 
 % Create voxel array
-ellipse_a = voxel_ellipse(efields_a.center, efields_a.a, efields_a.b, efields_a.c, bone);
-ellipse_b = voxel_ellipse(efields_b.center, efields_b.a, efields_b.b, efields_b.c, brain);
-ellipse_c = voxel_ellipse_rotated(efields_c.center, efields_c.a, efields_c.b, efields_c.c, efields_c.phi, fat);
-ellipse_d = voxel_ellipse_rotated(efields_d.center, efields_d.a, efields_d.b, efields_d.c, efields_d.phi, fat);
-ellipse_e = voxel_ellipse(efields_e.center, efields_e.a, efields_e.b, efields_e.c, alanine);
-ellipse_f = voxel_ellipse(efields_f.center, efields_f.a, efields_f.b, efields_f.c, alanine);
-ellipse_g = voxel_ellipse(efields_g.center, efields_g.a, efields_g.b, efields_g.c, alanine);
-ellipse_h = voxel_ellipse(efields_h.center, efields_h.a, efields_h.b, efields_h.c, alanine);
-ellipse_i = voxel_ellipse(efields_i.center, efields_i.a, efields_i.b, efields_i.c, alanine);
-ellipse_j = voxel_ellipse(efields_j.center, efields_j.a, efields_j.b, efields_j.c, alanine);
+ellipse_a = voxel_ellipsoid(efields_a.center, efields_a.a, efields_a.b, efields_a.c, bone);
+ellipse_b = voxel_ellipsoid(efields_b.center, efields_b.a, efields_b.b, efields_b.c, brain);
+ellipse_c = voxel_ellipsoid_rotated(efields_c.center, efields_c.a, efields_c.b, efields_c.c, efields_c.phi, fat);
+ellipse_d = voxel_ellipsoid_rotated(efields_d.center, efields_d.a, efields_d.b, efields_d.c, efields_d.phi, fat);
+ellipse_e = voxel_ellipsoid(efields_e.center, efields_e.a, efields_e.b, efields_e.c, alanine);
+ellipse_f = voxel_ellipsoid(efields_f.center, efields_f.a, efields_f.b, efields_f.c, alanine);
+ellipse_g = voxel_ellipsoid(efields_g.center, efields_g.a, efields_g.b, efields_g.c, alanine);
+ellipse_h = voxel_ellipsoid(efields_h.center, efields_h.a, efields_h.b, efields_h.c, alanine);
+ellipse_i = voxel_ellipsoid(efields_i.center, efields_i.a, efields_i.b, efields_i.c, alanine);
+ellipse_j = voxel_ellipsoid(efields_j.center, efields_j.a, efields_j.b, efields_j.c, alanine);
 
 
 a_shepp_logan = {ellipse_a, ellipse_b, ellipse_c, ellipse_d, ellipse_e, ellipse_f, ellipse_g, ellipse_h, ellipse_i, ellipse_j};

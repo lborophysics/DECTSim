@@ -1,5 +1,5 @@
-function obj = voxel_ellipse(centre, a, b, c, material)
-    %VOXEL_ELLIPSE A voxel object representing an 3d ellipsoid
+function obj = voxel_ellipsoid(centre, a, b, c, material)
+    %VOXEL_ELLIPSOID A voxel object representing an 3d ellipsoid
     x = centre(1); y = centre(2); z = centre(3);
     obj = voxel_object(@ellipse, material);
 

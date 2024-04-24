@@ -1,5 +1,5 @@
-function obj = voxel_ellipse_rotated(centre, a, b, c, angle, material)
-    %VOXEL_ELLIPSE A voxel object representing an ellipsoid
+function obj = voxel_ellipsoid_rotated(centre, a, b, c, angle, material)
+    %VOXEL_ELLIPSOID A voxel object representing an ellipsoid
     %   centre: 1x3 vector
     %   major: length of the major axis
     %   minor: length of the minor axis
