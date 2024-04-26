@@ -175,5 +175,5 @@ air = air_scan(xray_source, detector_obj);
 air_signal = sensor_unit.get_signal(air);
 
 % Convert the signal to a sinogram
-sinogram = sensor.get_image(photon_signal + scatter_signal, air_signal);
+sinogram = sensor_unit.get_image(photon_signal + scatter_signal, air_signal);
 end

@@ -17,7 +17,7 @@ classdef (Abstract) sensor
             arguments
                 energy_range (2, 1) double {mustBeNonnegative}
                 num_bins     (1, 1) double {mustBePositive, mustBeInteger}
-                num_samples  (1, 1) double {mustBePositive, mustBeInteger} = 1;
+                num_samples  (1, 1) double {mustBePositive, mustBeInteger}
             end
             self.energy_range = energy_range;
             assert(energy_range(1) < energy_range(2), 'sensor:IncorrectEnergyRange', 'Energy range must be increasing');
@@ -47,10 +47,8 @@ classdef (Abstract) sensor
                     self.detector_response(i, reshape(array(i,:,:,:), new_size));
             end
         end
-    end
-    
-    methods (Static)
-        function image = get_image(signal, I0)
+
+        function image = get_image(~, signal, I0)
             % Normalize the intensity array before taking the log 
             % (Will I want any different behavior?) - Change this to add guassian noise
             signal = signal ./ I0;

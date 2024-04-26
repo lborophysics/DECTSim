@@ -88,14 +88,9 @@ Methods
     :param array: An array of dimensions [energy_bins, ny_pix, nz_pix, nrotation] representing the number of photons in each pixel and rotation in each energy bin.
     :type array: MxNxPxQ double
 
-    :returns: :code:`signal` will be [ny_pix, nz_pix, nrotation], and will represent the signal from the sensor in response to the counts in each energy bin.
+.. method:: get_image(~, signal, I0)
 
-Static Methods
-~~~~~~~~~~~~~~
-
-.. method:: get_image(signal, I0)
-
-    This method takes in the final signal and the air scan and returns :math:`-\ln{\frac{S}{I0}}`, where ``S`` is the signal from primary and scatter rays and ``I0`` is the total unattenuated signal.
+    This method takes in the final signal and the air scan and returns :math:`-\ln{\frac{S}{I0}}`, where ``S`` is the signal from primary and scatter rays and ``I0`` is the total unattenuated signal. It is expected that other sensors can override this method.
 
     :param signal: An array of dimensions [ny_pix, nz_pix, nrotation] representing the signal from the sensor.
     :type signal: MxNxP double
@@ -117,7 +112,3 @@ Methods
 .. method:: ideal_sensor.detector_response(self, energy_bin, count_array)
 
     This method takes in an index referring to the energy bin and an array of photon counts in that energy bin, and returns the count_array multiplied by the average energy of the energy bin. See the parameters and return values from :meth:`detector_response`.
-
-.. method:: ideal_sensor.get_image(self, signal)
-    
-
