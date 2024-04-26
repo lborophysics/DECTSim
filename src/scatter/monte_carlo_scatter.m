@@ -34,6 +34,10 @@ num_bins     = sensor_unit.num_bins;
 num_esamples = sensor_unit.num_samples;
 sensor_range = sensor_unit.get_range();
 
+if ~(strcmp(phantom.world_material.name, "air") || strcmp(phantom.world_material.name, "vacuum"))
+    warning("The world material is not air or vacuum, we do not consider scatter in this material. So your scatter signal may be incorrect or an underestimation.")
+end
+    
 vox_init    = phantom.array_position;
 vox_dims    = phantom.dimensions;
 vox_nplanes = phantom.num_planes;
@@ -88,7 +92,7 @@ assert(vox_init(1)^2 + vox_init(2)^2 <= (d2detector/2)^2, ...
 assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
     'Phantom is not entirely within the detector');
 
-num_angle_samples = 1e7;
+num_angle_samples = 1e6;
 sample_angles = compton_dist(zeros(1, num_angle_samples) + mean_energy);
 
 scatter_count = zeros(num_bins, npy, npz, num_rotations);
@@ -131,8 +135,8 @@ parfor angle = 1:num_rotations
             ipix = (z_pix-1)*npy + y_pix;
             ls = traced_lens{ipix};
             intensity = sum(intensity_list(:, y_pix, z_pix));
-            if isempty(ls); continue % If the ray doesn't hit the phantom
-            else
+            if ~isempty(ls) % If the ray hits the phantom, then it scatters - 
+            % potentially change this if we would like to consider a world material that scatters a lot like water
                 ray_start = ray_starts(:, ipix);
                 ray_dir = ray_dirs(:, ipix);
 
@@ -211,9 +215,9 @@ parfor angle = 1:num_rotations
                     % percentage of rays getting to the scatter point *
                     % the percentage of rays getting to the detector from the scatter point
                     new_intensity = intensity * ...
-                        exp(-sum(mus(1:li) .* ls(1:li))) * ...
-                        (prob_scatter(si) ./ num_scatters) * ...
-                        exp(-sum(scatter_mus .* scatter_ray_lens{si}));
+                        exp(-sum(mus(1:li) .* ls(1:li))-sum(scatter_mus .* scatter_ray_lens{si})) * ...
+                        (prob_scatter(si) ./ num_scatters);% * ...
+                        % exp(-sum(scatter_mus .* scatter_ray_lens{si}));
                     ang_scatter_count(:, hit_pixels(1, si), hit_pixels(2, si)) = ...
                         ang_scatter_count(:, hit_pixels(1, si), hit_pixels(2, si)) + ...
                         new_intensity;
