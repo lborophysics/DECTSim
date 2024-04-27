@@ -127,7 +127,7 @@ classdef gui < matlab.apps.AppBase
     methods (Access = private)
 
         % Image clicked function: RaysImage, SourceImage
-        function ToggleSourcePanelVisibility(app, event)
+        function ToggleSourcePanelVisibility(app, ~)
             if strcmp(app.SourcePanel.Visible, 'off')
                 app.SourcePanel.Visible = 'on';
             else
@@ -136,7 +136,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Image clicked function: PhantomImage
-        function TogglePhantomPanelVisibility(app, event)
+        function TogglePhantomPanelVisibility(app, ~)
             if strcmp(app.PhantomPanel.Visible, 'off')
                 app.PhantomPanel.Visible = 'on';
             else
@@ -145,7 +145,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Image clicked function: DetectorArrayImage
-        function ToggleDetectorPanelVisibility(app, event)
+        function ToggleDetectorPanelVisibility(app, ~)
             if strcmp(app.DetectorPanel.Visible, 'off')
                 app.DetectorPanel.Visible = 'on';
             else
@@ -154,7 +154,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Image clicked function: PCImage, WireImage
-        function ToggleReconstructionPanelVisibility(app, event)
+        function ToggleReconstructionPanelVisibility(app, ~)
             if strcmp(app.ReconstructionPanel.Visible, 'off')
                 app.ReconstructionPanel.Visible = 'on';
             else
@@ -163,7 +163,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Image clicked function: ScatterImage
-        function ToggleScatterPanelVisibility(app, event)
+        function ToggleScatterPanelVisibility(app, ~)
             if strcmp(app.ScatterPanel.Visible, 'off')
                 app.ScatterPanel.Visible = 'on';
             else
@@ -172,7 +172,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Image clicked function: DistToDetectorLine
-        function DistToDetectorLineImageClicked(app, event)
+        function DistToDetectorLineImageClicked(app, ~)
             if strcmp(app.DistToDetectorUnits.Visible, 'off')
                 app.DistToDetectorUnits.Visible = "on";
                 app.DistToDetectorField.Visible = "on";
@@ -186,7 +186,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Image clicked function: RotationImage
-        function RotationImageClicked(app, event)
+        function RotationImageClicked(app, ~)
             if strcmp(app.NumberofRotationsEditField.Visible, 'off')
                 app.NumberofRotationsEditField.Visible = 'on';
                 app.NumberofRotationsLabel.Visible = 'on';
@@ -215,14 +215,14 @@ classdef gui < matlab.apps.AppBase
                 end
 
                 source2_idx = app.Source2DropDown.ValueIndex;
-                has_source2 = true;
-                if source2_idx == 1
-                    has_source2 = false;
-                elseif source2_idx <= 3
-                    source2 = load(fullfile(pathToMLAPP, ...
-                        app.source_files{source2_idx-1}), 'source').source;
-                else
-                    source2 = app.Source2DropDown.ItemsData{source2_idx-1};
+                has_source2 = source2_idx > 1;
+                if has_source2
+                    if source2_idx <= 3
+                        source2 = load(fullfile(pathToMLAPP, ...
+                            app.source_files{source2_idx-1}), 'source').source;
+                    else
+                        source2 = app.Source2DropDown.ItemsData{source2_idx};
+                    end
                 end
 
                 % Get the phantom
@@ -299,8 +299,8 @@ classdef gui < matlab.apps.AppBase
                 else
                     recon = iradon(sinogram, scan_angles, interpolation, filter);
                 end
-                app.ShowDropDown.ItemsData{1} = app1.greyToColour(mat2gray(sinogram));
-                app.recons{1} = app1.greyToColour(mat2gray(recon));
+                app.ShowDropDown.ItemsData{1} = gui.greyToColour(mat2gray(sinogram));
+                app.recons{1} = gui.greyToColour(mat2gray(recon));
 
                 % Source 2
                 if has_source2
@@ -323,12 +323,12 @@ classdef gui < matlab.apps.AppBase
                         recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
                     end
 
-                    app.ShowDropDown.ItemsData{2} = app1.greyToColour(mat2gray(sinogram2));
-                    app.ShowDropDown.ItemsData{3} = app1.greyToColour(mat2gray(sinogram - sinogram2));
-                    app.ShowDropDown.ItemsData{4} = app1.greyToColour(mat2gray(sinogram ./ sinogram2));
-                    app.recons{2} = app1.greyToColour(mat2gray(recon2));
-                    app.recons{3} = app1.greyToColour(mat2gray(recon2 - recon));
-                    app.recons{4} = app1.greyToColour(mat2gray(recon2 ./ recon));
+                    app.ShowDropDown.ItemsData{2} = gui.greyToColour(mat2gray(sinogram2));
+                    app.ShowDropDown.ItemsData{3} = gui.greyToColour(mat2gray(sinogram - sinogram2));
+                    app.ShowDropDown.ItemsData{4} = gui.greyToColour(mat2gray(sinogram ./ sinogram2));
+                    app.recons{2} = gui.greyToColour(mat2gray(recon2));
+                    app.recons{3} = gui.greyToColour(mat2gray(recon2 - recon));
+                    app.recons{4} = gui.greyToColour(mat2gray(recon2 ./ recon));
                 else
                     app.ShowDropDown.ItemsData{4} = [];
                     app.ShowDropDown.ItemsData{3} = [];
@@ -359,7 +359,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: ReconstructionMenu
-        function ReconSaveImageSelected(app, event)
+        function ReconSaveImageSelected(app, ~)
             if isempty(app.recons{1})
                 errordlg('No file to save', 'Invalid file');
                 return
@@ -372,7 +372,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: SinogramMenu
-        function SinogramSaveImageSelected(app, event)
+        function SinogramSaveImageSelected(app, ~)
             if isempty(app.recons{1})
                 errordlg('No file to save', 'Invalid file');
                 return
@@ -386,7 +386,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: ReconstructionMenu_2
-        function ReconOpeninNewWindowMenuSelected(app, event)
+        function ReconOpeninNewWindowMenuSelected(app, ~)
             if isempty(app.recons{1}) % Check if reconstruction available
                 errordlg('No reconstruction to view', 'Invalid Reconstruction');return;
             end
@@ -400,7 +400,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: SinogramMenu_2
-        function SinogramOpeninNewWindowMenuSelected(app, event)
+        function SinogramOpeninNewWindowMenuSelected(app, ~)
             if isempty(app.recons{1}) % Check if reconstruction available (I will always create a reconstruction with a sinogram)
                 errordlg('No sinogram to view', 'Invalid Sinogram');return;
             end
@@ -415,7 +415,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Value changed function: SourceTypeDropDown
-        function SourceTypeDropDownValueChanged(app, event)
+        function SourceTypeDropDownValueChanged(app, ~)
             source_type = app.SourceTypeDropDown.Value;
             pathToMLAPP = fileparts(mfilename('fullpath'));
             if strcmp(source_type, 'Parallel Beam')
@@ -426,7 +426,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Value changed function: DetectorShapeDropDown
-        function DetectorShapeDropDownValueChanged(app, event)
+        function DetectorShapeDropDownValueChanged(app, ~)
             detector_type = app.DetectorShapeDropDown.Value;
             pathToMLAPP = fileparts(mfilename('fullpath'));
             if strcmp(detector_type, 'Flat')
@@ -437,7 +437,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Callback function: LoadPhantomMenu, PhantomLoadButton
-        function PhantomLoadButtonPushed(app, event)
+        function PhantomLoadButtonPushed(app, ~)
             [file,path] = uigetfile('*.mat','Load Saved Phantom File');
             if ischar(file)
                 [~, name, ~] = fileparts(file);
@@ -454,27 +454,29 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Callback function: LoadSourceMenu, SourceLoadButton
-        function SourceLoadButtonPushed(app, event)
-            [file,path] = uigetfile('*.mat','Load Saved Source File');
+        function SourceLoadButtonPushed(app, ~)
+            [file,path] = uigetfile({'*.mat;*.spk', 'MATLAB file or SpekPy spectrum file (*.mat, *.spk)'}, 'Load Saved Source File');
             if ischar(file)
-                [~, name, ~] = fileparts(file);
+                [~, name, ext] = fileparts(file);
                 app.Source1DropDown.Items{end+1} = name;
                 app.Source2DropDown.Items{end+1} = name;
                 try
-                    app.Source1DropDown.ItemsData{end+1} = ...
-                        load(fullfile(path, file), 'source').source;
-                    app.Source2DropDown.ItemsData{end+1} = ...
-                        load(fullfile(path, file), 'source').source;
-                    app.source_files{end+1} = fullfile(path, file);
+                    if ext == ".spk"
+                        loaded_source = source_fromfile(fullfile(path, file));
+                    else
+                        loaded_source = load(fullfile(path, file), 'source').source;
+                    end
                 catch ME
                     % If there is an error loading the source - let the user know
                     uialert(app.UIFigure, ME.message, 'Invalid Source File');
                 end
+                app.Source1DropDown.ItemsData{end+1} = loaded_source;
+                app.Source2DropDown.ItemsData{end+1} = loaded_source;
             end % Nothing selected
         end
 
         % Menu selected function: ResetInContextMenu, ResetMenu
-        function ResetMenuSelected(app, event)
+        function ResetMenuSelected(app, ~)
             % Reset the app to its initial state
 
             % Check if the user wants to reset
@@ -531,7 +533,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Value changed function: ShowDropDown
-        function ShowDropDownChanged(app, event)
+        function ShowDropDownChanged(app, ~)
             idx = app.ShowDropDown.ValueIndex;
             if ~isempty(app.recons{1})
                 if idx > 1 && isempty(app.recons{2})
@@ -564,7 +566,7 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: SaveStateInContextMenu, SaveStateMenu
-        function SaveStateSelected(app, event)
+        function SaveStateSelected(app, ~)
             [file,path] = uiputfile('*.mat','Save State');
             if ~ischar(file); return; end % Nothing selected
             state.recon_visible    = app.ReconstructionPanel.Visible;
@@ -678,13 +680,13 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: ReconstructionHelpMenu
-        function ReconstructionHelpMenuSelected(app, event)
+        function ReconstructionHelpMenuSelected(~, ~)
             doc iradon
             web('docs/build/html/user_guide/gui.html#reconstruction')
         end
 
         % Menu selected function: ExportMenu, ExporttoScriptMenu
-        function ExporttoScriptMenuSelected(app, event)
+        function ExporttoScriptMenuSelected(app, ~)
             % Create a script to run the simulation
             [file,path] = uiputfile('*.m','Save Script');
             if ~ischar(file); return; end % Nothing selected
@@ -699,8 +701,10 @@ classdef gui < matlab.apps.AppBase
                 fprintf(fid, "source1 = load('%s', 'source').source;\n", ...
                     fullfile(pathToMLAPP, app.source_files{source1_selected}));
             else
-                fprintf(fid, "source1 = load('%s', 'source').source;\n", ...
-                    app.source_files{source1_selected});
+                source1 = app.Source1DropDown.ItemsData{source1_selected};
+                save(fullfile(path, 'source1.mat'), "source1");
+                fprintf(fid, "source1 = load('%s', 'source1').source1;\n", ...
+                    fullfile(path, 'source1.mat'));
             end
 
             source2_selected = app.Source2DropDown.ValueIndex;
@@ -709,8 +713,10 @@ classdef gui < matlab.apps.AppBase
                 fprintf(fid, "source2 = load('%s', 'source').source;\n", ...
                     fullfile(pathToMLAPP, app.source_files{source2_selected}));
             elseif source2_selected > 3
-                fprintf(fid, "source2 = load('%s', 'source').source;\n", ...
-                    app.source_files{source2_selected});
+                source2 = app.Source2DropDown.ItemsData{source2_selected};
+                save(fullfile(path, 'source2.mat'), "source2");
+                fprintf(fid, "source2 = load('%s', 'source2').source2;\n", ...
+                    fullfile(path, 'source2.mat'));
             end
 
             % Get the phantom
@@ -832,27 +838,27 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: DocumentationMenu
-        function DocumentationMenuSelected(app, event)
+        function DocumentationMenuSelected(~, ~)
             web('docs\build\html\index.html')
         end
 
         % Menu selected function: SourceHelpMenu_run
-        function SourceHelpMenu_runSelected(app, event)
+        function SourceHelpMenu_runSelected(~, ~)
             web('docs/build/html/user_guide/gui.html#source')
         end
 
         % Menu selected function: PhantomHelpMenu_run
-        function PhantomHelpMenu_runSelected(app, event)
+        function PhantomHelpMenu_runSelected(~, ~)
             web('docs/build/html/user_guide/gui.html#phantom')
         end
 
         % Menu selected function: DetectorHelpMenu_run
-        function DetectorContextMenuSelected(app, event)
+        function DetectorContextMenuSelected(~, ~)
             web('docs/build/html/user_guide/gui.html#detector')
         end
 
         % Menu selected function: ScatterHelpMenu
-        function ScatterContextMenuSelected(app, event)
+        function ScatterContextMenuSelected(~, ~)
             web('docs/build/html/user_guide/gui.html#scatter')
         end
 
@@ -914,7 +920,7 @@ classdef gui < matlab.apps.AppBase
             % Create ExportMenu
             app.ExportMenu = uimenu(app.FileMenu);
             app.ExportMenu.MenuSelectedFcn = createCallbackFcn(app, @ExporttoScriptMenuSelected, true);
-            app.ExportMenu.Text = 'Export';
+            app.ExportMenu.Text = 'Export to Script';
 
             % Create ResetMenu
             app.ResetMenu = uimenu(app.FileMenu);
