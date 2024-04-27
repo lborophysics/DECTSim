@@ -17,7 +17,7 @@ classdef (Abstract) sensor
             arguments
                 energy_range (2, 1) double {mustBeNonnegative}
                 num_bins     (1, 1) double {mustBePositive, mustBeInteger}
-                num_samples  (1, 1) double {mustBePositive, mustBeInteger}
+                num_samples  (1, 1) double {mustBePositive, mustBeInteger} = 1
             end
             self.energy_range = energy_range;
             assert(energy_range(1) < energy_range(2), 'sensor:IncorrectEnergyRange', 'Energy range must be increasing');
