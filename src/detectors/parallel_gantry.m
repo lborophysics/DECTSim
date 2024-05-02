@@ -4,7 +4,7 @@ classdef parallel_gantry < gantry
         function source_pos = get_source_pos(self, index, pixel_pos)
             % Get the position of the source at a given angular index
             source_pos = pixel_pos + self.get_rot_mat(index) * ...
-                (self.to_source_vec .* self.dist_to_detector);
+                (self.to_source_vec .* self.dist_to_detector/2);
         end
     end
 end

@@ -42,7 +42,7 @@ classdef gantry < handle
             % Get the position of the source at a given angular index
             % Third argument is the pixel position, which is not used here, useful for 
             % parallel beams.
-            source_pos = self.get_rot_mat(index) * (self.to_source_vec .* self.rot_radius);
+            source_pos = (self.get_rot_mat(index) * self.to_source_vec) .* self.rot_radius;
         end
 
         function rot_mat = get_rot_mat(self, index)

@@ -146,7 +146,7 @@ parfor angle = 1:num_rotations
                 end
 
                 % Add the residual length in air
-                obj_lens(end) = obj_lens(end) + ray_lens(y_pix, z_pix) - sum(obj_lens);
+                obj_lens(end) = obj_lens(end) + (ray_lens(y_pix, z_pix) - sum(obj_lens));
             end 
             % Now we calculate the attenuation
             mus = sum(mu_dict .* obj_lens, 1);
