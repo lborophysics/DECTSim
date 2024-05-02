@@ -32,7 +32,7 @@ classdef source_fromfile < source % could create a spectrum super class.
             
             self = self@source(num_energies);
             self.ebins = ebins;
-            self.fluences = fluences .* ebins;
+            self.fluences = (fluences .* ebins) .* 100^2*units.cm2; % Convert to fluence per cm^2 at 1 cm
         end
 
         function energies = get_energies(self, range)
