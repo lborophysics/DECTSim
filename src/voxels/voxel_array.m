@@ -24,7 +24,8 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
             self.dimensions = zeros(3, 1) + voxel_size;
 
             assert(sum(object_dims ~= 0) == 3, 'There must be at least one length in each dimension')
-            self.num_planes = object_dims ./ voxel_size + 1; % +1 to include the last plane (fence post problem)
+            self.num_planes = round(object_dims ./ voxel_size + 1, 10); % +1 to include the last plane (fence post problem)
+            assert(all(floor(self.num_planes) == self.num_planes), 'The number of planes must be an integer')
 
             % In the future, I need to create this array based on the get_voxel_mu
             % nobj = nargin - 3;
@@ -40,6 +41,8 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
         function self = update_voxel_size(self, new_voxel_size)
             % Update the voxel size
             self.num_planes = (self.num_planes - 1) .* (self.dimensions ./ new_voxel_size) + 1;
+            self.num_planes = round(self.num_planes, 10); 
+            assert(all(floor(self.num_planes) == self.num_planes), 'The number of planes must be an integer')
             self.dimensions = zeros(3, 1) + new_voxel_size;
         end
 
