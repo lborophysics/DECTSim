@@ -53,10 +53,7 @@ classdef duke_source < source
             fluences = zeros(1, num_ranges);
             spectrum_slice = self.spectrum(ypixel, :);
             for i = 1:num_ranges
-                % indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
-                % fluences(i) = sum(spectrum_slice(indices));%.* self.ebins(indices));
-                fluences(i) = sum(spectrum_slice(self.ebins >= range(i,1) & self.ebins < range(i,2)));%.* self.ebins(indices));
-                % fluences(i) = sum(spectrum_slice(indices));%.* self.ebins(indices));
+                fluences(i) = sum(spectrum_slice(self.ebins >= range(i,1) & self.ebins < range(i,2)));
             end
         end
 
