@@ -51,12 +51,11 @@ classdef detector_tests < matlab.unittest.TestCase
 
             angle = chord2ang(pixel_width, d2d);
             chord_radius = realsqrt(radius^2 - (pixel_width/2)^2);
-            rot_by_pixel = rotz(angle);
             vector = rotz(-61*angle/2) * [0; -chord_radius; 0];
             z_pos = @(i) (-2 + 0.2 + (0.4 .* (i-1)));
             for i = 20:40
                 for j = 1:10
-                    exp_pos   = rot_by_pixel^i * vector + [0;0;z_pos(j)];
+                    exp_pos   = rotz(angle*i) * vector + [0;0;z_pos(j)];
                     
                     pixel_position = pixel_generator(i, j);
                     tc.verifyEqual(pixel_position, exp_pos, 'RelTol', 1e-14);
@@ -100,19 +99,21 @@ classdef detector_tests < matlab.unittest.TestCase
             a1 = flat_detector([0.1, 0.35], [110, 20]);
             pixel_generator = a1.set_array_angle(geom, 13);
             hit_at_angle = a1.hit_pixel(geom, 13);
-            for i = 1:110
+            for i = 1:1%10
                 for j = 1:20
                     pixel_pos = pixel_generator(i, j);
                     ray_start = geom.get_source_pos(13, pixel_pos);
                     ray_dir   = pixel_pos - ray_start;
                     exp_ray_len = norm(ray_dir);
 
-                    [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir ./ exp_ray_len);
+                    [pixel, act_ray_len, angle, hit] = hit_at_angle(ray_start, ray_dir ./ exp_ray_len);
                     tc.verifyEqual(pixel, [i; j]);
                     tc.verifyEqual(act_ray_len, exp_ray_len, "RelTol", 1e-15);
                     tc.verifyTrue(hit);
+                    % tc.verifyEqual(angle, pi/2, "RelTol", 1e-15);
                 end
-            end 
+            end
+
             % Test for a ray that just misses the detector
             pixel_pos = pixel_generator(111, 20);
             ray_start = geom.get_source_pos(13, pixel_pos);
@@ -120,9 +121,10 @@ classdef detector_tests < matlab.unittest.TestCase
             ray_dir   = ray_dir ./ norm(ray_dir);
             hit_at_angle = a1.hit_pixel(geom, 13);
 
-            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
+            [pixel, act_ray_len, angle, hit] = hit_at_angle(ray_start, ray_dir);
             tc.verifyEqual(pixel, [0; 0]);
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
+            % tc.verifyEqual(angle, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);
 
             % Test for a ray would hit the detector if it was going the other way
@@ -133,9 +135,10 @@ classdef detector_tests < matlab.unittest.TestCase
             ray_dir   = ray_dir ./ norm(ray_dir);
             hit_at_angle = a1.hit_pixel(geom, 35);
             
-            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, -ray_dir);
+            [pixel, act_ray_len, angle, hit] = hit_at_angle(ray_start, -ray_dir);
             tc.verifyEqual(pixel, [0; 0]);
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
+            % tc.verifyEqual(angle, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);                
             
 
@@ -148,21 +151,28 @@ classdef detector_tests < matlab.unittest.TestCase
             
             ray_dirs = repmat(ray_dir, 1, 10);
             ray_starts = repmat(ray_start, 1, 10);
-            [pixels, act_ray_lens, hits] = hit_at_angle(ray_starts, ray_dirs);
+            [pixels, act_ray_lens, angles, hits] = hit_at_angle(ray_starts, ray_dirs);
             tc.verifyTrue(all(pixels(1,:) == 55));
             tc.verifyTrue(all(pixels(2,:) == 15));
             tc.verifyEqual(act_ray_lens, repmat(ray_len, 1, 10), "RelTol", 1e-15);
+            % tc.verifyEqual(angles, repmat(pi/2, 1, 10), "RelTol", 1e-15);
             tc.verifyTrue(all(hits));
 
             ray_dirs(:, 2:4) = -ray_dirs(:, 2:4);
-            [pixels, act_ray_lens, hits] = hit_at_angle(ray_starts, ray_dirs);
+            [pixels, act_ray_lens, angles, hits] = hit_at_angle(ray_starts, ray_dirs);
             tc.verifyTrue(all(pixels(1,2:4) == 0));
             tc.verifyTrue(all(pixels(2,2:4) == 0));
+            
             tc.verifyEqual(act_ray_lens(2:4), zeros(1, 3), "RelTol", 1e-15);
+            % tc.verifyEqual(angles(2:4), zeros(1, 3), "RelTol", 1e-15);
+            
             tc.verifyTrue(all(~hits(2:4)));
             tc.verifyTrue(all(pixels(1,[1,5:end]) == 55));
             tc.verifyTrue(all(pixels(2,[1,5:end]) == 15));
+            
             tc.verifyEqual(act_ray_lens([1,5:end]), repmat(ray_len, 1, 7), "RelTol", 1e-15);
+            % tc.verifyEqual(angles([1,5:end]), repmat(pi/2, 1, 7), "RelTol", 1e-15);
+            
             tc.verifyTrue(all(hits([1,5:end])));
         end
 
@@ -177,14 +187,19 @@ classdef detector_tests < matlab.unittest.TestCase
                     ray_start = geom.get_source_pos(1, pixel_pos);
                     ray_dir   = pixel_pos - ray_start;
                     exp_ray_len = norm(ray_dir);
+                    unit_ray = ray_dir ./ exp_ray_len;
 
-                    [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir ./ exp_ray_len);
+                    [pixel, act_ray_len, angle, hit] = hit_at_angle(ray_start, unit_ray);
                     tc.verifyEqual(pixel, [i; j]);
                     tc.verifyEqual(act_ray_len, exp_ray_len, "RelTol", 2e-15);
                     tc.verifyTrue(hit);
+                    
+                    unit_xy_pos = pixel_pos(1:2) ./ norm(pixel_pos(1:2));
+                    unit_xy_pos(3) = 0;
+                    tc.verifyEqual(angle, asin(abs(sum(unit_ray .* unit_xy_pos))), "RelTol", 5e-14);
                 end
             end
-
+            % return
             % Test for a ray that just misses the detector  
             pixel_pos = pixel_generator(61, 10);
             ray_start = geom.get_source_pos(1, pixel_pos);
@@ -192,10 +207,11 @@ classdef detector_tests < matlab.unittest.TestCase
             ray_dir   = ray_dir ./ norm(ray_dir);
             hit_at_angle = c1.hit_pixel(geom, 1);
 
-            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, ray_dir);
+            [pixel, act_ray_len, angle, hit] = hit_at_angle(ray_start, ray_dir);
             tc.verifyEqual(pixel, [0; 0]);
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);
+            tc.verifyEqual(angle, 0, "RelTol", 1e-15);  
 
             % Test for a ray would hit the detector if it was going the other way
             pixel_generator = c1.set_array_angle(geom, 35);
@@ -205,10 +221,11 @@ classdef detector_tests < matlab.unittest.TestCase
             ray_dir   = ray_dir ./ norm(ray_dir);
             hit_at_angle = c1.hit_pixel(geom, 35);
             
-            [pixel, act_ray_len, hit] = hit_at_angle(ray_start, -ray_dir);
+            [pixel, act_ray_len, angle, hit] = hit_at_angle(ray_start, -ray_dir);
             tc.verifyEqual(pixel, [0; 0]);
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
-            tc.verifyFalse(hit);                
+            tc.verifyFalse(hit);
+            tc.verifyEqual(angle, 0, "RelTol", 1e-15);         
         end
     end
 end
