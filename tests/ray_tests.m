@@ -73,6 +73,80 @@ classdef ray_tests < matlab.unittest.TestCase
             tc.assertEqual(indices, []);
         end
 
+        function test_siddon_ray_reversability(tc)
+            % Voxel array constants
+            vox_arr_center = zeros(3, 1);
+            phantom_radius = 30/2 * units.cm; % In the x-y planex
+            phantom_width = 50 * units.cm; % In the z direction
+            voxel_size = 1 * units.mm;
+
+            % Create voxel array
+            water_cylinder = voxel_cylinder(vox_arr_center, phantom_radius, phantom_width, material_attenuation("water"));
+            voxels = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
+                voxel_size, {water_cylinder});
+
+            % Detector constants
+            dist_to_detector = 1.05 * units.m;
+            pixel_size = [1 1] .* units.mm;
+            num_pixels = [900 1];
+            num_rotations = 360;
+
+            dgantry = parallel_gantry(dist_to_detector, num_rotations, 2*pi);
+            darray = flat_detector(pixel_size, num_pixels);
+            
+            pixel_generator_45 = darray.set_array_angle(dgantry, 43);
+            pixel_generator_135 = darray.set_array_angle(dgantry, 137);
+            pixel_generator_225 = darray.set_array_angle(dgantry, 222);
+            pixel_generator_315 = darray.set_array_angle(dgantry, 318);
+
+            pixel360_45 = pixel_generator_45(360, 1);
+            pixel360_135 = pixel_generator_135(360, 1);
+            pixel360_225 = pixel_generator_225(143, 1);
+            pixel360_315 = pixel_generator_315(670, 1);
+
+            ray_start_45 = dgantry.get_source_pos(43, 0);
+            ray_start_135 = dgantry.get_source_pos(137, 0);
+            ray_start_225 = dgantry.get_source_pos(222, 0);
+            ray_start_315 = dgantry.get_source_pos(318, 0);
+
+            ray_dir_45 = pixel360_45 - ray_start_45;
+            ray_dir_135 = pixel360_135 - ray_start_135;
+            ray_dir_225 = pixel360_225 - ray_start_225;
+            ray_dir_315 = pixel360_315 - ray_start_315;
+
+            vox_init    = voxels.array_position;
+            vox_dims    = voxels.dimensions;
+            vox_nplanes = voxels.num_planes;
+
+            [lengths_45, indices_45] = ray_trace(ray_start_45, ray_dir_45, vox_init, vox_dims, vox_nplanes);
+            [rev_lengths_45, rev_indices_45] = ray_trace(pixel360_45, -ray_dir_45, vox_init, vox_dims, vox_nplanes);
+
+            tc.assertEqual(sum(lengths_45), sum(rev_lengths_45), 'AbsTol', 1e-13, 'RelTol', 2e-12);
+            tc.assertEqual(lengths_45, flip(rev_lengths_45, 2), 'AbsTol', 1e-10, 'RelTol', 1e-12);
+            tc.assertEqual(indices_45, flip(rev_indices_45, 2), 'AbsTol', 1e-13, 'RelTol', 1e-12);
+
+            [lengths_135, indices_135] = ray_trace(ray_start_135, ray_dir_135, vox_init, vox_dims, vox_nplanes);
+            [rev_lengths_135, rev_indices_135] = ray_trace(pixel360_135, -ray_dir_135, vox_init, vox_dims, vox_nplanes);
+            
+            tc.assertEqual(sum(lengths_135), sum(rev_lengths_135), 'AbsTol', 1e-13, 'RelTol', 2e-12);
+            tc.assertEqual(lengths_135, flip(rev_lengths_135, 2), 'AbsTol', 1e-10, 'RelTol', 1e-12);
+            tc.assertEqual(indices_135, flip(rev_indices_135, 2), 'AbsTol', 1e-13, 'RelTol', 1e-12);
+
+            [lengths_225, indices_225] = ray_trace(ray_start_225, ray_dir_225, vox_init, vox_dims, vox_nplanes);
+            [rev_lengths_225, rev_indices_225] = ray_trace(pixel360_225, -ray_dir_225, vox_init, vox_dims, vox_nplanes);
+            
+            tc.assertEqual(sum(lengths_225), sum(rev_lengths_225), 'AbsTol', 1e-13, 'RelTol', 2e-11);
+            tc.assertEqual(lengths_225, flip(rev_lengths_225, 2), 'AbsTol', 1e-9, 'RelTol', 1e-12);
+            tc.assertEqual(indices_225, flip(rev_indices_225, 2), 'AbsTol', 1e-13, 'RelTol', 1e-12);
+
+            [lengths_315, indices_315] = ray_trace(ray_start_315, ray_dir_315, vox_init, vox_dims, vox_nplanes);
+            [rev_lengths_315, rev_indices_315] = ray_trace(pixel360_315, -ray_dir_315, vox_init, vox_dims, vox_nplanes);
+
+            tc.assertEqual(sum(lengths_315), sum(rev_lengths_315), 'AbsTol', 1e-13, 'RelTol', 3e-12);
+            tc.assertEqual(lengths_315, flip(rev_lengths_315, 2), 'AbsTol', 1e-10, 'RelTol', 1e-12);
+            tc.assertEqual(indices_315, flip(rev_indices_315, 2), 'AbsTol', 1e-13, 'RelTol', 1e-12);
+        end
+
         function test_many_siddon_ray(tc)
             threes = zeros(3, 5) + 3;
 
