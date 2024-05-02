@@ -177,15 +177,15 @@ parfor angle = 1:num_rotations
 
                 % Calculate the scatter directions and energies
                 [ndirs, nnrjs] = compton_scatter(ray_dir, mean_energy, thetas, phis);
-                [pixels, scatter_lens, hits] = hit_at_angle(scatter_starts, ndirs);
+                [pixels, scatter_lens, angles, hits] = hit_at_angle(scatter_starts, ndirs);
 
                 % Set all the scatter points that do hit the detector to the correct values
-                scatter_energies(hits) = nnrjs(hits);
-                scatter_dirs(:, hits) = ndirs(:, hits) .* scatter_lens(hits);
-                hit_pixels(:, hits) = pixels(:, hits);
+                scatter_energies(hits) = nnrjs (   hits);
+                scatter_dirs (:, hits) = ndirs (:, hits) .* scatter_lens(hits);
+                hit_pixels   (:, hits) = pixels(:, hits);
 
                 % Remove scatter points that don't hit the detector arrays
-                ignore = isnan(scatter_energies);
+                ignore = isnan(scatter_energies) | angles > pi/30; % this angle is the scatter grid angle
                 scatter_starts  (:, ignore) = [];
                 prob_scatter    (   ignore) = [];
                 scatter_dirs    (:, ignore) = [];

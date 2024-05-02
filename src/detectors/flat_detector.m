@@ -24,14 +24,14 @@ classdef flat_detector < detector_array
             % Get the pixel information
             pixel_width  = self.pixel_dims(1);
             pixel_height = self.pixel_dims(2);
-            ny_pixels    = self.n_pixels(1);
+            half_y       = (self.n_pixels(1) + 1) / 2;
             nz_pixels    = self.n_pixels(2);
 
             % Create the function which returns the information for each ray
             pixel_generator = @generator; 
             function pixel_centre = generator(y_pixel, z_pixel)
                 pixel_centre = centre +  ... 
-                            detector_vec .* (y_pixel - (ny_pixels+1)/2) .* pixel_width + ...
+                            detector_vec .* (y_pixel - half_y) .* pixel_width + ...
                             [0;0;pixel_height] .* (z_pixel - (nz_pixels+1)/2);
             end
         end
@@ -55,7 +55,7 @@ classdef flat_detector < detector_array
 
             D = dot(normal_vec, corner); % D as in Ax + By + Cz = D (where A, B, C are the components of the normal vector to the plane)
             hit_pixel_at_angle = @at_angle;
-            function [pixel, ray_len, hit] = at_angle(ray_starts, ray_dirs)
+            function [pixel, ray_len, angles, hit] = at_angle(ray_starts, ray_dirs)
                 assert(all(abs(sum(ray_dirs.^2, 1) - 1) < 1e-14), "All ray directions must be unit vectors")
                 assert(size(ray_starts, 2) == size(ray_dirs, 2), "The number of ray starts must match the number of ray directions")
                 
@@ -65,6 +65,7 @@ classdef flat_detector < detector_array
                 ray_len = (D - sum(ray_starts .* normal_vec, 1)) ...
                     ./ sum(ray_dirs .* normal_vec, 1);
                 ray_hits = ray_starts + ray_dirs .* ray_len;
+                angles = acos(sum(ray_dirs .* normal_vec, 1));
                 
                 % Calculate the pixel number
                 if abs(detector_vec(1)) > 0
@@ -84,6 +85,7 @@ classdef flat_detector < detector_array
                 pixel(1, hit) = ypix(hit);
                 pixel(2, hit) = zpix(hit);
                 ray_len(~hit) = 0;
+                angles (~hit) = 0;
             end
         end
     end
