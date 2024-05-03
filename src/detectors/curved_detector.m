@@ -43,8 +43,8 @@ classdef curved_detector < detector_array
             dist_to_detector = detect_geom.dist_to_detector; % Distance from the source to the detector == 2 * rot_radius
 
             % Get the detector radius
-            rot_radius  = realsqrt(detect_geom.rot_radius^2 - (self.pixel_dims(1)/2)^2); % Correct to the radius of the chords
-            r2 = rot_radius^2;
+            r2 = detect_geom.rot_radius^2 - (self.pixel_dims(1)/2)^2; % Correct to the radius of the chords
+            rot_radius  = realsqrt(r2);
 
             % Calculate information about the source position and direction
             to_detect_vec = detect_geom.get_rot_mat(angle_index) ...
@@ -60,7 +60,6 @@ classdef curved_detector < detector_array
             % Calculate the angle of the left edge of the detector
             left_edge   = rotz(-pixel_angle * ny_pixels / 2) * to_detect_vec .* rot_radius;
             left_edge   = left_edge(1:2);
-            norm_right   = sqrt(sum(left_edge.^2));
 
             % Calculate the half height of the detector
             half_z     = nz_pixels / 2;
@@ -86,30 +85,25 @@ classdef curved_detector < detector_array
                 dy = ray_dirs(2, :);
                 dr2 = dx.^2 + dy.^2;
                 
-                % Check if the ray is parallel to the detector
-                hit(dr2 < 1e-14) = false;
-                if ~any(hit); return; end
-                
                 % Calculate the discriminant
-                x1 = ray_starts(1, :);
-                y1 = ray_starts(2, :);
-                discriminant = r2 .* dr2 - (dx .* y1 - dy .* x1).^2;
+                discriminant = (dr2 .* r2) - ...
+                    (dx .* ray_starts(2, :) - dy .* ray_starts(1, :)).^2;
 
                 % Check if the ray hits the cylinder
                 hit(discriminant <= 0) = false;
                 if ~any(hit); return; end
                 
-                % Remove the rays that don't hit the detector
-                x1 = x1(hit); y1 = y1(hit);
-                dx = dx(hit); dy = dy(hit);
+                % Select the rays which hit the cylinder
+                x1 = ray_starts(1, hit); y1 = ray_starts(2, hit);
                 dirs = ray_dirs(:, hit);
+                dx = dirs(1, :); dy = dirs(2, :);
                 
                 dr2 = dr2(hit);
                 sqrt_discriminant = sqrt(discriminant(hit));
 
                 % Calculate the two possible hit distances for the rays                
                 d1 = (-(dx .* x1 + dy .* y1) + sqrt_discriminant) ./ dr2;
-                d2 =-( (dx .* x1 + dy .* y1) + sqrt_discriminant) ./ dr2;
+                d2 = (-(dx .* x1 + dy .* y1) - sqrt_discriminant) ./ dr2;
                 
                 % Calculate the hit points in the detector
                 point1 = ray_starts(:, hit) + d1 .* dirs;
@@ -118,24 +112,22 @@ classdef curved_detector < detector_array
                 % Calculate the z pixel number
                 zpix1 = ceil(half_z + point1(3, :) ./ pixel_height);
                 zpix2 = ceil(half_z + point2(3, :) ./ pixel_height);
-
-                norm1 = sqrt(sum(point1(1:2, :).^2, 1));
-                norm2 = sqrt(sum(point2(1:2, :).^2, 1));
-
+                
                 % Calculate the y pixel number by finding the angle of intersection with respect to the left edge
-                angle1 = acos(sum(point1(1:2, :) .* left_edge, 1) ./ (norm_right * norm1));
-                angle2 = acos(sum(point2(1:2, :) .* left_edge, 1) ./ (norm_right * norm2));
+                dist_between1 = sum((left_edge - point1(1:2, :)).^2, 1);
+                dist_between2 = sum((left_edge - point2(1:2, :)).^2, 1);
 
-                ypix1 = ceil(angle1 ./ pixel_angle); % Don't like this numerical instability
-                ypix2 = ceil(angle2 ./ pixel_angle); % Don't like this numerical instability
+                ypix1 = ceil(acos(1 - dist_between1 ./ (2*r2)) ./ pixel_angle); % Don't like this numerical instability
+                ypix2 = ceil(acos(1 - dist_between2 ./ (2*r2)) ./ pixel_angle); % Don't like this numerical instability
+                ypix2(ypix2 == ypix1) = -1; % If the angles are the same, set the second pixel to -1, so we only hit one pixel
 
                 cross1 = point1(2, :) .* left_edge(1) - point1(1, :) .* left_edge(2);
                 cross2 = point2(2, :) .* left_edge(1) - point2(1, :) .* left_edge(2);
-                
+
                 % Check if the hit is within the detector arc
                 first_hit  = zpix1 >= 1 & zpix1 <= nz_pixels & ypix1 >= 1 & ypix1 <= ny_pixels & d1 > 0 & cross1 >= 0;
                 second_hit = zpix2 >= 1 & zpix2 <= nz_pixels & ypix2 >= 1 & ypix2 <= ny_pixels & d2 > 0 & cross2 >= 0;
-
+                
                 assert(~any(first_hit == 1 & second_hit == 1), 'Both first and second hit are true, this should not happen');
 
                 % Check if any rays hit the detector
