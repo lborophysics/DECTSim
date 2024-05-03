@@ -102,6 +102,7 @@ function [ls, idxs] = ray_trace_single(ray_start, v1_to_v2, init_plane, v_dims, 
         % Get the union of the arrays
         a = unique([a_min, a_set_x, a_set_y, a_set_z, a_max]);
         % a = sort([a_min, a_set_x, a_set_y, a_set_z, a_max]);
+        a = a(a >= a_min & a <= a_max);
     
         idxs = floor(1 + ((a(2:end) + a(1:end-1)).* v1_to_v2./2 - to_plane) ./ v_dims);
         ls = norm(v1_to_v2) * diff(a);
