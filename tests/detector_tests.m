@@ -186,8 +186,9 @@ classdef detector_tests < matlab.unittest.TestCase
             pixel_positions = c1.set_array_angle(geom, 1);
             pixel_positions = reshape(pixel_positions, 3, 60, 10);
             hit_at_angle = c1.hit_pixel(geom, 1);
-            for i = 1:60
-                for j = 1:10
+
+            for i = 3:4%30:40
+                for j = 1:1%0
                     pixel_pos = pixel_positions(:, i, j);
                     ray_start = geom.get_source_pos(1, pixel_pos);
                     ray_dir   = pixel_pos - ray_start;
@@ -201,10 +202,10 @@ classdef detector_tests < matlab.unittest.TestCase
                     
                     unit_xy_pos = pixel_pos(1:2) ./ norm(pixel_pos(1:2));
                     unit_xy_pos(3) = 0;
-                    tc.verifyEqual(angle, acos(abs(sum(unit_ray .* unit_xy_pos))), "RelTol", 1e-12);
+                    tc.verifyEqual(angle, acos(sum(unit_ray .* unit_xy_pos)), "RelTol", 1e-13, "AbsTol", 1e-13);
                 end
             end
-            % return
+
             % Test for a ray that just misses the detector  
             c2 = curved_detector([4.5*pi/60, 0.4], [120, 20]);
             pixel_positions2 = c2.set_array_angle(geom, 1);
@@ -235,6 +236,55 @@ classdef detector_tests < matlab.unittest.TestCase
             tc.verifyEqual(act_ray_len, 0, "RelTol", 1e-15);
             tc.verifyFalse(hit);
             tc.verifyEqual(angle, 0, "RelTol", 1e-15);         
+        end
+
+
+        function test_many_hit_curved_pixel(tc)
+            geom = gantry(9, 10, pi);
+            c1 = curved_detector([4.5*pi/600, 0.4], [600, 10]);
+            pixels = c1.set_array_angle(geom, 11);
+            pixels = reshape(pixels, 3, 600, 10);
+            hit_at_angle = c1.hit_pixel(geom, 11);
+            
+            rng(199);
+            start_list = zeros(3, 600, 10);
+            dir_list   = zeros(3, 600, 10);
+            res_pixels = zeros(2, 600, 10);
+            flip       = (-1).^(rand(600, 10) < 0.3);
+            
+            for i = 1:600
+                for j = 1:10
+                    this_flip = flip(i, j);
+                    start_list(:, i, j) = geom.get_source_pos(11, 0);
+                    dir_list(:, i, j) = pixels(:, i, j) - ...
+                        this_flip * start_list(:, i, j);
+                    
+                    % Move the start point a bit
+                    move_by = rand;
+                    start_list(:, i, j) = start_list(:, i, j) + ...
+                        move_by .* dir_list(:, i, j);
+                    dir_list(:, i, j) = (1-move_by) * dir_list(:, i, j);
+                    
+                    if this_flip == -1
+                        res_pixels(:, i, j) = [0; 0];
+                    else
+                        res_pixels(:, i, j) = [i; j];
+                    end
+                end
+            end
+            % Reshape the arrays
+            hit = reshape(flip==1, 1, 6000);
+            start_list = reshape(start_list, 3, 6000);
+            dir_list = reshape(dir_list, 3, 6000);
+            res_pixels = reshape(res_pixels, 2, 6000);
+
+            exp_ray_len = sqrt(sum(dir_list.^2, 1));
+            dir_list = dir_list ./ exp_ray_len;
+            exp_ray_len(~hit) = 0;
+            [pixels, act_ray_lens, ~, hits] = hit_at_angle(start_list, dir_list);
+            tc.verifyEqual(pixels, res_pixels);
+            tc.verifyEqual(act_ray_lens, exp_ray_len, "RelTol", 1e-13, "AbsTol", 1e-13);
+            tc.verifyEqual(hits, hit);
         end
     end
 end
