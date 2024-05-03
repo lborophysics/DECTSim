@@ -1,5 +1,5 @@
-classdef (Abstract) detector_array
-    properties (SetAccess = protected)
+classdef (Abstract) detector_array < handle
+    properties (SetAccess = immutable)
         pixel_dims (1, 2) double % [width, height] of each pixel
         n_pixels   (1, 2) double % [n_x, n_y] number of pixels in each direction
     end

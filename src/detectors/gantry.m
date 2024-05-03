@@ -1,5 +1,5 @@
 classdef gantry < handle
-    properties
+    properties (SetAccess=immutable)
         % Detector geometry
         dist_to_detector   (1, 1) double % Distance from source to detector
         rot_radius         (1, 1) double % Radius of rotation of the detector
