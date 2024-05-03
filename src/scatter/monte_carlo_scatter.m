@@ -142,7 +142,7 @@ parfor angle = 1:num_rotations
                 prob_scatter = 1 - exp(-ls ./ mfps);
 
                 % Calculate the number of scatter points to sample
-                num_points = floor(n_mfps(end) ./ mfp_fraction);
+                num_points = floor(n_mfps(end) ./ mfp_fraction) - 1; % -1 because we don't want to sample the last point
                 ray_num_scatters = num_scatters*num_points;
 
                 % Determine where the scatter points are
@@ -151,11 +151,17 @@ parfor angle = 1:num_rotations
                 probabilities = zeros(1, num_points);
                 prev_scatter = 1;
                 for i = 1:num_points
-                    [~, iscatter] = find(n_mfps - i*mfp_fraction > 0, 1);
+                    [~, iscatter] = find(n_mfps - i*mfp_fraction >= 0, 1);
+                    if isempty(iscatter)
+                        scatter_points(:, i:end) = [];
+                        probabilities(i:end) = [];
+                        break;
+                    end
+                    
                     lis((i-1)*num_scatters+1:i*num_scatters) = iscatter;
                     scatter_points(:, i) = ray_start + ray_dir .* sum(ls(1:iscatter));
                     probabilities(i) = sum(prob_scatter(prev_scatter:iscatter));
-                    prev_scatter = iscatter+1;                    
+                    prev_scatter = iscatter+1;  
                 end
                 % Sample the scatter angles
                 thetas = sample_angles(randi(num_angle_samples, 1, ray_num_scatters));
@@ -178,7 +184,7 @@ parfor angle = 1:num_rotations
                 hit_pixels   (:, hits) = pixels(:, hits);
 
                 % Remove scatter points that don't hit the detector arrays
-                ignore = isnan(scatter_energies) | angles > pi/30; % this angle is the scatter grid angle
+                ignore = isnan(scatter_energies) | angles > pi/15; % this angle is the scatter grid angle
                 scatter_starts  (:, ignore) = [];
                 prob_scatter    (   ignore) = [];
                 scatter_dirs    (:, ignore) = [];
