@@ -93,42 +93,35 @@ assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
     'Phantom is not entirely within the detector');
 
 num_angle_samples = 1e6;
-sample_angles = compton_dist(zeros(1, num_angle_samples) + mean_energy);
+sample_angles = compton_dist(zeros(1, num_angle_samples) + mean_energy); % possibly make this a tall array?
 
 scatter_count = zeros(num_bins, npy, npz, num_rotations);
 parfor angle = 1:num_rotations
     % Do the linear indexing of scatter
-    pixel_generator = feval(set_array_angle, angle);
-    hit_at_angle = feval(hit_pixel, angle);
     ang_scatter_count = zeros(num_bins, npy, npz);
-
+    hit_at_angle = feval(hit_pixel, angle);
+    
+    % For each rotation, we calculate the image for the source
     intensity_list = zeros(num_bins*num_esamples, npy, npz);
-    ray_starts = zeros(3, npy*npz);
-    ray_dirs   = zeros(3, npy*npz);
-    ray_lens   = zeros(1, npy*npz);
+    pixel_positions = feval(set_array_angle, angle);
+    ray_starts = feval(get_source_pos, angle, pixel_positions);    
+    ray_dirs = pixel_positions - ray_starts;
+
+    % Ray trace the primary rays
+    [traced_lens, traced_idxs] = ray_tracing(ray_starts, ray_dirs);
+    
+    ray_length2s = sum(ray_dirs.^2, 1);
+    ray_dirs = ray_dirs ./ sqrt(ray_length2s);
+    ray_length2s = reshape(ray_length2s, npy, npz);
 
     for z_pix = 1:npz
         for y_pix = 1:npy
-            pixel_position = pixel_generator(y_pix, z_pix);
-            ray_start = feval(get_source_pos, angle, pixel_position); 
-            ray_dir = pixel_position - ray_start;
-            ray_length2 = sum(ray_dir.^2);
-            ray_length = sqrt(ray_length2);
-
-            idx = (z_pix-1)*npy + y_pix;
-            ray_starts(:, idx) = ray_start;
-            ray_dirs(:, idx) = ray_dir ./ ray_length;
-            ray_lens(idx) = ray_length;
-
             % Get the fluences for the pixel
             fluences = get_fluences(y_pix);
-            intensity_list(:, y_pix, z_pix) = ...
-                fluences .* pix_size ./ ray_length2 ./sfactor;
+            intensity_list(:, y_pix, :) = ...
+                fluences .* pix_size ./ ray_length2s(y_pix, z_pix);
         end
     end
-
-    % Ray trace the primary rays
-    [traced_lens, traced_idxs] = ray_tracing(ray_starts, ray_dirs .* ray_lens);
 
     for z_pix = 1:npz
         for y_pix = 1:npy

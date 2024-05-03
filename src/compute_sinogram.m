@@ -99,32 +99,23 @@ assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
 photon_count = zeros(num_bins, npy, npz, num_rotations);
 parfor angle = 1:num_rotations
     % For each rotation, we calculate the image for the source
-    pixel_generator = feval(set_array_angle, angle);
-    ray_starts = zeros(3, npy*npz);
-    ray_dirs   = zeros(3, npy*npz);
-    ray_lens   = zeros(npy, npz);
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
 
+    pixel_positions = feval(set_array_angle, angle);
+    ray_starts = feval(get_source_pos, angle, pixel_positions);
+    ray_dirs = pixel_positions - ray_starts;
+    ray_length2s = reshape(sum(ray_dirs.^2, 1), npy, npz);
+    ray_lens = sqrt(ray_length2s);
+
+    % Doing nested loop here, as the calculation is simpler without vectorisation
     for z_pix = 1:npz
         for y_pix = 1:npy
-            pixel_position = pixel_generator(y_pix, z_pix);
-            % Even if parallel beams are removed, this still must be called for
-            % every pixel, as the source position may change (cloud of points)
-            ray_start = feval(get_source_pos, angle, pixel_position); 
-            ray_dir = pixel_position - ray_start;
-            ray_length2 = sum(ray_dir.^2);
-            
-            % Here you are missing a call to the source dependent of the pixel position
-            ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
-            ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir;
-            ray_lens(y_pix, z_pix) = sqrt(ray_length2);
-
             % Get the fluences for the pixel
             fluences = get_fluences(y_pix);
             fluences = reshape(fluences, num_esamples, num_bins)';
 
             intensity_list(:, :, y_pix, z_pix) = ...
-                fluences .* pix_size / ray_length2;
+                fluences .* pix_size ./ ray_length2s(y_pix, z_pix);
         end
     end
 

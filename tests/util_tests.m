@@ -21,6 +21,21 @@ classdef util_tests < matlab.unittest.TestCase
             tc.verifyEqual(R, [-1 0 0; 0 -1 0; 0 0 1], 'AbsTol', 10*tc.eps);
         end
 
+
+        function test_rotz_vec(tc)
+            R = rotz_vec([pi/2 pi/4 pi/6 pi/3 pi]);
+            pi_2 = [0 -1 0; 1 0 0; 0 0 1];
+            pi_4 = [sqrt(2)/2 -sqrt(2)/2 0; sqrt(2)/2 sqrt(2)/2 0; 0 0 1];
+            pi_6 = [sqrt(3)/2 -1/2 0; 1/2 sqrt(3)/2 0; 0 0 1];
+            pi_3 = [1/2 -sqrt(3)/2 0; sqrt(3)/2 1/2 0; 0 0 1];
+            pi_1 = [-1 0 0; 0 -1 0; 0 0 1];
+            tc.verifyEqual(R(:, :, 1), pi_2, 'AbsTol', 10*tc.eps);
+            tc.verifyEqual(R(:, :, 2), pi_4, 'AbsTol', 10*tc.eps);
+            tc.verifyEqual(R(:, :, 3), pi_6, 'AbsTol', 10*tc.eps);
+            tc.verifyEqual(R(:, :, 4), pi_3, 'AbsTol', 10*tc.eps);
+            tc.verifyEqual(R(:, :, 5), pi_1, 'AbsTol', 10*tc.eps);
+        end
+
         function test_roty(tc)
             R = roty(pi/2);
             tc.verifyEqual(R, [0 0 1; 0 1 0; -1 0 0], 'AbsTol', 10*tc.eps);

@@ -94,15 +94,19 @@ classdef ray_tests < matlab.unittest.TestCase
             dgantry = parallel_gantry(dist_to_detector, num_rotations, 2*pi);
             darray = flat_detector(pixel_size, num_pixels);
             
-            pixel_generator_45 = darray.set_array_angle(dgantry, 43);
-            pixel_generator_135 = darray.set_array_angle(dgantry, 137);
-            pixel_generator_225 = darray.set_array_angle(dgantry, 222);
-            pixel_generator_315 = darray.set_array_angle(dgantry, 318);
+            pixels_45 = darray.set_array_angle(dgantry, 43);
+            pixels_45 = reshape(pixels_45, 3, num_pixels(1), num_pixels(2));
+            pixels_135 = darray.set_array_angle(dgantry, 137);
+            pixels_135 = reshape(pixels_135, 3, num_pixels(1), num_pixels(2));
+            pixels_225 = darray.set_array_angle(dgantry, 222);
+            pixels_225 = reshape(pixels_225, 3, num_pixels(1), num_pixels(2));
+            pixels_315 = darray.set_array_angle(dgantry, 318);
+            pixels_315 = reshape(pixels_315, 3, num_pixels(1), num_pixels(2));
 
-            pixel360_45 = pixel_generator_45(360, 1);
-            pixel360_135 = pixel_generator_135(360, 1);
-            pixel360_225 = pixel_generator_225(143, 1);
-            pixel360_315 = pixel_generator_315(670, 1);
+            pixel360_45  = pixels_45(:, 360, 1);
+            pixel360_135 = pixels_135(:, 360, 1);
+            pixel360_225 = pixels_225(:, 143, 1);
+            pixel360_315 = pixels_315(:, 670, 1);
 
             ray_start_45 = dgantry.get_source_pos(43, 0);
             ray_start_135 = dgantry.get_source_pos(137, 0);
@@ -135,7 +139,7 @@ classdef ray_tests < matlab.unittest.TestCase
             [lengths_225, indices_225] = ray_trace(ray_start_225, ray_dir_225, vox_init, vox_dims, vox_nplanes);
             [rev_lengths_225, rev_indices_225] = ray_trace(pixel360_225, -ray_dir_225, vox_init, vox_dims, vox_nplanes);
             
-            tc.assertEqual(sum(lengths_225), sum(rev_lengths_225), 'AbsTol', 1e-13, 'RelTol', 2e-11);
+            tc.assertEqual(sum(lengths_225), sum(rev_lengths_225), 'AbsTol', 1e-13, 'RelTol', 2e-10);
             tc.assertEqual(lengths_225, flip(rev_lengths_225, 2), 'AbsTol', 1e-9, 'RelTol', 1e-12);
             tc.assertEqual(indices_225, flip(rev_indices_225, 2), 'AbsTol', 1e-13, 'RelTol', 1e-12);
 

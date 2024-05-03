@@ -50,10 +50,10 @@ classdef source_tests < matlab.unittest.TestCase
                     74.5000,476481.1458; 75.5000,396112.0471; 76.5000,314269.5785;
                     77.5000,230691.5663; 78.5000,145363.1041; 79.5000,56373.3614];
             ebins = data(:,1);
-            fluences = data(:,2);
+            fluences = data(:,2) .* 100^2*units.cm2;
             s = source_fromfile('test.spk');
             tc.verifyEqual(s.ebins, ebins);
-            tc.verifyEqual(s.fluences, fluences .* ebins);
+            tc.verifyEqual(s.fluences, fluences .* ebins, 'RelTol', 3e-16);
 
             range = [1 2; 13 14; 25 26; 37 38];
             expE = [1.5, 13.5, 25.5, 37.5];
@@ -62,7 +62,7 @@ classdef source_tests < matlab.unittest.TestCase
                 71.8812 *  13.5; 
                 1507282.8827 * 25.5;
                 3211914.5414 * 37.5
-            ]';
+            ]'.*100^2*units.cm2;
             e = s.get_energies(range);
             i = s.get_fluences(range);
             tc.verifyEqual(e, expE);
@@ -81,7 +81,7 @@ classdef source_tests < matlab.unittest.TestCase
                 555465.0211 * 73.5 + 476481.1458 * 74.5 + 396112.0471 * 75.5 + ...
                 314269.5785 * 76.5 + 230691.5663 * 77.5 + 145363.1041 * 78.5 + ...
                 56373.3614  * 79.5 
-            ]';
+            ]'.*100^2*units.cm2;
             expE = [
                 5.5;
                 (...

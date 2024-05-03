@@ -1,16 +1,13 @@
 classdef flat_detector < detector_array
      methods
 
-        function pixel_generator = set_array_angle(self, detect_geom, angle_index, ray_per_pixel)
+        function pixel_positions = set_array_angle(self, detect_geom, angle_index)
             % Create a function which returns the rays which should be fired to hit each pixel.
-            % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
             arguments
                 self           flat_detector
                 detect_geom    gantry
                 angle_index    double
-                ray_per_pixel  int32             = 1
             end
-            assert(ray_per_pixel==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
 
             % Get the detector geometry
             rot_mat       = detect_geom.get_rot_mat(angle_index);
@@ -22,18 +19,19 @@ classdef flat_detector < detector_array
             detector_vec  = rotz(-pi/2) * to_source_vec; % perpendicular to the source vector
 
             % Get the pixel information
-            pixel_width  = self.pixel_dims(1);
-            pixel_height = self.pixel_dims(2);
             half_y       = (self.n_pixels(1) + 1) / 2;
+            ny_pixels    = self.n_pixels(1);
             nz_pixels    = self.n_pixels(2);
 
-            % Create the function which returns the information for each ray
-            pixel_generator = @generator; 
-            function pixel_centre = generator(y_pixel, z_pixel)
-                pixel_centre = centre +  ... 
-                            detector_vec .* (y_pixel - half_y) .* pixel_width + ...
-                            [0;0;pixel_height] .* (z_pixel - (nz_pixels+1)/2);
-            end
+            z_shift = zeros(3, 1, nz_pixels);
+            z_shift(3, 1, :) = self.pixel_dims(2) * ((1:nz_pixels) - (nz_pixels+1)/2);
+            z_shift = repmat(z_shift, 1, ny_pixels, 1);
+
+            pixel_centre = centre + detector_vec .* self.pixel_dims(1)  * ((1:ny_pixels) - half_y);
+            pixel_centre = repmat(pixel_centre, 1, 1, nz_pixels);
+            
+            pixel_positions = pixel_centre + z_shift;
+            pixel_positions = reshape(pixel_positions, 3, ny_pixels * nz_pixels);
         end
 
         function hit_pixel_at_angle = hit_pixel(self, detect_geom, angle_index)

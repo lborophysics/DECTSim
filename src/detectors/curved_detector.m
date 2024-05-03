@@ -1,19 +1,12 @@
 classdef curved_detector < detector_array
     methods
-        function pixel_generator = set_array_angle(self, detect_geom, angle_index, ray_per_pixel)
-            % Create a function which returns the rays which should be fired to hit each pixel.
-            % Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.
-            
-            % THIS FUNCTION NEEDS CHANGING. In the future, this function should be vectorised
-            % meaning that all of the pixel positions at a given angle should be calculated at once, 
-            % rather than return a function which calculates the pixel position for each pixel.
+        function pixel_positions = set_array_angle(self, detect_geom, angle_index)
+            % Returns the pixel positions for a given angle_index
             arguments
                 self           curved_detector
                 detect_geom    gantry
                 angle_index    double {mustBePositive, mustBeInteger}    
-                ray_per_pixel  int32  {mustBePositive, mustBeInteger} = 1
             end
-            assert(ray_per_pixel==1, "Only 1 ray per pixel is supported at the moment, as anti-aliasing techniques are not yet implemented.")
 
             % Get the detector properties
             rot_radius       = detect_geom.rot_radius;
@@ -21,9 +14,7 @@ classdef curved_detector < detector_array
           
             % Get the pixel information
             % pixel_angle  = self.pixel_dims(1) / rot_radius; % angle = arc_length / radius
-            pixel_angle  = single(chord2ang(self.pixel_dims(1), dist_to_detector)); % angle = 2 * asin(arc_length / (2 * radius))
-            pixel_height = self.pixel_dims(2);
-            half_z = pixel_height * (self.n_pixels(2) + 1) / 2;
+            pixel_angle  = chord2ang(self.pixel_dims(1), dist_to_detector); % angle = 2 * asin(arc_length / (2 * radius))
             
             % Correct the radius to the radius of the chords
             rot_radius  = realsqrt(rot_radius^2 - (self.pixel_dims(1)/2)^2); % Correct to the radius of the chords
@@ -32,17 +23,20 @@ classdef curved_detector < detector_array
             to_detect_vec = detect_geom.get_rot_mat(angle_index) ...
                 * -detect_geom.to_source_vec * rot_radius;
 
-            % Calculate the edge of the detector
-            detect_edge = rotz(-pixel_angle * ((self.n_pixels(1) - 1) / 2)) * to_detect_vec;
-            
-            % Create the function which returns the information for each ray
-            pixel_generator = @generator;
-            function pixel_centre = generator(y_pixel, z_pixel)
-                z_shift = pixel_height * z_pixel - half_z;
+            ny_pixels = self.n_pixels(1);
+            nz_pixels = self.n_pixels(2);
 
-                pixel_centre = rotz(pixel_angle * (y_pixel - 1)) * detect_edge + ...
-                    [0; 0; z_shift];
-            end
+            % Create the all the pixel positions for the detector
+            z_shift = zeros(3, 1, nz_pixels);
+            z_shift(3, 1, :) = self.pixel_dims(2) * ((1:nz_pixels) - (nz_pixels+1)/2);
+            z_shift = repmat(z_shift, 1, ny_pixels, 1);
+
+            pixel_centre = pagemtimes(...
+                rotz_vec(pixel_angle/2 * (2.*(1:ny_pixels) - ny_pixels - 1)), to_detect_vec);
+            pixel_centre = repmat(squeeze(pixel_centre), 1, 1, nz_pixels);
+
+            pixel_positions = pixel_centre + z_shift;
+            pixel_positions = reshape(pixel_positions, 3, ny_pixels * nz_pixels);
         end
 
         function hit_pixel_at_angle = hit_pixel(self, detect_geom, angle_index)
