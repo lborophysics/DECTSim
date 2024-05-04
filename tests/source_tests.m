@@ -4,23 +4,37 @@ classdef source_tests < matlab.unittest.TestCase
         function test_single_energy(tc)
             s1 = single_energy(50);
             tc.verifyEqual(s1.energy, 50);
+            [e_min, e_max] = s1.get_energy_range();
+            tc.verifyEqual(e_min, 49);
+            tc.verifyEqual(e_max, 51);
+
             range1 = [0 10; 10 20; 20 30; 30 40; 40 50; 50 60];
             expE = [50; 50; 50; 50; 50; 50]';
             expI = [0; 0; 0; 0; 0; 1e6]';
             e = s1.get_energies(range1);
-            i = s1.get_fluences(range1);
+            i = s1.get_fluences(range1, 1);
             tc.verifyEqual(e, expE);
             tc.verifyEqual(i, expI);
 
+            i = s1.get_fluences(range1, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1));
+
             s2 = single_energy(21);
             tc.verifyEqual(s2.energy, 21);
+            [e_min, e_max] = s2.get_energy_range();
+            tc.verifyEqual(e_min, 20);
+            tc.verifyEqual(e_max, 22);
+
             range2 = [0 7; 7 10; 10 15; 15 25; 25 30; 30 40; 40 50; 50 60];
             expE = [21; 21; 21; 21; 21; 21; 21; 21]';
             expI = [0; 0; 0; 1e6; 0; 0; 0; 0]';
             e = s2.get_energies(range2);
-            i = s2.get_fluences(range2);
+            i = s2.get_fluences(range2, 1);
             tc.verifyEqual(e, expE);
             tc.verifyEqual(i, expI);
+            
+            i = s2.get_fluences(range2, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1));
         end
 
         function test_fromfile(tc)
@@ -64,10 +78,12 @@ classdef source_tests < matlab.unittest.TestCase
                 3211914.5414 * 37.5
             ]'.*100^2*units.cm2;
             e = s.get_energies(range);
-            i = s.get_fluences(range);
+            i = s.get_fluences(range, 1);
             tc.verifyEqual(e, expE);
             % Precision is lost when summing large numbers
             tc.verifyEqual(i, expI, 'RelTol', 1e-10);
+            i = s.get_fluences(range, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1), 'RelTol', 1e-10);
 
             range = [0 10; 40 50; 70 80];
             
@@ -105,10 +121,16 @@ classdef source_tests < matlab.unittest.TestCase
 
             ]';
             e = s.get_energies(range);
-            i = s.get_fluences(range);
+            i = s.get_fluences(range, 1);
             tc.verifyEqual(e, expE, 'RelTol', 1e-13);
             % Precision is lost when summing large numbers
             tc.verifyEqual(i, expI, 'RelTol', 1e-13); 
+            i = s.get_fluences(range, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1), 'RelTol', 1e-13);
+
+            [e_min, e_max] = s.get_energy_range();
+            tc.verifyEqual(e_min, ebins(1));
+            tc.verifyEqual(e_max, ebins(end));
         end
     end
 end

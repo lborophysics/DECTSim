@@ -95,7 +95,7 @@ classdef signal_tests < matlab.unittest.TestCase
         end
 
         function test_scatter_image(tc)
-            rng(1712345)
+            rng(200)
             % THIS IS NOT GREAT - CHANGE 
             % Voxel array constants
             vox_arr_center = zeros(3, 1);
@@ -125,7 +125,7 @@ classdef signal_tests < matlab.unittest.TestCase
             d = detector(dgantry, darray, dsensor);
             
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "slow", 1));
-     
+
             scatter_sinogram_expected = matfile("scatter_cylinder_slow.mat").scatter_sinogram;
             tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-8, 'AbsTol', 1e-8);
         end
@@ -160,7 +160,6 @@ classdef signal_tests < matlab.unittest.TestCase
             d = detector(dgantry, darray, dsensor);
 
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "fast"));
-            
             scatter_sinogram_expected = matfile("scatter_cylinder_fast.mat").scatter_sinogram;
             tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-14, 'AbsTol', 2e-14);
         end
