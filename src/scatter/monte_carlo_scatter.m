@@ -114,12 +114,12 @@ parfor angle = 1:num_rotations
     ray_dirs = ray_dirs ./ sqrt(ray_length2s);
     ray_length2s = reshape(ray_length2s, npy, npz);
 
-    for z_pix = 1:npz
-        for y_pix = 1:npy
-            % Get the fluences for the pixel
-            fluences = get_fluences(y_pix);
+    % Get the fluences for the pixel
+    fluences = get_fluences(1:npy);
+    for y_pix = 1:npy
+        for z_pix = 1:npz
             intensity_list(:, y_pix, :) = ...
-                fluences .* pix_size ./ ray_length2s(y_pix, z_pix);
+                fluences(y_pix, :) .* pix_size ./ ray_length2s(y_pix, z_pix);
         end
     end
 
@@ -142,7 +142,7 @@ parfor angle = 1:num_rotations
                 prob_scatter = 1 - exp(-ls ./ mfps);
 
                 % Calculate the number of scatter points to sample
-                num_points = floor(n_mfps(end) ./ mfp_fraction) - 1; % -1 because we don't want to sample the last point
+                num_points = floor(n_mfps(end) ./ mfp_fraction);
                 ray_num_scatters = num_scatters*num_points;
 
                 % Determine where the scatter points are
@@ -152,12 +152,6 @@ parfor angle = 1:num_rotations
                 prev_scatter = 1;
                 for i = 1:num_points
                     [~, iscatter] = find(n_mfps - i*mfp_fraction >= 0, 1);
-                    if isempty(iscatter)
-                        scatter_points(:, i:end) = [];
-                        probabilities(i:end) = [];
-                        break;
-                    end
-                    
                     lis((i-1)*num_scatters+1:i*num_scatters) = iscatter;
                     scatter_points(:, i) = ray_start + ray_dir .* sum(ls(1:iscatter));
                     probabilities(i) = sum(prob_scatter(prev_scatter:iscatter));
@@ -184,7 +178,7 @@ parfor angle = 1:num_rotations
                 hit_pixels   (:, hits) = pixels(:, hits);
 
                 % Remove scatter points that don't hit the detector arrays
-                ignore = isnan(scatter_energies) | angles > pi/15; % this angle is the scatter grid angle
+                ignore = isnan(scatter_energies) | angles > pi/30; % this angle is the scatter grid angle
                 scatter_starts  (:, ignore) = [];
                 prob_scatter    (   ignore) = [];
                 scatter_dirs    (:, ignore) = [];

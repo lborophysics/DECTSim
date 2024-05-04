@@ -108,14 +108,14 @@ parfor angle = 1:num_rotations
     ray_lens = sqrt(ray_length2s);
 
     % Doing nested loop here, as the calculation is simpler without vectorisation
-    for z_pix = 1:npz
-        for y_pix = 1:npy
-            % Get the fluences for the pixel
-            fluences = get_fluences(y_pix);
-            fluences = reshape(fluences, num_esamples, num_bins)';
-
+    fluences = get_fluences(1:npy);
+    for y_pix = 1:npy
+        % Get the fluences for the pixel
+        yfluences = fluences(y_pix, :);
+        yfluences = reshape(yfluences, num_esamples, num_bins)';
+        for z_pix = 1:npz
             intensity_list(:, :, y_pix, z_pix) = ...
-                fluences .* pix_size ./ ray_length2s(y_pix, z_pix);
+                yfluences .* pix_size ./ ray_length2s(y_pix, z_pix);
         end
     end
 

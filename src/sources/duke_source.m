@@ -42,18 +42,20 @@ classdef duke_source < source
             end
         end
 
-        function fluences = get_fluences(self, range, ypixel)
+        function fluences = get_fluences(self, range, ypixels)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
                 self
-                range  (:,2) double
-                ypixel (1, 1) double
+                range   (:, 2) double
+                ypixels (1, :) double
             end
             num_ranges = size(range,1);
-            fluences = zeros(1, num_ranges);
-            spectrum_slice = self.spectrum(ypixel, :);
+            num_pixels = length(ypixels);
+            
+            fluences = zeros(num_pixels, num_ranges);
+            spectrum_slice = self.spectrum(ypixels, :);
             for i = 1:num_ranges
-                fluences(i) = sum(spectrum_slice(self.ebins >= range(i,1) & self.ebins < range(i,2)));
+                fluences(:, i) = sum(spectrum_slice(:, self.ebins >= range(i,1) & self.ebins < range(i,2)));
             end
         end
 

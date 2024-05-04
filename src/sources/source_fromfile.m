@@ -58,18 +58,19 @@ classdef source_fromfile < source % could create a spectrum super class.
             end
         end
 
-        function fluences = get_fluences(self, range, ~)
+        function fluences = get_fluences(self, range, ypixels)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
                 self
-                range (:,2) double
-                ~ % We do not use the ypixel argument
+                range   (:, 2) double
+                ypixels (1, :) double
             end
             num_ranges = size(range,1);
-            fluences = zeros(1, num_ranges);
+            num_pixels = length(ypixels);
+            fluences = zeros(num_pixels, num_ranges);
             for i = 1:num_ranges
                 indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
-                fluences(i) = sum(self.fluences(indices));%.* self.ebins(indices));
+                fluences(:, i) = sum(self.fluences(indices));%.* self.ebins(indices));
             end
         end
 

@@ -20,15 +20,17 @@ classdef single_energy < source
             energies = zeros(1, size(range,1)) + self.energy; 
         end 
         
-        function intensities = get_fluences(self, range, ~)
+        function intensities = get_fluences(self, range, ypixels)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
                 self 
-                range (:,2) double
-                ~ % We do not use the ypixel, but we need to include it for the abstract class to be happy
+                range   (:, 2) double
+                ypixels (1, :) double
             end
             intensities = zeros(1, size(range,1)) + 1e6;
             intensities(self.energy < range(:,1) | self.energy >= range(:,2)) = 0;
+            num_pixels = length(ypixels);
+            intensities = repmat(intensities, num_pixels, 1);
         end 
 
         function [min, max] = get_energy_range(self)
