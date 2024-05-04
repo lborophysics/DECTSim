@@ -75,14 +75,16 @@ classdef curved_detector < detector_array
             hit_pixel_at_angle = @at_angle;
             function [pixel, ray_len, angles, hit] = at_angle(ray_starts, ray_dirs)
                 num_rays = size(ray_dirs, 2);
-                hit      = true (1, num_rays); 
+                % hit      = true (1, num_rays); 
                 pixel    = zeros(2, num_rays);
                 ray_len  = zeros(1, num_rays);
                 angles   = zeros(1, num_rays);
 
                 % First calculate the norm squared of the ray directions in the x-y plane
-                dx = ray_dirs(1, :);
-                dy = ray_dirs(2, :);
+                dx = ray_dirs  (1, :);
+                dy = ray_dirs  (2, :);
+                x1 = ray_starts(1, :); 
+                y1 = ray_starts(2, :);
                 dr2 = dx.^2 + dy.^2;
                 
                 % Calculate the discriminant
@@ -90,72 +92,59 @@ classdef curved_detector < detector_array
                     (dx .* ray_starts(2, :) - dy .* ray_starts(1, :)).^2;
 
                 % Check if the ray hits the cylinder
-                hit(discriminant <= 0) = false;
-                if ~any(hit); return; end
+                if all(discriminant <= 0)
+                    hit = false(1, num_rays);
+                    return
+                end
                 
-                % Select the rays which hit the cylinder
-                x1 = ray_starts(1, hit); y1 = ray_starts(2, hit);
-                dirs = ray_dirs(:, hit);
-                dx = dirs(1, :); dy = dirs(2, :);
-                
-                dr2 = dr2(hit);
-                sqrt_discriminant = sqrt(discriminant(hit));
+                sqrt_discriminant = sqrt(discriminant);
 
                 % Calculate the two possible hit distances for the rays                
                 d1 = (-(dx .* x1 + dy .* y1) + sqrt_discriminant) ./ dr2;
                 d2 = (-(dx .* x1 + dy .* y1) - sqrt_discriminant) ./ dr2;
                 
                 % Calculate the hit points in the detector
-                point1 = ray_starts(:, hit) + d1 .* dirs;
-                point2 = ray_starts(:, hit) + d2 .* dirs;
+                point1 = ray_starts + d1 .* ray_dirs;
+                point2 = ray_starts + d2 .* ray_dirs;
 
                 % Calculate the z pixel number
                 zpix1 = ceil(half_z + point1(3, :) ./ pixel_height);
                 zpix2 = ceil(half_z + point2(3, :) ./ pixel_height);
                 
                 % Calculate the y pixel number by finding the angle of intersection with respect to the left edge
-                dist_between1 = sum((left_edge - point1(1:2, :)).^2, 1);
-                dist_between2 = sum((left_edge - point2(1:2, :)).^2, 1);
-
-                ypix1 = ceil(acos(1 - dist_between1 ./ (2*r2)) ./ pixel_angle); % Don't like this numerical instability
-                ypix2 = ceil(acos(1 - dist_between2 ./ (2*r2)) ./ pixel_angle); % Don't like this numerical instability
+                ypix1 = ceil(acos(1 - sum((left_edge - point1(1:2, :)).^2, 1) ./ (2*r2)) ./ pixel_angle); % Don't like this numerical instability
+                ypix2 = ceil(acos(1 - sum((left_edge - point2(1:2, :)).^2, 1) ./ (2*r2)) ./ pixel_angle); % Don't like this numerical instability
                 ypix2(ypix2 == ypix1) = -1; % If the angles are the same, set the second pixel to -1, so we only hit one pixel
 
                 cross1 = point1(2, :) .* left_edge(1) - point1(1, :) .* left_edge(2);
                 cross2 = point2(2, :) .* left_edge(1) - point2(1, :) .* left_edge(2);
 
                 % Check if the hit is within the detector arc
-                first_hit  = zpix1 >= 1 & zpix1 <= nz_pixels & ypix1 >= 1 & ypix1 <= ny_pixels & d1 > 0 & cross1 >= 0;
-                second_hit = zpix2 >= 1 & zpix2 <= nz_pixels & ypix2 >= 1 & ypix2 <= ny_pixels & d2 > 0 & cross2 >= 0;
+                first_hit  = discriminant > 0 & zpix1 >= 1 & zpix1 <= nz_pixels & ypix1 >= 1 & ypix1 <= ny_pixels & d1 > 0 & cross1 >= 0;
+                second_hit = discriminant > 0 & zpix2 >= 1 & zpix2 <= nz_pixels & ypix2 >= 1 & ypix2 <= ny_pixels & d2 > 0 & cross2 >= 0;
                 
                 assert(~any(first_hit == 1 & second_hit == 1), 'Both first and second hit are true, this should not happen');
 
                 % Check if any rays hit the detector
                 if ~any(first_hit | second_hit)
-                    hit(:) = false;
+                    hit = false(1, num_rays);
                     return;
                 end
-                                
-                % Extend the hit arrays
-                hit1 = false(1, num_rays);
-                hit2 = false(1, num_rays);
-                hit1(hit) = first_hit;
-                hit2(hit) = second_hit;
                 
                 % Set the hit pixels, ray lengths and angles
-                if any(hit1)
-                    pixel(:, hit1) = [ypix1(first_hit ); zpix1(first_hit )];
-                    ray_len( hit1) = d1(first_hit);
-                    angles ( hit1) = acos(sum(dirs(:, first_hit ) .* normal_vecs(:, ypix1(first_hit )), 1));
+                if any(first_hit)
+                    pixel(:, first_hit) = [ypix1(first_hit ); zpix1(first_hit )];
+                    ray_len( first_hit) = d1(first_hit);
+                    angles ( first_hit) = acos(sum(ray_dirs(:, first_hit ) .* normal_vecs(:, ypix1(first_hit )), 1));
                 end
-                if any(hit2)
-                    pixel(:, hit2) = [ypix2(second_hit); zpix2(second_hit)]; 
-                    ray_len( hit2) = d2(second_hit);
-                    angles ( hit2) = acos(sum(dirs(:, second_hit) .* normal_vecs(:, ypix2(second_hit)), 1));
+                if any(second_hit)
+                    pixel(:, second_hit) = [ypix2(second_hit); zpix2(second_hit)]; 
+                    ray_len( second_hit) = d2(second_hit);
+                    angles ( second_hit) = acos(sum(ray_dirs(:, second_hit) .* normal_vecs(:, ypix2(second_hit)), 1));
                 end
 
                 % Set the hit flag
-                hit = hit1 | hit2;           
+                hit = first_hit | second_hit;      
             end
         end
     end
