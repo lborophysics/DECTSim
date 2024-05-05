@@ -82,7 +82,7 @@ classdef signal_tests < matlab.unittest.TestCase
         
             % Check that 
             image = compute_sinogram(tc.ray_source, array, d1);
-            scatter_count = monte_carlo_scatter(tc.ray_source, array, d1);
+            scatter_count = deterministic_scatter(tc.ray_source, array, d1);
             scatter_signal = tc.sensor_unit.get_signal(scatter_count);
 
             tc.verifyEqual(scatter_signal, zeros(5,1,4), 'RelTol', 1e-15, 'AbsTol', 1e-15);

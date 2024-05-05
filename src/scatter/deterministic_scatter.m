@@ -1,5 +1,5 @@
-function scatter_count = monte_carlo_scatter(xray_source, phantom, detector_obj, sfactor)
-%monte_carlo_scatter Monte Carlo simulation of scatter signal
+function scatter_count = deterministic_scatter(xray_source, phantom, detector_obj, sfactor)
+% deterministic_scatter Deterministic scatter estimation simulation
 %
 % Parameters:
 %  source: Source object (see compute_sinogram.m for details)

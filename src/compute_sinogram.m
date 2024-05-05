@@ -39,13 +39,13 @@ scatter_type = find(["none", "fast", "slow"] == scatter);
 
 % Retrieve sub-objects of all the objects
 sensor_unit = detector_obj.sensor;
-gantry      = detector_obj.gantry;
+the_gantry  = detector_obj.gantry;
 d_array     = detector_obj.detector_array;
 
 
 % Retrieve information within the sub-objects
-num_rotations  = gantry.num_rotations;
-d2detector     = gantry.dist_to_detector;
+num_rotations  = the_gantry.num_rotations;
+d2detector     = the_gantry.dist_to_detector;
 
 npy = d_array.n_pixels(1);
 npz = d_array.n_pixels(2);
@@ -63,8 +63,8 @@ vox_nplanes = phantom.num_planes;
 vox_last    = vox_init + (vox_nplanes - 1) .* vox_dims;
 
 % Now lets define some functions that we will use to calculate the sinogram
-get_source_pos  = @(angle, pixel_pos) gantry.get_source_pos(angle, pixel_pos);
-set_array_angle = @(angle) d_array.set_array_angle(gantry, angle);
+get_source_pos  = @(angle, pixel_pos) the_gantry.get_source_pos(angle, pixel_pos);
+set_array_angle = @(angle) d_array.set_array_angle(the_gantry, angle);
 get_object_idxs = @(idxs) phantom.get_object_idxs(idxs);
 
 % Identify which compiled functions are available to use
@@ -155,7 +155,7 @@ elseif scatter_type == 2 % Fast scatter
         convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
 else
     scatter_count = ...
-        monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
+        deterministic_scatter  (xray_source, phantom     , detector_obj, sfactor);
 end
 % Convert the photon count (rays + scatter) to a signal
 photon_signal = sensor_unit.get_signal(photon_count);
