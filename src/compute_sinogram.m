@@ -82,7 +82,7 @@ energies = xray_source.get_energies(sensor_range);
 energy_list = reshape(energies, num_esamples, num_bins)';
 
 % Now the fluences
-get_fluences = @(ypixel) xray_source.get_fluences(sensor_range, ypixel);
+fluences = xray_source.get_fluences(sensor_range, 1:npy);
 
 % Pre-calculate the mu values for the energy list
 mu_dict = phantom.precalculate_mus(energy_list);
@@ -108,7 +108,6 @@ parfor angle = 1:num_rotations
     ray_lens = sqrt(ray_length2s);
 
     % Doing nested loop here, as the calculation is simpler without vectorisation
-    fluences = get_fluences(1:npy);
     for y_pix = 1:npy
         % Get the fluences for the pixel
         yfluences = fluences(y_pix, :);

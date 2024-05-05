@@ -70,16 +70,10 @@ mfp_fraction = 1e-2; % Fraction of the mean free path to sample scatter points
 energy_list = xray_source.get_energies(sensor_range);
 
 % Now the fluences
-% fluences = xray_source.get_fluences(sensor_range);
-get_fluences = @(ypixel) xray_source.get_fluences(sensor_range, ypixel);
-sum_fluences = zeros(1, num_bins * num_esamples);
-for i = 1:npy
-    fluences = get_fluences(i);
-    sum_fluences = sum_fluences + sum(fluences, 1);
-end
+fluences = xray_source.get_fluences(sensor_range, 1:npy);
+av_fluences = sum(fluences, 1) / npy;
+mean_energy = sum(energy_list .* av_fluences) / sum(av_fluences);
 
-fluences = sum_fluences / npy;
-mean_energy = sum(energy_list .* fluences) / sum(fluences);
 % mu_dict = phantom.precalculate_mus(energy_list);
 % mfp_dict = phantom.precalculate_mfps(energy_list);
 mu_dict  = phantom.get_mu_arr(mean_energy );
@@ -114,8 +108,6 @@ parfor angle = 1:num_rotations
     ray_dirs = ray_dirs ./ sqrt(ray_length2s);
     ray_length2s = reshape(ray_length2s, npy, npz);
 
-    % Get the fluences for the pixel
-    fluences = get_fluences(1:npy);
     for y_pix = 1:npy
         for z_pix = 1:npz
             intensity_list(:, y_pix, :) = ...
