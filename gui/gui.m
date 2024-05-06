@@ -368,7 +368,7 @@ classdef gui < matlab.apps.AppBase
                 {'*.png;*.jpeg','Image files'}, ...
                 "Save Reconstructed Image");
             if ~ischar(file); return; end % Nothing selected
-            imwrite(app.recons{app.ShowDropDown.ValueIndex}, fullfile(path, file)) % Could use event.ContextObject.ImageSource
+            imwrite(app.recons{app.ShowDropDown.ValueIndex}, fullfile(path, file), "png") % Could use event.ContextObject.ImageSource
         end
 
         % Menu selected function: SinogramMenu
@@ -382,7 +382,7 @@ classdef gui < matlab.apps.AppBase
                 "Save Sinogram");
             if ~ischar(file); return; end % Nothing selected
             imwrite(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex},...
-                fullfile(path, file))
+                fullfile(path, file), "png")
         end
 
         % Menu selected function: ReconstructionMenu_2
