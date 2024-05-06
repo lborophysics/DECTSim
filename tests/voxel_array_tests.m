@@ -190,7 +190,7 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             mat1 = material_attenuation("water");
             mat2 = material_attenuation("bone");
             mat3 = material_attenuation("fat");
-            mus = [mat1.get_mu(nrjs); mat2.get_mu(nrjs); mat3.get_mu(nrjs); air.get_mu(nrjs)];
+            mus = [mat1.get_mu(nrjs); mat2.get_mu(nrjs); mat3.get_mu(nrjs); air.get_mu(nrjs)]
             
             big_box   = voxel_cube([0,0,0], 10, mat1);
             med_box   = voxel_cube([0,0,0], 6 , mat2);
