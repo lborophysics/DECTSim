@@ -5,14 +5,14 @@ classdef sensor_tests < matlab.unittest.TestCase
             is = ideal_sensor([0, 10], 100);
             tc.verifyEqual(is.num_bins, 100);
             tc.verifyEqual(is.bin_width, 0.1);
-            tc.verifyEqual(is.energy_range, [0, 10]);
-            tc.verifyEqual(is.energy_bins, 0:0.1:10);
+            tc.verifyEqual(is.nrj_range, [0, 10]);
+            tc.verifyEqual(is.nrj_bins, 0:0.1:10);
 
             is = ideal_sensor([4, 32], 83);
             tc.verifyEqual(is.num_bins, 83);
             tc.verifyEqual(is.bin_width, 28/83);
-            tc.verifyEqual(is.energy_range, [4, 32]);
-            tc.verifyEqual(is.energy_bins, 4:28/83:32);
+            tc.verifyEqual(is.nrj_range, [4, 32]);
+            tc.verifyEqual(is.nrj_bins, 4:28/83:32);
             
             tc.verifyError(@() ideal_sensor([0, 10], 0), 'MATLAB:validators:mustBePositive');
             tc.verifyError(@() ideal_sensor([0, 10], -1), 'MATLAB:validators:mustBePositive');
@@ -25,11 +25,11 @@ classdef sensor_tests < matlab.unittest.TestCase
         function test_ideal_sensor(tc)
             is = ideal_sensor([0, 10], 100);
 
-            % test get_energy_bin
-            tc.verifyEqual(is.get_energy_bin(4.2), 43);
-            tc.verifyEqual(is.get_energy_bin(4.29), 43);
-            tc.verifyEqual(is.get_energy_bin(0), 1);
-            tc.verifyEqual(is.get_energy_bin(9.99), 100);
+            % test get_nrj_bin
+            tc.verifyEqual(is.get_nrj_bin(4.2), 43);
+            tc.verifyEqual(is.get_nrj_bin(4.29), 43);
+            tc.verifyEqual(is.get_nrj_bin(0), 1);
+            tc.verifyEqual(is.get_nrj_bin(9.99), 100);
 
             % test detector_response
             tc.verifyEqual(is.detector_response(43, 2), 2 * 4.25);

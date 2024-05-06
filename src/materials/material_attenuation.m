@@ -3,15 +3,15 @@ classdef material_attenuation
     % for ray tracing and scattering
 
     properties (SetAccess=immutable)
-        name           % Name of the material
-        atomic_numbers % Atomic numbers of the elements in the material
-        mass_fractions % Mass fractions of the elements in the material
-        density        % Density of the material in g/cm^3
+        name           string % Name of the material
+        atomic_numbers (1, :) double % % Atomic numbers of the elements in the material
+        mass_fractions (1, :) double % Mass fractions of the elements in the material (sum to 1)
+        density        (1, 1) double % Density of the material (g/cm^3)
         mu_from_energy % A function handle to get the linear attenuation coefficient from energy. Only used if use_mex is false
     end
 
     properties (SetAccess=private)
-        atomic_masses  % Atomic masses of the elements in the material
+        atomic_masses (1, :) double % Atomic masses of the elements in the material (g/mol)
     end
 
 
@@ -20,58 +20,56 @@ classdef material_attenuation
     end
 
     methods
-        function self = material_attenuation(material_name, varargin)
+        function obj = material_attenuation(material_name, varargin)
             %MATERIAL Construct a material object
             %   mat = material("material_name") creates a material object with the properties of the given material, if it is available
             %   
             %   mat = material("material_name", atomic_numbers, mass_fractions, density) creates a material object with the given properties, using the PhotonAttenuation package
             assert(isstring(material_name), 'assert:failure', 'The material name must be a string.');
-            self.name = material_name;
+            obj.name = material_name;
             if nargin == 1
                 material_index = find(mat_consts.known_materials == lower(material_name));
                 if any(material_index)
-                    self.atomic_numbers = mat_consts.known_atomic_numbers{material_index};
-                    self.mass_fractions = mat_consts.known_mass_fractions{material_index};
-                    self.density = mat_consts.known_densities(material_index);
+                    obj.atomic_numbers = mat_consts.known_atomic_numbers{material_index};
+                    obj.mass_fractions = mat_consts.known_mass_fractions{material_index};
+                    obj.density = mat_consts.known_densities(material_index);
                 else
                     error('MATLAB:invalidMaterial', ...
                         'The material %s is not available. Available materials are: %s', ...
                         material_name, strjoin(mat_consts.known_materials, ', '));
                 end
             elseif nargin == 4
-                self.atomic_numbers = varargin{1};
-                self.mass_fractions = varargin{2};
-                self.density = varargin{3};
-                assert(isvector(self.atomic_numbers), 'assert:failure', 'The atomic numbers should be a vector.');
-                assert(isvector(self.mass_fractions), 'assert:failure', 'The mass fractions should be a vector.');
-                assert(length(self.atomic_numbers) == length(self.mass_fractions), 'assert:failure', 'The atomic numbers and mass fractions should have the same length.');
-                assert(isnumeric(self.density) && isscalar(self.density), 'assert:failure', 'The density should be a scalar number.');
-                self.mass_fractions = self.mass_fractions / sum(self.mass_fractions);
+                obj.atomic_numbers = varargin{1};
+                obj.mass_fractions = varargin{2};
+                obj.density = varargin{3};
+                assert(length(obj.atomic_numbers) == length(obj.mass_fractions), 'assert:failure', 'The atomic numbers and mass fractions should have the same length.');
+                assert(~isnan(obj.density), 'assert:failure', 'The density should be a scalar number.');
+                obj.mass_fractions = obj.mass_fractions / sum(obj.mass_fractions);
             else
                 error('MATLAB:invalidInput', 'Invalid number of input arguments. Use either material("material_name") or material("material_name", atomic_numbers, mass_fractions, density).');
             end
-            self.density = self.density * units.g / units.cm^3;
-            self.atomic_masses = mat_consts.atomic_masses(self.atomic_numbers) .* units.g; % in g/mol (mol handled by cross_section)
-            if ~self.use_mex
-                self.mu_from_energy = get_photon_attenuation(self.atomic_numbers);
+            obj.density = obj.density * units.g / units.cm^3;
+            obj.atomic_masses = mat_consts.atomic_masses(obj.atomic_numbers) .* units.g; % in g/mol (mol handled by cross_section)
+            if ~obj.use_mex
+                obj.mu_from_energy = get_photon_attenuation(obj.atomic_numbers);
             end
         end
 
-        function mu = get_mu(self, nrj)
+        function mu = get_mu(obj, nrj)
             % GET_MU Get the linear attenuation coefficient of the material for a given energy
-            if self.use_mex
-                mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, nrj);
+            if obj.use_mex
+                mu = photon_attenuation_mex(obj.atomic_numbers, obj.mass_fractions, obj.density, nrj);
             else
-                mus = self.mu_from_energy(log(nrj));
-                mu = sum(exp(mus).*self.mass_fractions, 2)' .* self.density;
+                mus = obj.mu_from_energy(log(nrj));
+                mu = sum(exp(mus).*obj.mass_fractions, 2)' .* obj.density;
             end
         end
 
-        function mfp = mean_free_path(self, nrjs)
+        function mfp = mean_free_path(obj, nrjs)
             % MEAN_FREE_PATH Get the mean free path of the material a set of energies
-            mfp = 1 ./ (constants.N_A .* self.density .* ...
-                sum(self.mass_fractions .* cross_section(self.atomic_numbers, nrjs) ...
-                    ./ self.atomic_masses, 2));
+            mfp = 1 ./ (constants.N_A .* obj.density .* ...
+                sum(obj.mass_fractions .* cross_section(obj.atomic_numbers, nrjs) ...
+                    ./ obj.atomic_masses, 2));
         end
     end
 

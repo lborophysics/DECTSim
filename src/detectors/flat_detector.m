@@ -31,7 +31,6 @@ classdef flat_detector < detector_array
             pixel_centre = repmat(pixel_centre, 1, 1, nz_pixels);
             
             pixel_positions = pixel_centre + z_shift;
-            pixel_positions = reshape(pixel_positions, 3, ny_pixels * nz_pixels);
         end
 
         function hit_pixel_at_angle = hit_pixel(self, detect_geom, angle_index)

@@ -48,7 +48,6 @@ classdef detector_tests < matlab.unittest.TestCase
             pixel_width = radius * pi / 60;
             c1 = curved_detector([pixel_width, 0.4], [60, 10]);
             pixel_positions = c1.set_array_angle(geom, 1);
-            pixel_positions = reshape(pixel_positions, 3, 60, 10);
 
             angle = chord2ang(pixel_width, d2d);
             chord_radius = realsqrt(radius^2 - (pixel_width/2)^2);
@@ -69,7 +68,6 @@ classdef detector_tests < matlab.unittest.TestCase
             geom = gantry(2, 10, pi);
             p1 = flat_detector([0.1, 0.35], [110, 20]);
             pixel_positions = p1.set_array_angle(geom, 1);
-            pixel_positions = reshape(pixel_positions, 3, 110, 20);
 
             y_increment = [1; 0; 0] * 0.1;
             z_increment = [0; 0; 7] / 20;
@@ -101,7 +99,6 @@ classdef detector_tests < matlab.unittest.TestCase
             geom = gantry(2, 10, pi);
             a1 = flat_detector([0.1, 0.35], [110, 20]);
             pixel_positions = a1.set_array_angle(geom, 13);
-            pixel_positions = reshape(pixel_positions, 3, 110, 20);
             hit_at_angle = a1.hit_pixel(geom, 13);
             for i = 1:1%10
                 for j = 1:20
@@ -121,7 +118,6 @@ classdef detector_tests < matlab.unittest.TestCase
             % Test for a ray that just misses the detector
             a2 = flat_detector([0.1, 0.35], [200, 40]);
             pixel_positions2 = a2.set_array_angle(geom, 13);
-            pixel_positions2 = reshape(pixel_positions2, 3, 200, 40);
             pixel_pos = pixel_positions2(:, 100+56, 20);
             ray_start = geom.get_source_pos(13, pixel_pos);
             ray_dir   = pixel_pos - ray_start;
@@ -184,7 +180,6 @@ classdef detector_tests < matlab.unittest.TestCase
             geom = gantry(9, 10, pi);
             c1 = curved_detector([4.5*pi/60, 0.4], [60, 10]);
             pixel_positions = c1.set_array_angle(geom, 1);
-            pixel_positions = reshape(pixel_positions, 3, 60, 10);
             hit_at_angle = c1.hit_pixel(geom, 1);
 
             for i = 3:4%30:40
@@ -209,7 +204,6 @@ classdef detector_tests < matlab.unittest.TestCase
             % Test for a ray that just misses the detector  
             c2 = curved_detector([4.5*pi/60, 0.4], [120, 20]);
             pixel_positions2 = c2.set_array_angle(geom, 1);
-            pixel_positions2 = reshape(pixel_positions2, 3, 120, 20);
             pixel_pos = pixel_positions2(:, 50+31, 16);
             ray_start = geom.get_source_pos(1, pixel_pos);
             ray_dir   = pixel_pos - ray_start;
@@ -224,7 +218,6 @@ classdef detector_tests < matlab.unittest.TestCase
 
             % Test for a ray would hit the detector if it was going the other way
             pixel_positions = c1.set_array_angle(geom, 35);
-            pixel_positions = reshape(pixel_positions, 3, 60, 10);
             pixel_pos = pixel_positions(:, 35, 5);
             ray_start = geom.get_source_pos(35, pixel_pos);
             ray_dir   = pixel_pos - ray_start;
@@ -243,7 +236,6 @@ classdef detector_tests < matlab.unittest.TestCase
             geom = gantry(9, 10, pi);
             c1 = curved_detector([4.5*pi/600, 0.4], [600, 10]);
             pixels = c1.set_array_angle(geom, 11);
-            pixels = reshape(pixels, 3, 600, 10);
             hit_at_angle = c1.hit_pixel(geom, 11);
             
             rng(199);

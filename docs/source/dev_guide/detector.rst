@@ -10,25 +10,36 @@ The only purpose of :class:`detector` is to collect all the objects that are req
 
 Properties
 ----------
-.. attribute:: gantry
+.. attribute:: the_gantry
     :noindex:
     
-    The gantry object that the detector is attached to.
+    (:class:`gantry`) The gantry object that the detector is attached to.
 
-.. attribute:: detect_array
+.. attribute:: the_array
     
-    The detector pixel array object that the detector is using.
+    (:class:`detector_array`) The detector pixel array object that the detector is using.
 
-.. attribute:: sensor
+.. attribute:: the_sensor
     
-    The sensor object that the detector is using.
+    (:class:`sensor`) The sensor object that the detector is using.
 
 Functions
 ---------
 
-.. function:: detector(gantry, detector_array, sensor)
+.. function:: detector(the_gantry, the_array, the_sensor)
 
     The constructor for the detector class. It takes a gantry, a detector pixel array and a sensor as input. It checks that the input data is of the correct type and then assigns the input data to the properties of the class.
+
+    :param the_gantry: The gantry object that the detector is attached to.
+    :type gantry: gantry
+    :param the_array: The detector pixel array object that the detector is using.
+    :type the_array: detector_array
+    :param the_sensor: The sensor object that the detector is using.
+    :type the_sensor: sensor
+
+    :returns: **obj** - An instance of the detector class.
+    :rtype: :class:`detector`
+
 
 Potential Future Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~

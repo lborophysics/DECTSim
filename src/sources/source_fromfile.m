@@ -2,12 +2,12 @@ classdef source_fromfile < source % could create a spectrum super class.
     %SOUCE_FROMFILE Create a source object from a file
 
     properties (SetAccess=immutable)
-        ebins
-        fluences
+        ebins    (:, 1) double % Energy bins
+        fluences (:, 1) double % Fluences
     end
 
     methods
-        function self = source_fromfile(filename)
+        function obj = source_fromfile(filename)
             % Read the file as a string
             file = fileread(filename);
 
@@ -30,38 +30,38 @@ classdef source_fromfile < source % could create a spectrum super class.
 
             num_energies = length(ebins);
             
-            self = self@source(num_energies);
-            self.ebins = ebins;
-            self.fluences = (fluences .* ebins) .* 100^2*units.cm2; % Convert to fluence per cm^2 at 1 cm
+            obj = obj@source(num_energies);
+            obj.ebins = ebins;
+            obj.fluences = (fluences .* ebins) .* 100^2*units.cm2; % Convert to fluence per cm^2 at 1 cm
         end
 
-        function energies = get_energies(self, range)
+        function energies = get_energies(obj, range)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
-                self
+                obj
                 range (:,2) double
             end
             num_ranges = size(range,1);
             energies = zeros(1, num_ranges);
             for i = 1:num_ranges
-                indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
+                indices = find(obj.ebins >= range(i,1) & obj.ebins < range(i,2));
                 if isempty(indices)
                     error('No energies found in the range [%f, %f)', range(i,1), range(i,2));
                 end
-                weights = self.fluences(indices);
+                weights = obj.fluences(indices);
                 
                 % If all weights are zero, set them all to 1, we will not use them anyway
                 if sum(weights) == 0; weights = ones(size(weights)); end
                  
                 weights = weights / sum(weights);
-                energies(i) = sum(self.ebins(indices) .* weights);
+                energies(i) = sum(obj.ebins(indices) .* weights);
             end
         end
 
-        function fluences = get_fluences(self, range, ypixels)
+        function fluences = get_fluences(obj, range, ypixels)
             % range is a Nx2-element vector with N rows of [min_energy, max_energy) 
             arguments
-                self
+                obj
                 range   (:, 2) double
                 ypixels (1, :) double
             end
@@ -69,14 +69,14 @@ classdef source_fromfile < source % could create a spectrum super class.
             num_pixels = length(ypixels);
             fluences = zeros(num_pixels, num_ranges);
             for i = 1:num_ranges
-                indices = find(self.ebins >= range(i,1) & self.ebins < range(i,2));
-                fluences(:, i) = sum(self.fluences(indices));%.* self.ebins(indices));
+                indices = find(obj.ebins >= range(i,1) & obj.ebins < range(i,2));
+                fluences(:, i) = sum(obj.fluences(indices));%.* obj.ebins(indices));
             end
         end
 
-        function [emin, emax] = get_energy_range(self)
-            emin = min(self.ebins);
-            emax = max(self.ebins);
+        function [emin, emax] = get_nrj_range(obj)
+            emin = min(obj.ebins);
+            emax = max(obj.ebins);
         end
     end
 end

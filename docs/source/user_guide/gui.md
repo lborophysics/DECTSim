@@ -3,25 +3,25 @@
 To change any of the parameters of the simulation, click on an object in the left panel. This will show a new panel with the parameters of the object with the available options. To hide the panel, click on the object again. Once you have set the parameters, click on the "Run" with the big green arrowhead to run the simulation.
 
 The simulation by default will run with the following parameters, for understanding each term, please go to the section on this page that corresponds to the object you want to understand.
-    - Source: 
-        - Voltage: 40 kV
-        - Parallel beam
-    - Phantom:
-        - 3D cylinder including air, water, bone, fat, blood and muscle
-        - 1 cm voxel size
-    - Detector:
-        - 1D flat detector
-        - 900 pixels
-        - 1 mm wide pixels
-        - Ideal sensor (has an equal response to all energies)
-    - Reconstruction:
-        - No filter
-        - Interpolation method: Nearest neighbour
-    - Scatter:
-        - No scatter
-    - Gantry:
-        - 180 projections (2 degree steps)
-        - 100 cm from source to detector
+- Source: 
+    - Voltage: 40 kV
+    - Parallel beam
+- Phantom:
+    - 3D cylinder including air, water, bone, fat, blood and muscle
+    - 1 cm voxel size
+- Detector:
+    - 1D flat detector
+    - 900 pixels
+    - 1 mm wide pixels
+    - Ideal sensor (has an equal response to all energies)
+- Reconstruction:
+    - No filter
+    - Interpolation method: Nearest neighbour
+- Scatter:
+    - No scatter
+- Gantry:
+    - 180 projections (2 degree steps)
+    - 100 cm from source to detector
 
 ## Source
 The source controls the energy and intensity of the x-ray beam. There are currently two source energies available: 40 kV and 80 kV. It is possible load a custom spectrum, this must be a '.mat' file containing an object called `source`, using the objects within the DECTSim backend. In the future, you should be able to create this new source within the GUI.
@@ -38,10 +38,10 @@ It is possible to load a custom phantom, this must be a '.mat' file containing a
 ### Phantom Examples
 
 In the GUI, there are currently four phantom examples available, these are:
-    - Modified Shepp-Logan
-    - Example 2
-    - Example 3
-    - Example 4
+- Modified Shepp-Logan
+- Example 2
+- Example 3
+- Example 4
 
 The Modified Shepp-Logan phantom is a modified version of the Shepp-Logan phantom, which is a standard phantom used in medical imaging. The Modified Shepp-Logan phantom has been modified to include real materials, such as bone, brain matter, air and alanine. It is also three dimensional, so there are no actual overlapping of the materials (unlike the Shepp-Logan phantom).
 

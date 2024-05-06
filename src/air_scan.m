@@ -20,9 +20,9 @@ function photon_count = air_scan(xray_source, detector_obj)
     end
 
     % Retrieve sub-objects of all the objects
-    sensor_unit = detector_obj.sensor;
-    the_gantry  = detector_obj.gantry;
-    d_array     = detector_obj.detector_array;
+    sensor_unit = detector_obj.the_sensor;
+    the_gantry  = detector_obj.the_gantry;
+    d_array     = detector_obj.the_array;
     
     num_rotations = the_gantry.num_rotations;
     

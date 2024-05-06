@@ -9,7 +9,7 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
     end
 
     methods
-        function self = voxel_array(centre, object_dims, voxel_size, voxel_objs, world_material)
+        function obj = voxel_array(centre, object_dims, voxel_size, voxel_objs, world_material)
             arguments
                 centre      (3, 1) double {mustBeReal}
                 object_dims (3, 1) double {mustBePositive}
@@ -18,112 +18,112 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
                 world_material     material_attenuation = material_attenuation("air");
             end
             % Constructor method
-            self.array_position = centre - object_dims ./ 2;
+            obj.array_position = centre - object_dims ./ 2;
 
             assert(voxel_size > 0, 'Voxel dimensions must be greater than zero')
-            self.dimensions = zeros(3, 1) + voxel_size;
+            obj.dimensions = zeros(3, 1) + voxel_size;
 
             assert(sum(object_dims ~= 0) == 3, 'There must be at least one length in each dimension')
-            self.num_planes = round(object_dims ./ voxel_size + 1, 10); % +1 to include the last plane (fence post problem)
-            assert(all(floor(self.num_planes) == self.num_planes), 'The number of planes must be an integer')
+            obj.num_planes = round(object_dims ./ voxel_size + 1, 10); % +1 to include the last plane (fence post problem)
+            assert(all(floor(obj.num_planes) == obj.num_planes), 'The number of planes must be an integer')
 
             % In the future, I need to create this array based on the get_voxel_mu
             % nobj = nargin - 3;
-            self.nobj = length(voxel_objs) + 1; % +1 for the world material
-            for obj = voxel_objs
-                assert(isa(obj{1}, 'voxel_object'), 'All objects must be of type voxel_object')
+            obj.nobj = length(voxel_objs) + 1; % +1 for the world material
+            for o = voxel_objs
+                assert(isa(o{1}, 'voxel_object'), 'All objects must be of type voxel_object')
             end
-            self.voxel_objs = voxel_objs;
+            obj.voxel_objs = voxel_objs;
 
-            self.world_material = world_material;
+            obj.world_material = world_material;
         end
 
-        function self = update_voxel_size(self, new_voxel_size)
+        function obj = update_voxel_size(obj, new_voxel_size)
             % Update the voxel size
-            self.num_planes = (self.num_planes - 1) .* (self.dimensions ./ new_voxel_size) + 1;
-            self.num_planes = round(self.num_planes, 10); 
-            assert(all(floor(self.num_planes) == self.num_planes), 'The number of planes must be an integer')
-            self.dimensions = zeros(3, 1) + new_voxel_size;
+            obj.num_planes = (obj.num_planes - 1) .* (obj.dimensions ./ new_voxel_size) + 1;
+            obj.num_planes = round(obj.num_planes, 10); 
+            assert(all(floor(obj.num_planes) == obj.num_planes), 'The number of planes must be an integer')
+            obj.dimensions = zeros(3, 1) + new_voxel_size;
         end
 
-        function mu_dict = precalculate_mus(self, nrj_arr)
+        function mu_dict = precalculate_mus(obj, nrj_arr)
             % Return a 3D matrix of mu values using the 2D array of nrj values
             num_nrjs = numel(nrj_arr);
-            mu_dict = zeros(self.nobj, num_nrjs);
+            mu_dict = zeros(obj.nobj, num_nrjs);
             lin_nrjs = reshape(nrj_arr, 1, num_nrjs);
-            for n = 1:self.nobj-1
-                mu_dict(n, :) = self.voxel_objs{n}.get_mu(lin_nrjs);
+            for n = 1:obj.nobj-1
+                mu_dict(n, :) = obj.voxel_objs{n}.get_mu(lin_nrjs);
             end
-            mu_dict(self.nobj, :) = self.world_material.get_mu(lin_nrjs);
-            mu_dict = reshape(mu_dict, [self.nobj, size(nrj_arr)]);
+            mu_dict(obj.nobj, :) = obj.world_material.get_mu(lin_nrjs);
+            mu_dict = reshape(mu_dict, [obj.nobj, size(nrj_arr)]);
         end
 
-        function mfp_dict = precalculate_mfps(self, nrj_arr)
+        function mfp_dict = precalculate_mfps(obj, nrj_arr)
             % Create a dictionary of mfp values for each material
             num_nrjs = numel(nrj_arr);
-            mfp_dict = zeros(self.nobj, num_nrjs);
+            mfp_dict = zeros(obj.nobj, num_nrjs);
             lin_nrjs = reshape(nrj_arr, num_nrjs, 1);
-            for n = 1:self.nobj-1
-                mfp_dict(n, :) = self.voxel_objs{n}.material.mean_free_path(lin_nrjs);
+            for n = 1:obj.nobj-1
+                mfp_dict(n, :) = obj.voxel_objs{n}.material.mean_free_path(lin_nrjs);
             end
-            mfp_dict(self.nobj, :) = self.world_material.mean_free_path(lin_nrjs);
-            mfp_dict = reshape(mfp_dict, [self.nobj, size(nrj_arr)]);            
+            mfp_dict(obj.nobj, :) = obj.world_material.mean_free_path(lin_nrjs);
+            mfp_dict = reshape(mfp_dict, [obj.nobj, size(nrj_arr)]);            
         end
 
-        function iobj = get_object_idxs(self, indices)
+        function iobj = get_object_idxs(obj, indices)
             % Convert indices to position at centre of voxel
-            position = self.array_position + (indices - 0.5) .* self.dimensions;
+            position = obj.array_position + (indices - 0.5) .* obj.dimensions;
 
             % Get mus at position
-            iobj = zeros(1, size(indices, 2)) + self.nobj; % Default to air
-            for n = 1:self.nobj-1
-                iobj(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = n;
+            iobj = zeros(1, size(indices, 2)) + obj.nobj; % Default to air
+            for n = 1:obj.nobj-1
+                iobj(obj.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = n;
             end
         end
     
-        function mu_arr = get_mu_arr(self, nrj)
+        function mu_arr = get_mu_arr(obj, nrj)
             % Create a dictionary of mu values for each material
             arguments
-                self; nrj (1, 1) double
+                obj; nrj (1, 1) double
             end
-            mu_arr(self.nobj) = self.world_material.get_mu(nrj);
-            for n = 1:self.nobj-1
-                mu_arr(n) = self.voxel_objs{n}.get_mu(nrj);
+            mu_arr(obj.nobj) = obj.world_material.get_mu(nrj);
+            for n = 1:obj.nobj-1
+                mu_arr(n) = obj.voxel_objs{n}.get_mu(nrj);
             end
         end
 
-        function mus = get_saved_mu(self, indices, dict)
+        function mus = get_saved_mu(obj, indices, dict)
             % Convert indices to position at centre of voxel
-            position = self.array_position + (indices - 0.5) .* self.dimensions;
+            position = obj.array_position + (indices - 0.5) .* obj.dimensions;
 
             % Get mus at position
-            mus = zeros(1, size(indices, 2)) + dict(self.nobj); % Default to air
-            for n = 1:self.nobj-1
-                mus(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
+            mus = zeros(1, size(indices, 2)) + dict(obj.nobj); % Default to air
+            for n = 1:obj.nobj-1
+                mus(obj.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) =  ...
                     dict(n);
             end
         end
 
-        function mfp_arr = get_mfp_arr(self, nrj)
+        function mfp_arr = get_mfp_arr(obj, nrj)
             % Create a dictionary of mfp values for each material
             arguments
-                self; nrj (1, 1) double
+                obj; nrj (1, 1) double
             end
-            mfp_arr(self.nobj) = self.world_material.mean_free_path(nrj);
-            % mfp_arr = zeros(1, self.nobj + 1);
-            for n = 1:self.nobj-1
-                mfp_arr(n) = self.voxel_objs{n}.material.mean_free_path(nrj);
+            mfp_arr(obj.nobj) = obj.world_material.mean_free_path(nrj);
+            % mfp_arr = zeros(1, obj.nobj + 1);
+            for n = 1:obj.nobj-1
+                mfp_arr(n) = obj.voxel_objs{n}.material.mean_free_path(nrj);
             end
         end
 
-        function mfps = get_saved_mfp(self, indices, dict)
+        function mfps = get_saved_mfp(obj, indices, dict)
             % Convert indices to position at centre of voxel
-            position = self.array_position + (indices - 0.5) .* self.dimensions;
+            position = obj.array_position + (indices - 0.5) .* obj.dimensions;
 
             % Get material at position
-            mfps = zeros(1, size(indices, 2)) + dict(self.nobj); % Default to air
-            for n = 1:self.nobj-1
-                mfps(self.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = ...
+            mfps = zeros(1, size(indices, 2)) + dict(obj.nobj); % Default to air
+            for n = 1:obj.nobj-1
+                mfps(obj.voxel_objs{n}.is_in_object(position(1, :), position(2, :), position(3, :))) = ...
                     dict(n);
             end
         end

@@ -30,6 +30,6 @@ To generate the sinogram of the phantom, there is a single function to call.
     :type detector_obj: detector
     :type scatter: string
     :type sfactor: double
-    :return: the sinogram of the phantom, given the source and detector
-             and optionally, the scatter model
-
+    :return: the sinogram of the phantom, with dimensions MxNxP, where M is the number of
+             ypixels, N is the number of zpixels, and P is the number of angles. Use :func:`squeeze` if only one zpixel, to produce the expected MxP.
+    :rtype: :class:`MxNxP double`

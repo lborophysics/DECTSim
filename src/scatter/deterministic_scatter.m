@@ -17,9 +17,9 @@ arguments
 end
 
 % Retrieve sub-objects of all the objects
-sensor_unit = detector_obj.sensor;
-gantry      = detector_obj.gantry;
-d_array     = detector_obj.detector_array;
+sensor_unit = detector_obj.the_sensor;
+gantry      = detector_obj.the_gantry;
+d_array     = detector_obj.the_array;
 
 % Retrieve information within the sub-objects
 num_rotations  = gantry.num_rotations;
@@ -98,6 +98,7 @@ parfor angle = 1:num_rotations
     % For each rotation, we calculate the image for the source
     intensity_list = zeros(num_bins*num_esamples, npy, npz);
     pixel_positions = feval(set_array_angle, angle);
+    pixel_positions = reshape(pixel_positions, 3, npy*npz);
     ray_starts = feval(get_source_pos, angle, pixel_positions);    
     ray_dirs = pixel_positions - ray_starts;
 

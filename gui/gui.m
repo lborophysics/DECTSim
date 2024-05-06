@@ -272,7 +272,7 @@ classdef gui < matlab.apps.AppBase
                     sensor_spacing = chord2ang(pixel_size, dist_to_detector);
                 end
                 
-                [emin, emax] = source1.get_energy_range();
+                [emin, emax] = source1.get_nrj_range();
                 num_bins = ceil(emax - emin);
                 sensor = ideal_sensor([emin, emax], num_bins);
                 
@@ -304,7 +304,7 @@ classdef gui < matlab.apps.AppBase
 
                 % Source 2
                 if has_source2
-                    [emin, emax] = source2.get_energy_range();
+                    [emin, emax] = source2.get_nrj_range();
                     num_bins = ceil(emax - emin);
                     sensor2 = ideal_sensor([emin, emax], num_bins);
                     d2 = detector(g, darray, sensor2);
@@ -767,7 +767,7 @@ classdef gui < matlab.apps.AppBase
             end
 
             fprintf(fid, "\n%% Get the sensor on the detector\n");
-            fprintf(fid, "[emin, emax] = source1.get_energy_range();\n");
+            fprintf(fid, "[emin, emax] = source1.get_nrj_range();\n");
             fprintf(fid, "num_bins = ceil(emax - emin);\n");
             fprintf(fid, "sensor = ideal_sensor([emin, emax], num_bins);\n");
 
@@ -789,7 +789,7 @@ classdef gui < matlab.apps.AppBase
 
             if has_source2
                 fprintf(fid, "\n%% Compute the sinogram for source 2\n");
-                fprintf(fid, "[emin, emax] = source2.get_energy_range();\n");
+                fprintf(fid, "[emin, emax] = source2.get_nrj_range();\n");
                 fprintf(fid, "num_bins = ceil(emax - emin);\n");
                 fprintf(fid, "sensor2 = ideal_sensor([emin, emax], num_bins);\n");
                 fprintf(fid, "d2 = detector(the_gantry, darray, sensor2);\n");

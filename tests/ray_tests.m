@@ -95,13 +95,9 @@ classdef ray_tests < matlab.unittest.TestCase
             darray = flat_detector(pixel_size, num_pixels);
             
             pixels_45 = darray.set_array_angle(dgantry, 43);
-            pixels_45 = reshape(pixels_45, 3, num_pixels(1), num_pixels(2));
             pixels_135 = darray.set_array_angle(dgantry, 137);
-            pixels_135 = reshape(pixels_135, 3, num_pixels(1), num_pixels(2));
             pixels_225 = darray.set_array_angle(dgantry, 222);
-            pixels_225 = reshape(pixels_225, 3, num_pixels(1), num_pixels(2));
             pixels_315 = darray.set_array_angle(dgantry, 318);
-            pixels_315 = reshape(pixels_315, 3, num_pixels(1), num_pixels(2));
 
             pixel360_45  = pixels_45(:, 360, 1);
             pixel360_135 = pixels_135(:, 360, 1);

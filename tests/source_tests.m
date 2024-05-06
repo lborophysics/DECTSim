@@ -4,7 +4,7 @@ classdef source_tests < matlab.unittest.TestCase
         function test_single_energy(tc)
             s1 = single_energy(50);
             tc.verifyEqual(s1.energy, 50);
-            [e_min, e_max] = s1.get_energy_range();
+            [e_min, e_max] = s1.get_nrj_range();
             tc.verifyEqual(e_min, 49);
             tc.verifyEqual(e_max, 51);
 
@@ -21,7 +21,7 @@ classdef source_tests < matlab.unittest.TestCase
 
             s2 = single_energy(21);
             tc.verifyEqual(s2.energy, 21);
-            [e_min, e_max] = s2.get_energy_range();
+            [e_min, e_max] = s2.get_nrj_range();
             tc.verifyEqual(e_min, 20);
             tc.verifyEqual(e_max, 22);
 
@@ -128,7 +128,7 @@ classdef source_tests < matlab.unittest.TestCase
             i = s.get_fluences(range, 1:10);
             tc.verifyEqual(i, repmat(expI, 10, 1), 'RelTol', 1e-13);
 
-            [e_min, e_max] = s.get_energy_range();
+            [e_min, e_max] = s.get_nrj_range();
             tc.verifyEqual(e_min, ebins(1));
             tc.verifyEqual(e_max, ebins(end));
         end

@@ -38,9 +38,9 @@ end
 scatter_type = find(["none", "fast", "slow"] == scatter);
 
 % Retrieve sub-objects of all the objects
-sensor_unit = detector_obj.sensor;
-the_gantry  = detector_obj.gantry;
-d_array     = detector_obj.detector_array;
+sensor_unit = detector_obj.the_sensor;
+the_gantry  = detector_obj.the_gantry;
+d_array     = detector_obj.the_array;
 
 
 % Retrieve information within the sub-objects
@@ -102,6 +102,7 @@ parfor angle = 1:num_rotations
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
 
     pixel_positions = feval(set_array_angle, angle);
+    pixel_positions = reshape(pixel_positions, 3, npy*npz);
     ray_starts = feval(get_source_pos, angle, pixel_positions);
     ray_dirs = pixel_positions - ray_starts;
     ray_length2s = reshape(sum(ray_dirs.^2, 1), npy, npz);

@@ -22,7 +22,7 @@ function scatter = convolutional_scatter(xray_source, photon_count, detector, sf
     scatter = zeros(size(photon_count));
     skernel = get_scatter_kernel(); 
     air = air_scan(xray_source, detector);
-    for i = 1:detector.gantry.num_rotations
+    for i = 1:detector.the_gantry.num_rotations
         e_average = mean(photon_count(:, :, :, i), [2, 3, 4]);
         e_average = e_average ./ sum(e_average);
 

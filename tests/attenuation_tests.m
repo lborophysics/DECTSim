@@ -10,10 +10,10 @@ classdef attenuation_tests < matlab.unittest.TestCase
             tc.verifyError(@() material_attenuation(1), 'assert:failure');
             tc.verifyError(@() material_attenuation('water'), 'assert:failure');
             tc.verifyError(@() material_attenuation("wat"), 'MATLAB:invalidMaterial');
-            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.111898, 0.888102], [0, 1]), 'assert:failure');
-            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2], "1"), 'assert:failure');
-            tc.verifyError(@() material_attenuation("my_water", [1, 2;1, 2], [0.111898, 0.888102], 1), 'assert:failure');
-            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2; 0.3, 0.4], 1), 'assert:failure');
+            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.111898, 0.888102], [0, 1]), 'MATLAB:validation:IncompatibleSize');
+            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2], "s"), 'assert:failure');
+            tc.verifyError(@() material_attenuation("my_water", [1, 2;1, 2], [0.111898, 0.888102], 1), 'MATLAB:validation:IncompatibleSize');
+            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2; 0.3, 0.4], 1), 'MATLAB:validation:IncompatibleSize');
             tc.verifyError(@() material_attenuation("my_water", 1, [0.1, 0.2], 1), 'assert:failure');
         end
 

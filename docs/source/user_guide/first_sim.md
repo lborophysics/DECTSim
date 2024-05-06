@@ -9,13 +9,16 @@ To run a simulation, there are 5 main ingredients required:
 
 There is one more optional ingredient, which is whether you would like to include scatter in the simulation. There exists three types of scatter models: `"none"`, `"fast"` and `"slow"`. The default is `"none"`, but can be changed.
 
+## Step 0: The units system
+Before we start, it is important to note that all functions are intended to be operated independently of units. Therefore, for the user to know if they are using the correct units, they must use the `units` class. Any number that is input into a function must be multiplied by the unit, for example, 80 keV would be input as `80*units.keV`. With this in mind, all input variables will be consistent with what the function expects.
+
 ## Step 1: The x-ray source
 
 ### Single energy source
 To create a single energy source, you only need to specify the energy of the x-rays. For example, to create a source with 80 keV x-rays, you would use the following code:
 
 ```MATLAB
-src = single_energy(80);
+src = single_energy(80*units.keV);
 ```
 
 ### Source from file
@@ -67,7 +70,7 @@ The details of the materials have been taken from the NIST database [here](https
 2. By specifying the atomic numbers, mass fractions and density of the material. The list of atomic numbers and mass fractions must be the same length, and the density must be a scalar. For example:
 
 ```MATLAB
-water = material_attenuation([1, 8], [0.111894, 0.888106], 1.0);
+water = material_attenuation([1, 8], [0.111894, 0.888106], 1.0*units.g/units.cm^3);
 ```
 
 ### Voxel objects
@@ -90,10 +93,10 @@ There are currently only two types of voxel objects available:
 #### Using voxel objects
 An example of a two cylinders in a world of water is shown below:
 ```MATLAB
-bone_cylinder = voxel_cylinder(zeros(3, 1), 15, 50, material_attenuation("bone"));
-blood_cylinder = voxel_cylinder(zeros(3, 1), 5, 50, material_attenuation("blood"));
+bone_cylinder = voxel_cylinder(zeros(3, 1), 15*units.cm, 50*units.cm, material_attenuation("bone"));
+blood_cylinder = voxel_cylinder(zeros(3, 1), 5*units.cm, 50*units.cm, material_attenuation("blood"));
 
-world = voxel_array(zeros(3, 1), [50, 50, 50], 0.1, {bone_cylinder, blood_cylinder}, material_attenuation("water"));
+world = voxel_array(zeros(3, 1), [50, 50, 50].*units.cm, 1*units.mm, {bone_cylinder, blood_cylinder}, material_attenuation("water"));
 ```
 
 In this example, we have created two cylinders, one representing bone and the other representing blood. Due to the order of these cylinders in the cell array, the bone cylinder will be drawn first, and the blood cylinder will be drawn on top of it. The world is 50x50x50 cm, and the voxel size is 1mm.
@@ -111,7 +114,7 @@ There are currently two types of gantries available: `gantry` and `parallel_gant
 For example, to create a cone beam gantry with a detector 100cm from the source, rotating 180 degrees in 10 steps, you would use the following code:
 
 ```MATLAB
-g = gantry(100, 10, pi);
+g = gantry(1*units.m, 10, pi);
 ```
 
 This object contains useful attributes for reconstructing the sinogram into an image, such as `scan_angles`. This function returns a 1xN vector of the angles the detector will be at for each rotation.
@@ -124,10 +127,10 @@ The `curved_detector` object is created by specifying the following parameters:
 - `pixel_dims`: a 1x2 vector representing the dimensions of each pixel in the detector in cm
 - `num_pixels`: a 1x2 vector representing the number of pixels in the detector in the x and y directions
 
-For example, to create a curved detector with 900 pixels in the x direction and 64 pixels in the y direction, with each pixel being 0.1x0.1cm, you would use the following code:
+For example, to create a curved detector with 900 pixels in the x direction and 64 pixels in the y direction, with each pixel being 1x1mm, you would use the following code:
 
 ```MATLAB
-cd = curved_detector([0.1, 0.1], [900, 64]);
+cd = curved_detector([1, 1].*units.mm, [900, 64]);
 ```
 
 ### Flat detector
@@ -135,10 +138,10 @@ The `flat_detector` object is created by specifying the following parameters:
 - `pixel_dims`: a 1x2 vector representing the dimensions of each pixel in the detector in cm
 - `num_pixels`: a 1x2 vector representing the number of pixels in the detector in the x and y directions
 
-For example, to create a flat detector with 900 pixels in the x direction and 64 pixels in the y direction, with each pixel being 0.1x0.1cm, you would use the following code:
+For example, to create a flat detector with 900 pixels in the x direction and 64 pixels in the y direction, with each pixel being 1x1mm, you would use the following code:
 
 ```MATLAB
-pd = flat_detector([0.1, 0.1], [900, 64]);
+pd = flat_detector([1, 1].*units.mm, [900, 64]);
 ```
 
 ## Step 5: The sensor
@@ -153,7 +156,7 @@ The `ideal_sensor` object is created by specifying the following parameters:
 For example, to create an ideal sensor that can detect energies between 20 and 140 keV, with 100 energy bins and 4 samples per energy bin, you would use the following code:
 
 ```MATLAB
-s = ideal_sensor([20, 140], 100, 4);
+s = ideal_sensor([20, 140].*units.keV, 100, 4);
 ```
 
 
