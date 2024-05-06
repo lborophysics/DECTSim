@@ -16,7 +16,7 @@ classdef material_attenuation
 
 
     properties (Access=private, Constant, NonCopyable)
-        use_mex = ~~exist('photon_attenuation_mex', 'file');
+        use_mex = ~~exist('photon_attenuatin_mex', 'file');
     end
 
     methods
@@ -63,7 +63,7 @@ classdef material_attenuation
                 mu = photon_attenuation_mex(self.atomic_numbers, self.mass_fractions, self.density, nrj);
             else
                 mus = self.mu_from_energy(log(nrj));
-                mu = sum(exp(mus).*self.mass_fractions, 2) * self.density;
+                mu = sum(exp(mus).*self.mass_fractions, 2)' .* self.density;
             end
         end
 
