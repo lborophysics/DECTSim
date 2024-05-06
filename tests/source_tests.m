@@ -65,7 +65,7 @@ classdef source_tests < matlab.unittest.TestCase
                     77.5000,230691.5663; 78.5000,145363.1041; 79.5000,56373.3614];
             ebins = data(:,1);
             fluences = data(:,2) .* 100^2*units.cm2;
-            s = source_fromfile('test.spk');
+            s = source_fromfile('resources/test.spk');
             tc.verifyEqual(s.ebins, ebins);
             tc.verifyEqual(s.fluences, fluences .* ebins, 'RelTol', 3e-16);
 
