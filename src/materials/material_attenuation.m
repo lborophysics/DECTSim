@@ -67,11 +67,11 @@ classdef material_attenuation
             end
         end
 
-        function mfp = mean_free_path(self, nrj)
-            % MEAN_FREE_PATH Get the mean free path of the material for a given energy
-            mfp = 1 / (constants.N_A * self.density * ...
-                sum(self.mass_fractions .* cross_section(self.atomic_numbers, nrj) ...
-                    ./ self.atomic_masses));
+        function mfp = mean_free_path(self, nrjs)
+            % MEAN_FREE_PATH Get the mean free path of the material a set of energies
+            mfp = 1 ./ (constants.N_A .* self.density .* ...
+                sum(self.mass_fractions .* cross_section(self.atomic_numbers, nrjs) ...
+                    ./ self.atomic_masses, 2));
         end
     end
 

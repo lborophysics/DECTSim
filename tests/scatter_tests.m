@@ -67,11 +67,45 @@ classdef scatter_tests < matlab.unittest.TestCase
                     h_exp = 1.008 / (hydrogen_cs(i)*constants.N_A);
                     tc.verifyEqual(mfp, h_exp, 'RelTol', tol);
 
-                    cs = comined.mean_free_path(E(i));
+                    cs = cross_section([1, 6, 14, 26, 53], E(i));
+                    tc.verifyEqual(cs, [hydrogen_cs(i), carbon_cs(i), silicon_cs(i), iron_cs(i), iodine_cs(i)], 'RelTol', tol);
+
+                    mfp = comined.mean_free_path(E(i));
                     comb_exp = 1/(0.7*(0.1/(h_exp) + 0.3/(c_exp) + 0.2/(s_exp*0.4) + 0.3/(i_exp*0.3) + 0.1/(io_exp)));
-                    tc.verifyEqual(cs, comb_exp, 'RelTol', tol);
+                    tc.verifyEqual(mfp, comb_exp, 'RelTol', tol);
                 end
             end
+
+            % Test the cross section of with an array of energies
+            E = [10, 30, 60, 100] .* units.keV;
+            cs = cross_section(Z(2), E);
+            tc.verifyEqual(cs, carbon_cs', 'RelTol', [0.11, 0.06, 0.06, 0.06]');
+
+            cs = cross_section(Z(3), E);
+            tc.verifyEqual(cs, silicon_cs', 'RelTol', [0.11, 0.06, 0.06, 0.06]');
+            
+            cs = cross_section(Z(4), E);
+            tc.verifyEqual(cs, iron_cs', 'RelTol', [0.11, 0.06, 0.06, 0.06]');
+            
+            cs = cross_section(Z(5), E);
+            tc.verifyEqual(cs, iodine_cs', 'RelTol', [0.11, 0.06, 0.06, 0.06]');
+            
+            cs = cross_section([1, 6, 14, 26, 53], E(2:end)');
+            tc.verifyEqual(cs, ...
+                [hydrogen_cs(2:end)', carbon_cs(2:end)', silicon_cs(2:end)', iron_cs(2:end)', iodine_cs(2:end)'],...
+                'RelTol', [0.06, 0.06, 0.06]');
+
+            h_exp = 1.008  ./ (hydrogen_cs(2:end)*constants.N_A);
+            c_exp = 12.011 ./ (carbon_cs(2:end)*constants.N_A);
+            s_exp = 28.085 ./ (silicon_cs(2:end)*constants.N_A*0.4);
+            i_exp = 55.845 ./ (iron_cs(2:end)*constants.N_A*0.3);
+            io_exp = 126.90447 ./ (iodine_cs(2:end)*constants.N_A);
+            comb_exp = 1./(0.7*(0.1./(h_exp) + 0.3./(c_exp) + 0.2./(s_exp*0.4) + 0.3./(i_exp*0.3) + 0.1./(io_exp)));
+            
+            mfp = comined.mean_free_path(E(2:end));
+            tc.verifyEqual(mfp, comb_exp', 'RelTol', [0.06, 0.06, 0.06]');
+            mfp = comined.mean_free_path(E(2:end)');
+            tc.verifyEqual(mfp, comb_exp', 'RelTol', [0.06, 0.06, 0.06]');
         end
 
         function test_angle_distribution(tc)

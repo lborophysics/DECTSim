@@ -76,7 +76,7 @@ mean_energy = sum(energy_list .* av_fluences) / sum(av_fluences);
 
 % mu_dict = phantom.precalculate_mus(energy_list);
 % mfp_dict = phantom.precalculate_mfps(energy_list);
-mu_dict  = phantom.get_mu_arr(mean_energy );
+mu_dict  = phantom.get_mu_arr (mean_energy);
 mfp_dict = phantom.get_mfp_arr(mean_energy);
 
 

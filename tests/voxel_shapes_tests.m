@@ -71,7 +71,7 @@ classdef voxel_shapes_tests < matlab.unittest.TestCase
 
         end
 
-        function box(tc)
+        function test_box(tc)
             water = material_attenuation("water");
             my_box = voxel_cube([0,0,0], 100, water);
             box_fun = tc.get_get_mu(my_box);
@@ -84,6 +84,61 @@ classdef voxel_shapes_tests < matlab.unittest.TestCase
             res = box_fun(-100:300, -100:300, 50:0.25:150, 2);
             exp = cat(2,zeros(1, 100), zeros(1, 201) + water.get_mu(2), zeros(1, 100)); %101 includes 0
             tc.verifyEqual(res, exp)
+        end
+
+        function test_ellipsoid(tc)
+            water = material_attenuation("water");
+            my_ellipsoid = voxel_ellipsoid([0, 0, 0], 1, 1, 1, water); % unit sphere
+            ellipsoid_fun = tc.get_get_mu(my_ellipsoid);
+            for x = -2:0.25:2
+                for y = -2:0.25:2
+                    for z = -2:0.25:2
+                        if x^2 + y^2 + z^2 <= 1
+                            tc.verifyEqual(ellipsoid_fun(x, y, z, 10), water.get_mu(10))
+                        else
+                            tc.verifyEqual(ellipsoid_fun(x, y, z, 10), 0)
+                        end
+                    end
+                end
+            end
+
+            my_ellipsoid = voxel_ellipsoid([1, 2, 3], 2, 1, 1, water);
+            ellipsoid_fun = tc.get_get_mu(my_ellipsoid);
+            for x = -2:1:4
+                for y = -1:1:5
+                    for z = 0:1:6
+                        if (x-1)^2/4 + (y-2)^2 + (z-3)^2 <= 1
+                            tc.verifyEqual(ellipsoid_fun(x, y, z, 10), water.get_mu(10))
+                        else
+                            tc.verifyEqual(ellipsoid_fun(x, y, z, 10), 0)
+                        end
+                    end
+                end
+            end
+        end
+
+        function test_rotated_ellipsoid(tc)
+            water = material_attenuation("water");
+            rotated_ellipsoid1 = voxel_ellipsoid_rotated([0, 0, 0], 1, 2, 3, pi/2, water);
+            rotated_ellipsoid2 = voxel_ellipsoid_rotated([0, 0, 0], 1, 2, 3, pi, water);
+            rot_ellipsoid_fun1 = tc.get_get_mu(rotated_ellipsoid1);
+            rot_ellipsoid_fun2 = tc.get_get_mu(rotated_ellipsoid2);
+            for x = -2:1:2
+                for y = -2:1:2
+                    for z = -2:1:2
+                        if x^2/4 + y^2 + z^2/9 <= 1
+                            tc.verifyEqual(rot_ellipsoid_fun1(x, y, z, 10), water.get_mu(10))
+                        else
+                            tc.verifyEqual(rot_ellipsoid_fun1(x, y, z, 10), 0)
+                        end
+                        if x^2 + y^2/4 + z^2/9 <= 1
+                            tc.verifyEqual(rot_ellipsoid_fun2(x, y, z, 10), water.get_mu(10))
+                        else
+                            tc.verifyEqual(rot_ellipsoid_fun2(x, y, z, 10), 0)
+                        end
+                    end
+                end
+            end
         end
     end
 end

@@ -48,8 +48,9 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mu_dict = precalculate_mus(self, nrj_arr)
             % Return a 3D matrix of mu values using the 2D array of nrj values
-            mu_dict = zeros(self.nobj, numel(nrj_arr));
-            lin_nrjs = reshape(nrj_arr, 1, []);
+            num_nrjs = numel(nrj_arr);
+            mu_dict = zeros(self.nobj, num_nrjs);
+            lin_nrjs = reshape(nrj_arr, 1, num_nrjs);
             for n = 1:self.nobj-1
                 mu_dict(n, :) = self.voxel_objs{n}.get_mu(lin_nrjs);
             end
@@ -60,11 +61,13 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
         function mfp_dict = precalculate_mfps(self, nrj_arr)
             % Create a dictionary of mfp values for each material
             num_nrjs = numel(nrj_arr);
-            mfp_dict = zeros(self.nobj, size(nrj_arr, 1), size(nrj_arr, 2));
-            for n = 1:num_nrjs
-                [i, j] = ind2sub(size(nrj_arr), n);
-                mfp_dict(:, i, j) = self.get_mfp_arr(nrj_arr(i));
+            mfp_dict = zeros(self.nobj, num_nrjs);
+            lin_nrjs = reshape(nrj_arr, num_nrjs, 1);
+            for n = 1:self.nobj-1
+                mfp_dict(n, :) = self.voxel_objs{n}.material.mean_free_path(lin_nrjs);
             end
+            mfp_dict(self.nobj, :) = self.world_material.mean_free_path(lin_nrjs);
+            mfp_dict = reshape(mfp_dict, [self.nobj, size(nrj_arr)]);            
         end
 
         function iobj = get_object_idxs(self, indices)
@@ -80,6 +83,9 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
     
         function mu_arr = get_mu_arr(self, nrj)
             % Create a dictionary of mu values for each material
+            arguments
+                self; nrj (1, 1) double
+            end
             mu_arr(self.nobj) = self.world_material.get_mu(nrj);
             for n = 1:self.nobj-1
                 mu_arr(n) = self.voxel_objs{n}.get_mu(nrj);
@@ -100,6 +106,9 @@ classdef voxel_array % The functions here need to be reviewed - are they all nee
 
         function mfp_arr = get_mfp_arr(self, nrj)
             % Create a dictionary of mfp values for each material
+            arguments
+                self; nrj (1, 1) double
+            end
             mfp_arr(self.nobj) = self.world_material.mean_free_path(nrj);
             % mfp_arr = zeros(1, self.nobj + 1);
             for n = 1:self.nobj-1
