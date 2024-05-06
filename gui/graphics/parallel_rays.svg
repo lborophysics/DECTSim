@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="203.14673mm"
+   height="310.90793mm"
+   viewBox="0 0 203.14673 310.90792"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="parallel_rays.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.36504338"
+     inkscape:cx="-625.953"
+     inkscape:cy="431.45557"
+     inkscape:window-width="2400"
+     inkscape:window-height="1261"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1"
+     showguides="false" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="marker4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6" />
+    </marker>
+    <linearGradient
+       id="swatch4">
+      <stop
+         style="stop-color:#000000;stop-opacity:0.52651511;"
+         offset="0"
+         id="stop4" />
+    </linearGradient>
+    <marker
+       style="overflow:visible"
+       id="marker4-3"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-2" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-8"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-3" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-3-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-0-9" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-4-6"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-0-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-5"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-7" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-3-0"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-0-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-4-3"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-0-3" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-4-0"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-2-2" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-8-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-3-7" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-3-1-9"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-0-9-8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-4-6-9"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-0-0-5" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-4-3-8"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-0-3-1" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-4-0-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-2-2-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-8-1-5"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-3-7-8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker4-3-1-9-4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path4-0-9-8-0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DartArrow-4-6-9-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Dart arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         transform="scale(-0.5)"
+         id="path6-0-0-5-4" />
+    </marker>
+  </defs>
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4)"
+     d="M 2.4087343,2.8651283e-6 2.4100101,304.88235"
+     id="path1" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow)"
+     d="M 12.325058,2.9651283e-6 12.326358,304.88291"
+     id="path1-8" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-3)"
+     d="M 22.241395,2.9651283e-6 22.242695,304.88237"
+     id="path1-4" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-4)"
+     d="M 32.157732,2.9651283e-6 32.159032,304.88293"
+     id="path1-8-3" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-4)"
+     d="M 42.074069,2.9651283e-6 42.075358,304.88235"
+     id="path1-45" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-8)"
+     d="M 51.990392,2.9651283e-6 51.991692,304.88291"
+     id="path1-8-0" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-3-1)"
+     d="M 61.90673,2.9651283e-6 61.90803,304.88237"
+     id="path1-4-5" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-4-6)"
+     d="M 71.823067,2.9651283e-6 71.824367,304.88293"
+     id="path1-8-3-1" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-5)"
+     d="M 81.739417,2.9651283e-6 81.740706,304.88235"
+     id="path1-2" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-7)"
+     d="M 91.655741,2.9651283e-6 91.657041,304.88291"
+     id="path1-8-5" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-3-0)"
+     d="M 101.57207,2.9651283e-6 101.57306,304.88237"
+     id="path1-4-4" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-4-3)"
+     d="M 111.48841,2.9651283e-6 111.4894,304.88293"
+     id="path1-8-3-9" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-4-0)"
+     d="M 121.40476,2.9651283e-6 121.40574,304.88235"
+     id="path1-45-9" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-8-1)"
+     d="M 131.32107,2.9651283e-6 131.32206,304.88291"
+     id="path1-8-0-7" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-3-1-9)"
+     d="M 141.23741,2.9651283e-6 141.2384,304.88237"
+     id="path1-4-5-5" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-4-6-9)"
+     d="M 151.15375,2.9651283e-6 151.15473,304.88293"
+     id="path1-8-3-1-4" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-4-3-8)"
+     d="M 161.0704,1.5651283e-6 161.07139,304.88293"
+     id="path1-8-3-9-0" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-4-0-7)"
+     d="M 170.98676,1.5651283e-6 170.98775,304.88235"
+     id="path1-45-9-0" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-8-1-5)"
+     d="M 180.90308,1.5651283e-6 180.90406,304.88291"
+     id="path1-8-0-7-3" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#marker4-3-1-9-4)"
+     d="M 190.81941,1.5651283e-6 190.8204,304.88237"
+     id="path1-4-5-5-4" />
+  <path
+     style="fill:none;fill-opacity:0.526515;stroke:#000000;stroke-width:0.964;stroke-dasharray:none;marker-end:url(#DartArrow-4-6-9-1)"
+     d="M 200.73575,1.5651283e-6 200.73674,304.88293"
+     id="path1-8-3-1-4-3" />
+</svg>

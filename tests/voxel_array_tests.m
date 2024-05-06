@@ -184,7 +184,83 @@ classdef voxel_array_tests < matlab.unittest.TestCase
             end
         end
 
-        % MISSING TESTS FOR: precalculate_mus, precalculate_mfps
-    end
+        function test_precaclulate_mus(tc)
+            nrjs = [1, 20, 50, 100, 150, 200];
+            air = material_attenuation("air");
+            mat1 = material_attenuation("water");
+            mat2 = material_attenuation("bone");
+            mat3 = material_attenuation("fat");
+            mus = [mat1.get_mu(nrjs); mat2.get_mu(nrjs); mat3.get_mu(nrjs); air.get_mu(nrjs)];
+            
+            big_box   = voxel_cube([0,0,0], 10, mat1);
+            med_box   = voxel_cube([0,0,0], 6 , mat2);
+            small_box = voxel_cube([0,0,0], 2 , mat3);
 
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, {big_box, med_box, small_box});
+            mu_dict = my_collection.precalculate_mus(nrjs);
+            for n = 1:numel(nrjs)
+                tc.verifyEqual(mu_dict(:, n), mus(:, n));
+            end
+
+            nrjs = reshape(nrjs, 2, 3);
+            mu_dict = my_collection.precalculate_mus(nrjs);
+            for n = 1:numel(nrjs)
+                [i, j] = ind2sub(size(nrjs), n);
+                tc.verifyEqual(mu_dict(:, i, j), mus(:, n));
+            end
+        end
+
+        function test_precaclulate_mfps(tc)
+            nrjs = [1, 20, 50, 100, 150, 200];
+            air = material_attenuation("air");
+            mat1 = material_attenuation("water");
+            mat2 = material_attenuation("bone");
+            mat3 = material_attenuation("fat");
+            mfps = [ % Mean free path returns column vectors
+                mat1.mean_free_path(nrjs)';
+                mat2.mean_free_path(nrjs)';
+                mat3.mean_free_path(nrjs)';
+                air.mean_free_path(nrjs)'
+            ];
+            
+            big_box   = voxel_cube([0,0,0], 10, mat1);
+            med_box   = voxel_cube([0,0,0], 6 , mat2);
+            small_box = voxel_cube([0,0,0], 2 , mat3);
+
+            my_collection = voxel_array([0.5;0.5;0.5], [10;10;10], 1, {big_box, med_box, small_box});
+            mfp_dict = my_collection.precalculate_mfps(nrjs);
+            for n = 1:numel(nrjs)
+                tc.verifyEqual(mfp_dict(:, n), mfps(:, n));
+            end
+
+            nrjs = reshape(nrjs, 2, 3);
+            mfp_dict = my_collection.precalculate_mfps(nrjs);
+            for n = 1:numel(nrjs)
+                [i, j] = ind2sub(size(nrjs), n);
+                tc.verifyEqual(mfp_dict(:, i, j), mfps(:, n));
+            end
+        end
+
+        function test_change_voxel_size(tc)
+            obj1 = tc.test_obj1.update_voxel_size(0.5);
+            tc.verifyEqual(obj1.array_position, [-5; -5; -5]);
+            tc.verifyEqual(obj1.num_planes, [21; 21; 21]);
+            tc.verifyEqual(obj1.dimensions, [0.5; 0.5; 0.5]);
+
+            obj2 = tc.test_obj2.update_voxel_size(1);
+            tc.verifyEqual(obj2.array_position, [-5; -5; -5]);
+            tc.verifyEqual(obj2.num_planes, [11; 11; 11]);
+            tc.verifyEqual(obj2.dimensions, [1; 1; 1]);
+
+            obj3 = tc.test_obj3.update_voxel_size(0.25);
+            tc.verifyEqual(obj3.array_position, [-5; -5; -5]);
+            tc.verifyEqual(obj3.num_planes, [41; 41; 41]);
+            tc.verifyEqual(obj3.dimensions, [0.25; 0.25; 0.25]);
+
+            obj4 = tc.test_obj4.update_voxel_size(0.5);
+            tc.verifyEqual(obj4.array_position, [0; -1; -4.5]);
+            tc.verifyEqual(obj4.num_planes, [21; 21; 21]);
+            tc.verifyEqual(obj4.dimensions, [0.5; 0.5; 0.5]);
+        end
+    end
 end

@@ -11,7 +11,8 @@ Welcome to DECTSim's documentation!
    :caption: User Guide:
    :glob: 
    
-   user_guide/*
+   user_guide/gui.md
+   user_guide/first_sim.md
 
 .. toctree::
    :maxdepth: 2
@@ -32,6 +33,7 @@ Welcome to DECTSim's documentation!
    dev_guide/misc.rst
    dev_guide/sinogram.rst
    dev_guide/scatter.rst
+   dev_guide/duke.rst
    
    dev_guide/contributing.rst
 

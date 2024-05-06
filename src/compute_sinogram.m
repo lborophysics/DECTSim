@@ -38,14 +38,14 @@ end
 scatter_type = find(["none", "fast", "slow"] == scatter);
 
 % Retrieve sub-objects of all the objects
-sensor_unit = detector_obj.sensor;
-gantry      = detector_obj.gantry;
-d_array     = detector_obj.detector_array;
+sensor_unit = detector_obj.the_sensor;
+the_gantry  = detector_obj.the_gantry;
+d_array     = detector_obj.the_array;
 
 
 % Retrieve information within the sub-objects
-num_rotations  = gantry.num_rotations;
-d2detector     = gantry.dist_to_detector;
+num_rotations  = the_gantry.num_rotations;
+d2detector     = the_gantry.dist_to_detector;
 
 npy = d_array.n_pixels(1);
 npz = d_array.n_pixels(2);
@@ -63,8 +63,8 @@ vox_nplanes = phantom.num_planes;
 vox_last    = vox_init + (vox_nplanes - 1) .* vox_dims;
 
 % Now lets define some functions that we will use to calculate the sinogram
-get_source_pos  = @(angle, pixel_pos) gantry.get_source_pos(angle, pixel_pos);
-set_array_angle = @(angle) d_array.set_array_angle(gantry, angle);
+get_source_pos  = @(angle, pixel_pos) the_gantry.get_source_pos(angle, pixel_pos);
+set_array_angle = @(angle) d_array.set_array_angle(the_gantry, angle);
 get_object_idxs = @(idxs) phantom.get_object_idxs(idxs);
 
 % Identify which compiled functions are available to use
@@ -82,8 +82,7 @@ energies = xray_source.get_energies(sensor_range);
 energy_list = reshape(energies, num_esamples, num_bins)';
 
 % Now the fluences
-fluences = xray_source.get_fluences(sensor_range);
-fluences = reshape(fluences, num_esamples, num_bins)';
+fluences = xray_source.get_fluences(sensor_range, 1:npy);
 
 % Pre-calculate the mu values for the energy list
 mu_dict = phantom.precalculate_mus(energy_list);
@@ -100,68 +99,72 @@ assert(vox_last(1)^2 + vox_last(2)^2 <= (d2detector/2)^2, ...
 photon_count = zeros(num_bins, npy, npz, num_rotations);
 parfor angle = 1:num_rotations
     % For each rotation, we calculate the image for the source
-    pixel_generator = feval(set_array_angle, angle);
-    ray_starts = zeros(3, npy*npz);
-    ray_dirs = zeros(3, npy*npz);
     intensity_list = zeros(num_bins, num_esamples, npy, npz);
 
-    for z_pix = 1:npz
-        for y_pix = 1:npy
-            pixel_position = pixel_generator(y_pix, z_pix);
-            % Even if parallel beams are removed, this still must be called for
-            % every pixel, as the source position may change (cloud of points)
-            ray_start = feval(get_source_pos, angle, pixel_position); 
-            ray_dir = pixel_position - ray_start;
-            ray_length2 = sum(ray_dir.^2);
-            
-            % Here you are missing a call to the source dependent of the pixel position
-            ray_starts(:, (z_pix-1)*npy + y_pix) = ray_start;
-            ray_dirs(:, (z_pix-1)*npy + y_pix) = ray_dir;
+    pixel_positions = feval(set_array_angle, angle);
+    pixel_positions = reshape(pixel_positions, 3, npy*npz);
+    ray_starts = feval(get_source_pos, angle, pixel_positions);
+    ray_dirs = pixel_positions - ray_starts;
+    ray_length2s = reshape(sum(ray_dirs.^2, 1), npy, npz);
+    ray_lens = sqrt(ray_length2s);
+
+    % Doing nested loop here, as the calculation is simpler without vectorisation
+    for y_pix = 1:npy
+        % Get the fluences for the pixel
+        yfluences = fluences(y_pix, :);
+        yfluences = reshape(yfluences, num_esamples, num_bins)';
+        for z_pix = 1:npz
             intensity_list(:, :, y_pix, z_pix) = ...
-                fluences .* pix_size / ray_length2;
+                yfluences .* pix_size ./ ray_length2s(y_pix, z_pix);
         end
     end
 
-    [ray_lens, ray_idxs] = ray_tracing(ray_starts, ray_dirs);
+    [traced_ls, traced_idxs] = ray_tracing(ray_starts, ray_dirs);
     for z_pix = 1:npz
         for y_pix = 1:npy
-            ls = ray_lens{(z_pix-1)*npy + y_pix};
+            ls = traced_ls{(z_pix-1)*npy + y_pix};
+            obj_lens = zeros(num_obj, 1);
             if isempty(ls)
-                photon_count(:, y_pix, z_pix, angle) = ...
-                    sum(intensity_list(:, :, y_pix, z_pix), 2);
+                % If no ray tracing inside the world, then the ray is entirely in the world material (probably air)
+                obj_lens(end) = ray_lens(y_pix, z_pix);
             else
-                idxs = ray_idxs{(z_pix-1)*npy + y_pix};
+                idxs = traced_idxs{(z_pix-1)*npy + y_pix};
                 obj_idxs = get_object_idxs(idxs);
 
                 % Get a the length of the ray in each object
-                obj_lens = zeros(num_obj + 1, 1);
-                for i = 1:num_obj+1
+                for i = 1:num_obj
                     obj_lens(i) = sum(ls(obj_idxs == i));
                 end
 
-                % Now we calculate the attenuation
-                mus = sum(mu_dict .* obj_lens, 1);
-                photons = intensity_list(:, :, y_pix, z_pix) .* ...
-                    reshape(exp(-mus), num_bins, num_esamples);
-                photon_count(:, y_pix, z_pix, angle) = sum(photons, 2); % Sum over the sample dimension
-            end
+                % Add the residual length in air
+                obj_lens(end) = obj_lens(end) + (ray_lens(y_pix, z_pix) - sum(obj_lens));
+            end 
+            % Now we calculate the attenuation
+            mus = sum(mu_dict .* obj_lens, 1);
+            photons = intensity_list(:, :, y_pix, z_pix) .* ...
+                reshape(exp(-mus), num_bins, num_esamples);
+            photon_count(:, y_pix, z_pix, angle) = sum(photons, 2); % Sum over the sample dimension
         end
     end
 end
 
 % Calculate the scatter signal
 if scatter_type == 1
-    scatter_count = 0;
+    scatter_count = zeros(size(photon_count));
 elseif scatter_type == 2 % Fast scatter
     scatter_count = ...
         convolutional_scatter(xray_source, photon_count, detector_obj, sfactor);
 else
     scatter_count = ...
-        monte_carlo_scatter  (xray_source, phantom     , detector_obj, sfactor);
+        deterministic_scatter  (xray_source, phantom     , detector_obj, sfactor);
 end
 % Convert the photon count (rays + scatter) to a signal
-signal = sensor_unit.get_signal(photon_count + scatter_count);
+photon_signal = sensor_unit.get_signal(photon_count);
+scatter_signal = sensor_unit.get_signal(scatter_count);
+
+air = air_scan(xray_source, detector_obj);
+air_signal = sensor_unit.get_signal(air);
 
 % Convert the signal to a sinogram
-sinogram = sensor_unit.get_image(signal);
+sinogram = sensor_unit.get_image(photon_signal + scatter_signal, air_signal);
 end

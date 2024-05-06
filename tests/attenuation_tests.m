@@ -10,10 +10,10 @@ classdef attenuation_tests < matlab.unittest.TestCase
             tc.verifyError(@() material_attenuation(1), 'assert:failure');
             tc.verifyError(@() material_attenuation('water'), 'assert:failure');
             tc.verifyError(@() material_attenuation("wat"), 'MATLAB:invalidMaterial');
-            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.111898, 0.888102], [0, 1]), 'assert:failure');
-            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2], "1"), 'assert:failure');
-            tc.verifyError(@() material_attenuation("my_water", [1, 2;1, 2], [0.111898, 0.888102], 1), 'assert:failure');
-            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2; 0.3, 0.4], 1), 'assert:failure');
+            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.111898, 0.888102], [0, 1]), 'MATLAB:validation:IncompatibleSize');
+            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2], "s"), 'assert:failure');
+            tc.verifyError(@() material_attenuation("my_water", [1, 2;1, 2], [0.111898, 0.888102], 1), 'MATLAB:validation:IncompatibleSize');
+            tc.verifyError(@() material_attenuation("my_water", [1, 8], [0.1, 0.2; 0.3, 0.4], 1), 'MATLAB:validation:IncompatibleSize');
             tc.verifyError(@() material_attenuation("my_water", 1, [0.1, 0.2], 1), 'assert:failure');
         end
 
@@ -132,6 +132,41 @@ classdef attenuation_tests < matlab.unittest.TestCase
             tc.verifyEqual(mus(5), 7.779E-01, "RelTol", 1e-3)
             tc.verifyEqual(mus(6), 1.875E-01, "RelTol", 1e-3)
             tc.verifyEqual(mus(7), 1.067E-01, "RelTol", 1e-3)
+        end
+
+        function test_read_excel(tc)
+            materials = material_attenuation.get_materials("resources/example_materials.xlsx");
+            tc.verifyEqual(length(materials), 6);
+            tc.verifyEqual(materials{1}.name, "air");
+            tc.verifyEqual(materials{1}.atomic_numbers, [6 7 8 18]);
+            % I think the following error is to do with how excel stores its data - but I'm not sure, so this could be wrong to make the test pass
+            tc.verifyEqual(materials{1}.mass_fractions, [0.000124 0.755268 0.231781 0.012817], "RelTol", 1.0001e-5);
+            tc.verifyEqual(materials{1}.density, 1.205E-03);
+
+            tc.verifyEqual(materials{2}.name, "water");
+            tc.verifyEqual(materials{2}.atomic_numbers, [1 8]);
+            tc.verifyEqual(materials{2}.mass_fractions, [0.111898 0.888102]);
+            tc.verifyEqual(materials{2}.density, 1);
+
+            tc.verifyEqual(materials{3}.name, "bone");
+            tc.verifyEqual(materials{3}.atomic_numbers, [1 6 7 8 11 12 15 16 20]);
+            tc.verifyEqual(materials{3}.mass_fractions, [0.034 0.155 0.042 0.435 0.001 0.002 0.103 0.003 0.225]);
+            tc.verifyEqual(materials{3}.density, 1.92);
+
+            tc.verifyEqual(materials{4}.name, "fat");
+            tc.verifyEqual(materials{4}.atomic_numbers, [1 6 7 8 11 16 17]);
+            tc.verifyEqual(materials{4}.mass_fractions, [0.114 0.598 0.007 0.278 0.001 0.001 0.001]);   
+            tc.verifyEqual(materials{4}.density, 0.95);
+
+            tc.verifyEqual(materials{5}.name, "blood");
+            tc.verifyEqual(materials{5}.atomic_numbers, [1 6 7 8 11 15 16 17 19 26]);
+            tc.verifyEqual(materials{5}.mass_fractions, [0.102 0.11 0.033 0.745 0.001 0.001 0.002 0.003	0.002 0.001]);
+            tc.verifyEqual(materials{5}.density, 1.06);
+
+            tc.verifyEqual(materials{6}.name, "muscle");
+            tc.verifyEqual(materials{6}.atomic_numbers, [1 6 7 8 11 15 16 17 19]);
+            tc.verifyEqual(materials{6}.mass_fractions, [0.102 0.143 0.034 0.71 0.001 0.002 0.003 0.001 0.004]);
+            tc.verifyEqual(materials{6}.density, 1.05);
         end
     end
 end

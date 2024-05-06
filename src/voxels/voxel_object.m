@@ -5,10 +5,10 @@ classdef voxel_object
         get_mu          % A function handle that returns the attenuation coefficient of the material
     end
     methods
-        function self = voxel_object(is_in_object, material)
-            self.is_in_object = is_in_object;
-            self.material = material;
-            self.get_mu = @(energy) material.get_mu(energy);
+        function obj = voxel_object(is_in_object, material) 
+            obj.is_in_object = is_in_object;
+            obj.material = material;
+            obj.get_mu = @(energy) material.get_mu(energy);
         end
     end
 end

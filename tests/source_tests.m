@@ -4,23 +4,37 @@ classdef source_tests < matlab.unittest.TestCase
         function test_single_energy(tc)
             s1 = single_energy(50);
             tc.verifyEqual(s1.energy, 50);
+            [e_min, e_max] = s1.get_nrj_range();
+            tc.verifyEqual(e_min, 49);
+            tc.verifyEqual(e_max, 51);
+
             range1 = [0 10; 10 20; 20 30; 30 40; 40 50; 50 60];
             expE = [50; 50; 50; 50; 50; 50]';
             expI = [0; 0; 0; 0; 0; 1e6]';
             e = s1.get_energies(range1);
-            i = s1.get_fluences(range1);
+            i = s1.get_fluences(range1, 1);
             tc.verifyEqual(e, expE);
             tc.verifyEqual(i, expI);
 
+            i = s1.get_fluences(range1, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1));
+
             s2 = single_energy(21);
             tc.verifyEqual(s2.energy, 21);
+            [e_min, e_max] = s2.get_nrj_range();
+            tc.verifyEqual(e_min, 20);
+            tc.verifyEqual(e_max, 22);
+
             range2 = [0 7; 7 10; 10 15; 15 25; 25 30; 30 40; 40 50; 50 60];
             expE = [21; 21; 21; 21; 21; 21; 21; 21]';
             expI = [0; 0; 0; 1e6; 0; 0; 0; 0]';
             e = s2.get_energies(range2);
-            i = s2.get_fluences(range2);
+            i = s2.get_fluences(range2, 1);
             tc.verifyEqual(e, expE);
             tc.verifyEqual(i, expI);
+            
+            i = s2.get_fluences(range2, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1));
         end
 
         function test_fromfile(tc)
@@ -50,10 +64,10 @@ classdef source_tests < matlab.unittest.TestCase
                     74.5000,476481.1458; 75.5000,396112.0471; 76.5000,314269.5785;
                     77.5000,230691.5663; 78.5000,145363.1041; 79.5000,56373.3614];
             ebins = data(:,1);
-            fluences = data(:,2);
-            s = source_fromfile('test.spk');
+            fluences = data(:,2) .* 100^2*units.cm2;
+            s = source_fromfile('resources/test.spk');
             tc.verifyEqual(s.ebins, ebins);
-            tc.verifyEqual(s.fluences, fluences);
+            tc.verifyEqual(s.fluences, fluences .* ebins, 'RelTol', 3e-16);
 
             range = [1 2; 13 14; 25 26; 37 38];
             expE = [1.5, 13.5, 25.5, 37.5];
@@ -62,12 +76,14 @@ classdef source_tests < matlab.unittest.TestCase
                 71.8812 *  13.5; 
                 1507282.8827 * 25.5;
                 3211914.5414 * 37.5
-            ]';
+            ]'.*100^2*units.cm2;
             e = s.get_energies(range);
-            i = s.get_fluences(range);
+            i = s.get_fluences(range, 1);
             tc.verifyEqual(e, expE);
             % Precision is lost when summing large numbers
             tc.verifyEqual(i, expI, 'RelTol', 1e-10);
+            i = s.get_fluences(range, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1), 'RelTol', 1e-10);
 
             range = [0 10; 40 50; 70 80];
             
@@ -80,25 +96,41 @@ classdef source_tests < matlab.unittest.TestCase
                 786882.7618 * 70.5 + 710400.7260 * 71.5 + 633303.9447 * 72.5 + ...
                 555465.0211 * 73.5 + 476481.1458 * 74.5 + 396112.0471 * 75.5 + ...
                 314269.5785 * 76.5 + 230691.5663 * 77.5 + 145363.1041 * 78.5 + ...
-                56373.3614 * 79.5
-            ]';
+                56373.3614  * 79.5 
+            ]'.*100^2*units.cm2;
             expE = [
                 5.5;
-                expI(2)/sum([3180300.2508, 3141114.2826, 3094702.4266, ...
-                    3041959.8999, 2983738.1968, 2917590.0357, ...
-                    2844759.8856, 2769308.4106, 2691732.6485, ...
-                    2612535.8109]);
-                expI(3)/sum([786882.7618, 710400.7260, 633303.9447, ...
-                    555465.0211, 476481.1458, 396112.0471, ...
-                    314269.5785, 230691.5663, 145363.1041, ...
-                    56373.3614])
+                (...
+                    3180300.2508 * 40.5^2 + 3141114.2826 * 41.5^2 + 3094702.4266 * 42.5^2 + ...
+                    3041959.8999 * 43.5^2 + 2983738.1968 * 44.5^2 + 2917590.0357 * 45.5^2 + ...
+                    2844759.8856 * 46.5^2 + 2769308.4106 * 47.5^2 + 2691732.6485 * 48.5^2 + ...
+                    2612535.8109 * 49.5^2)/(...
+                    3180300.2508 * 40.5 + 3141114.2826 * 41.5 + 3094702.4266 * 42.5 + ...
+                    3041959.8999 * 43.5 + 2983738.1968 * 44.5 + 2917590.0357 * 45.5 + ...
+                    2844759.8856 * 46.5 + 2769308.4106 * 47.5 + 2691732.6485 * 48.5 + ...
+                    2612535.8109 * 49.5);
+                (...
+                    786882.7618 * 70.5^2 + 710400.7260 * 71.5^2 + 633303.9447 * 72.5^2 + ...
+                    555465.0211 * 73.5^2 + 476481.1458 * 74.5^2 + 396112.0471 * 75.5^2 + ...
+                    314269.5785 * 76.5^2 + 230691.5663 * 77.5^2 + 145363.1041 * 78.5^2 + ...
+                    56373.3614  * 79.5^2)/(...
+                    786882.7618 * 70.5 + 710400.7260 * 71.5 + 633303.9447 * 72.5 + ...
+                    555465.0211 * 73.5 + 476481.1458 * 74.5 + 396112.0471 * 75.5 + ...
+                    314269.5785 * 76.5 + 230691.5663 * 77.5 + 145363.1041 * 78.5 + ...
+                    56373.3614  * 79.5)
 
             ]';
             e = s.get_energies(range);
-            i = s.get_fluences(range);
-            tc.verifyEqual(e, expE);
+            i = s.get_fluences(range, 1);
+            tc.verifyEqual(e, expE, 'RelTol', 1e-13);
             % Precision is lost when summing large numbers
-            tc.verifyEqual(i, expI, 'RelTol', 1e-10); 
+            tc.verifyEqual(i, expI, 'RelTol', 1e-13); 
+            i = s.get_fluences(range, 1:10);
+            tc.verifyEqual(i, repmat(expI, 10, 1), 'RelTol', 1e-13);
+
+            [e_min, e_max] = s.get_nrj_range();
+            tc.verifyEqual(e_min, ebins(1));
+            tc.verifyEqual(e_max, ebins(end));
         end
     end
 end

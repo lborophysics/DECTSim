@@ -1,7 +1,8 @@
 classdef gantry < handle
-    properties
+    properties (SetAccess=immutable)
         % Detector geometry
         dist_to_detector   (1, 1) double % Distance from source to detector
+        rot_radius         (1, 1) double % Radius of rotation of the detector
 
         % Vector from the centre of the detector to the source 
         to_source_vec      (3, 1) double = [0;1;0] % Vector from source to centre of detector
@@ -26,21 +27,22 @@ classdef gantry < handle
             assert(num_rotations > 0 && mod(num_rotations, 1) == 0, 'Number of rotations must be a positive integer');
             assert(total_rotation > 0 && total_rotation <= 2*pi, 'Total rotation must be between 0 and 2*pi');
             
-            self.dist_to_detector = dist_to_detector;
-            self.num_rotations  = num_rotations;
-            
             % Set the detector movement properties
-            self.rot_angle      = total_rotation / num_rotations;
-                        % Get the angles at which the detector should be rotated to scan the object (in degrees)
+            self.rot_angle        = total_rotation / num_rotations;
+            self.dist_to_detector = dist_to_detector;
+            self.rot_radius       = dist_to_detector / 2;
+            self.num_rotations    = num_rotations;
+            
+            % Get the angles at which the detector should be rotated to scan the object (in degrees)
             scan_angles = linspace(0, total_rotation, num_rotations+1);
             self.scan_angles = scan_angles(1:end-1);
         end
 
-        function source_pos = get_source_pos(self, index, ~)
-            % Get the position of the source at a given angular index
-            % Third argument is the pixel position, which is not used here, useful for 
-            % parallel beams.
-            source_pos = self.get_rot_mat(index) * (self.to_source_vec .* self.dist_to_detector);
+        function source_pos = get_source_pos(self, index, pixel_pos)
+            % Get the position of the source at a given angular index, 
+            % use the pixel position to determine how many source positions are needed
+            source_pos = (self.get_rot_mat(index) * self.to_source_vec) .* self.rot_radius;
+            source_pos = repmat(source_pos, 1, size(pixel_pos, 2));
         end
 
         function rot_mat = get_rot_mat(self, index)

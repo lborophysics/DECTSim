@@ -17,24 +17,28 @@ Properties
 ~~~~~~~~~~
 
 .. attribute:: dist_to_detector
-    
-    Distance from source to detector
+
+    (:class:`double`) from source to detector
+
+.. attribute:: rot_radius
+
+    (:class:`double`) The radius of rotation of the gantry. This is calculated as ``dist_to_detector/2``. This is a precalculation to save time in the method :meth:`get_rot_mat`.
 
 .. attribute:: to_source_vec = [0;1;0]
     
-    Vector from source to centre of detector. The initial value is [0;1;0] as the source will always start above the detector pixel array. This is used in the `detector_array` classes to calculate the ray paths for each projection.
+    (:class:`3x1 double`) Vector from source to centre of detector. The initial value is [0;1;0] as the source will always start in the positive y position. This is used in the `detector_array` classes to calculate the ray paths for each projection.
 
 .. attribute:: num_rotations
     
-    Number of rotations the gantry will make, i.e. the number of projections. This is required in the funciton :func:`compute_sinogram` 
+    (:class:`double`) Number of rotations the gantry will make, i.e. the number of projections. This is required in the function :func:`compute_sinogram` 
     
 .. attribute:: rot_angle
 
-    The angle of rotation for each projection. Calculated as ``total_rotation/num_rotations``. This is a precalculation to save time in the method :meth:`get_rot_mat`.
+    (:class:`double`) The angle of rotation for each projection. Calculated as ``total_rotation/num_rotations``. This is a precalculation to save time in the method :meth:`get_rot_mat`.
 
 .. attribute:: scan_angles
     
-    The angles at which the gantry will rotate to. This is for the user to get the scan angles for use with reconstruction algorithms. 
+    (:class:`double`) The angles at which the gantry will rotate to. This is for the user to get the scan angles for use with reconstruction algorithms. 
     
 
 Functions
@@ -51,26 +55,30 @@ Functions
         :param total_rotation: is the total rotation of the gantry in radians (default :math:`2\pi`).
         :type total_rotation: double
 
+        :returns: **gantry** -- The gantry object.
+        :rtype: :class:`gantry`
+
 
 Methods
 ~~~~~~~~
 
-.. function:: get_rot_mat()
+.. method:: get_rot_mat()
 
         Returns the rotation matrix for the gantry. This is used to rotate any objects attached to the gantry.
 
         :returns: The rotation matrix for the gantry.
     
-.. function:: get_source_pos(index, pixel_position)
+.. method:: get_source_pos(index, pixel_positions)
 
         :param index: The index rotation of the gantry.
         :type index: double
-        :param pixel_position: The position of the pixel on the detector.
-        :type pixel_position: 3x1 double
+        :param pixel_positions: The position of the pixel on the detector.
+        :type pixel_positions: 3xN double
 
-        Returns the position of the source. This is used to calculate the ray paths for each projection. For this gantry, the source position is independent of the pixel position and a single point, dependent on the index of the rotation.
+        Returns the position of the source for every pixel position. This is used to calculate the ray paths for each projection. For this gantry, the source position is independent of the pixel position and a single point, dependent on the index of the rotation, so a list of the same source position the same size as the pixel position is returned.
 
-        :returns: The position of the source.
+        :returns: **source_pos** -- The positions of the source.
+        :rtype: :class:`3xN double`
 
 Potential Future Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,13 +96,14 @@ The parallel gantry class is a subclass of the gantry class. It has the same pro
 Methods
 ~~~~~~~
 
-.. function:: get_source_pos(index, pixel_position)
+.. function:: get_source_pos(index, pixel_positions)
 
         :param index: The index rotation of the gantry.
         :type index: double
-        :param pixel_position: The position of the pixel on the detector.
-        :type pixel_position: 3x1 double
+        :param pixel_positions: The position of the pixel on the detector.
+        :type pixel_positions: 3x1 double
 
-        Returns the position of the source, directly above the pixel position. This is used to calculate the ray paths for each projection. For this gantry, the source position is dependent on the pixel position and the index of the rotation.
+        Returns the positions of the source, directly above the pixel positions. This is used to calculate the ray paths for each projection. For this gantry, the source position is dependent on the pixel position, so the source position is calculated for each pixel position.
 
-        :returns: The position of the source.
+        :returns: **source_pos** -- The position of the source relative to each pixel position.
+        :rtype: :class:`3xN double`

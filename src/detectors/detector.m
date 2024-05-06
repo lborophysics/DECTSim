@@ -5,19 +5,19 @@ classdef detector
     % the validation of the input objects.
 
     properties(SetAccess=private)
-        gantry
-        detector_array
-        sensor
+        the_gantry 
+        the_array  
+        the_sensor 
     end
 
     methods
-        function self = detector(gantry, detector_array, sensor)
-            assert(isa(gantry, 'gantry'), 'gantry must be a gantry object');
-            assert(isa(detector_array, 'detector_array'), 'detector_array must be a detector_array object');
-            assert(isa(sensor, 'sensor'), 'sensor must be a sensor object');
-            self.gantry = gantry;
-            self.detector_array = detector_array;
-            self.sensor = sensor;
+        function obj = detector(the_gantry, the_array, the_sensor)
+            assert(isa(the_gantry, 'gantry'), 'gantry must be a gantry object');
+            assert(isa(the_array, 'detector_array'), 'detector_array must be a detector_array object');
+            assert(isa(the_sensor, 'sensor'), 'sensor must be a sensor object');
+            obj.the_gantry = the_gantry;
+            obj.the_array  = the_array ;
+            obj.the_sensor = the_sensor;
         end
     end
 end

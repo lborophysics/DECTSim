@@ -16,6 +16,13 @@ In the description of each class, the following information is provided:
 - **Potential Future Changes**: A list of potential changes that could be made to the class in the future.
 If any of the above sections are not present, it is because the class does not have any properties, functions, methods, or potential future changes.
 
+---
+**Important**
+
+All the input variables are technically not independent of units. Therefore, for the user to know if they are using the correct units, they must use the `units` class. Any number that is input into a function must be multiplied by the unit, for example, 80 keV would be input as `80*units.keV`. With this in mind, all input variables will be consistent with what the function expects.
+
+---
+
 ## What is the Developer Guide?
 
 The developer guide is a collection of documents that provide information about every class and function in the project. It is intended to be a reference for developers who are working on the project, and to provide a high-level overview of the project's architecture and design along with the reasoning behind it.

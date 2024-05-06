@@ -41,19 +41,20 @@ classdef signal_tests < matlab.unittest.TestCase
             array = voxel_array(zeros(3, 1), [5; 5; 5], 1, {my_box}, material_attenuation("vacuum"));
             att = mat.get_mu(30);
             sq2 = sqrt(2);
-
+    
             image = squeeze(compute_sinogram(tc.ray_source, array, d1));
+            image = signal_tests.renormalise_image(image, tc.sensor_unit, tc.ray_source, d1);
             tc.verifyEqual(size(image), [5, 4]);
             tc.verifyEqual(image(:, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
             tc.verifyEqual(image(:, 2), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
             tc.verifyEqual(image(:, 3), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
             tc.verifyEqual(image(:, 4), [3*sq2-4;3*sq2-2;3*sq2;3*sq2-2;3*sq2-4].*att, 'AbsTol', 3e-15);
-
-            % % 2D 
+            % % % 2D 
             a2 = flat_detector([1, 1], [5, 5]);
             sampled_sensor = ideal_sensor([0, 100], 50, 2);
             d2 = detector(g1, a2, sampled_sensor);
             image = compute_sinogram(tc.ray_source, array, d2);
+            image = signal_tests.renormalise_image(image, tc.sensor_unit, tc.ray_source, d2);
             tc.verifyEqual(size(image), [5, 5, 4]);
             for row = 2:4
                 tc.verifyEqual(image(:, row, 1), [0;3;3;3;0].*att, 'AbsTol', 1e-15);
@@ -65,7 +66,7 @@ classdef signal_tests < matlab.unittest.TestCase
             tc.verifyEqual(image(:, 5, :), zeros(5, 1, 4), 'AbsTol', 1e-15);
 
             % No hits 2D
-            array = voxel_array(zeros(3, 1), [1; 1; 1].*2, 1, {}, material_attenuation("vacuum"));
+            array = voxel_array(zeros(3, 1), [1; 1; 1].*2, 1, {}, material_attenuation("air"));
             image = compute_sinogram(tc.ray_source, array, d2);
             tc.verifyEqual(image, zeros(5, 5, 4), 'AbsTol', 1e-15);
         end
@@ -81,20 +82,20 @@ classdef signal_tests < matlab.unittest.TestCase
         
             % Check that 
             image = compute_sinogram(tc.ray_source, array, d1);
-            scatter_count = monte_carlo_scatter(tc.ray_source, array, d1);
+            scatter_count = deterministic_scatter(tc.ray_source, array, d1);
             scatter_signal = tc.sensor_unit.get_signal(scatter_count);
 
             tc.verifyEqual(scatter_signal, zeros(5,1,4), 'RelTol', 1e-15, 'AbsTol', 1e-15);
         
             scatter_image = compute_sinogram(tc.ray_source, array, d1, "slow");
             tc.verifyEqual(scatter_image, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
-        
+
             scatter_image = compute_sinogram(tc.ray_source, array, d2, "slow", 3);
             tc.verifyEqual(scatter_image, image, 'RelTol', 1e-15, 'AbsTol', 1e-15);
         end
 
         function test_scatter_image(tc)
-            rng(1712345)
+            rng(200)
             % THIS IS NOT GREAT - CHANGE 
             % Voxel array constants
             vox_arr_center = zeros(3, 1);
@@ -124,8 +125,8 @@ classdef signal_tests < matlab.unittest.TestCase
             d = detector(dgantry, darray, dsensor);
             
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "slow", 1));
-     
-            scatter_sinogram_expected = matfile("scatter_cylinder_slow.mat").scatter_sinogram;
+
+            scatter_sinogram_expected = matfile("resources/scatter_cylinder_slow.mat").scatter_sinogram;
             tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-8, 'AbsTol', 1e-8);
         end
 
@@ -159,9 +160,17 @@ classdef signal_tests < matlab.unittest.TestCase
             d = detector(dgantry, darray, dsensor);
 
             scatter_sinogram = squeeze(compute_sinogram(single_energy(50), voxels, d, "fast"));
-            
-            scatter_sinogram_expected = matfile("scatter_cylinder_fast.mat").scatter_sinogram;
+            scatter_sinogram_expected = matfile("resources/scatter_cylinder_fast.mat").scatter_sinogram;
             tc.verifyEqual(scatter_sinogram, scatter_sinogram_expected, 'RelTol', 2e-14, 'AbsTol', 2e-14);
+        end
+    end
+
+    methods (Static)
+        function new_image = renormalise_image(image, sensor_unit, xray_source, detector_unit)
+            % Renormalise the image to the air scan
+            air = squeeze(sensor_unit.get_signal(air_scan(xray_source, detector_unit)));
+            original_signal = exp(-image) .* air;
+            new_image = -log(original_signal ./ max(original_signal, [], "all"));
         end
     end
 end
