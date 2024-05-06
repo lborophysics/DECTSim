@@ -36,10 +36,6 @@ for i = 1:x_and_y
         out_matrix(i, j, :) = obj_idxs;
     end
 end
-% Swap the Y and Z axes
-% out_matrix = permute(out_matrix, [2, 3, 1]);
-% Reshape to fortran order
-% out_matrix = reshape(out_matrix, [z_size, x_and_y, x_and_y]);
 
 fwrite(fileID, out_matrix, 'uint8');
 fclose(fileID);

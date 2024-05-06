@@ -1,10 +1,10 @@
-function [sinogram, params] = dukesim_parser(MainDir)
-%DUKESIM_PARSER Given the MainDir of a DukeSim run, return the sinogram 
-%   The MainDir is a parameter in the input file to DukeSim 
+function [sinogram, params] = dukesim_parser(path_to_duke_out)
+%DUKESIM_PARSER Given the path_to_duke_out of a DukeSim run, return the sinogram 
+%   The path_to_duke_out is a parameter in the input file to DukeSim called MainDir
 %   - currently only supports one MainDir
     
     % Get the folder name and the path 
-    dirs = genpath(MainDir); % https://stackoverflow.com/questions/8748976/list-the-subfolders-in-a-folder-matlab-only-subfolders-not-files
+    dirs = genpath(path_to_duke_out); % https://stackoverflow.com/questions/8748976/list-the-subfolders-in-a-folder-matlab-only-subfolders-not-files
     dir_list = strsplit(dirs,':');
     dir = dir_list{2}; % Assume there is only 1 folder in the MainDir
         
