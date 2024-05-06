@@ -16,7 +16,7 @@ classdef material_attenuation
 
 
     properties (Access=private, Constant, NonCopyable)
-        use_mex = ~~exist('photon_attenuatin_mex', 'file');
+        use_mex = ~~exist('photon_attenuation_mex', 'file');
     end
 
     methods
