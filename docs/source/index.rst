@@ -35,9 +35,6 @@ Welcome to DECTSim's documentation!
    dev_guide/scatter.rst
    dev_guide/duke.rst
    
-   dev_guide/contributing.rst
-
-
 
 Indices and tables
 ==================
