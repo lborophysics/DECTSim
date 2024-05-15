@@ -62,3 +62,22 @@ Below are some guidelines to ensure smooth collaboration and maintain the qualit
 3. **Testing**: Testing is at the heart of our program. We rely on comprehensive testing to ensure reliability and stability. We welcome pull requests, but they will only be accepted once the new code has been thoroughly tested and meets our quality standards. Please include relevant tests along with your changes.
 
 4. **Documentation**: Clear and comprehensive documentation is essential for understanding the program's functionality and usage. We encourage contributors to provide documentation alongside their code changes and tests. Well-documented code helps maintain readability and facilitates future development efforts.
+
+
+## Creating the mex files
+The mex files are created using the Coder app in MATLAB, this can be opened by typing `coder` in the MATLAB command window. Once the app is open, you can select one of three files that are ready be made into a mex file. 
+
+The three files are: 
+- `photon_attenuation.m`
+- `ray_trace_many.m`
+- `ray_trace.m`
+
+The `ray_trace.m` file is not used in the code apart from tests, but should be the backup file in case you do not trust the other two files.
+
+Once you have selected the file, click next until you come to the page to define the input types. For each of the files, there is a comment at the bottom of the file that tells gives you example code to run in the coder app. Copy this line and place it into the coder app. In the same area for each file, there is a comment that tells you what the input types should be. Take care to not ignore the `:` in the input types. Click next, check for runtime issues, and then click next again. 
+
+Now you should be in the page to generate the code. Select the build type as `MEX`, no other options are required to be changed, but feel free to experiment with them. Click Generate, and the mex file will be created in the same directory as the file you selected.
+
+Click next and if you have MEX generated successfully, you can close the app. The mex file is now ready to be used in the code.
+
+If you have any issues with the mex files, please use the issues tab on the GitHub repository to ask for help or report a bug. Or otherwise, make a pull request with the changes you have made to fix the issue.
