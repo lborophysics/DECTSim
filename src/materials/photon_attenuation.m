@@ -362,7 +362,15 @@ for i = 1:nelem
 end
 att = att .* density; %Convert from cm^2/g to cm^-1
 end
+%{
+Example code to run the function:
+photon_attenuation([6, 7, 8, 18], [0.000124, 0.755268, 0.231781, 0.012827], 1.205E-03, [1 3 10 30 100])
 
+Use above to create the mex function.
+z & fracs are double(3x:100)
+density is a double(1x1)
+nrj is a double (1x:inf)
+%}
 %{
 Most of this code has the following license:
 Copyright (c) 2016, Jaroslaw Tuszynski

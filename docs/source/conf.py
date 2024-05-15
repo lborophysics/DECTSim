@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath("../../src/"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'DECTSim'
-copyright = '2023, Joshua Gray & Sofia Pearson'
+copyright = '2024, Joshua Gray & Sofia Pearson'
 author = 'Joshua Gray & Sofia Pearson'
 release = '0.1.0'
 

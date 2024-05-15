@@ -78,32 +78,42 @@ function [lengths, indices] = ray_trace_many(ray_start, v1_to_v2, init_plane, v_
 end
 
 function [ls, idxs] = ray_trace_single(ray_start, v1_to_v2, init_plane, v_dims, index_min, index_max, a_min, a_max)   
-        v1_to_v2 = round(v1_to_v2*1e10)/1e10;
-        to_plane = init_plane - ray_start;
+    v1_to_v2 = round(v1_to_v2*1e10)/1e10;
+    to_plane = init_plane - ray_start;
 
-        if     v1_to_v2(1) == 0; xrange = [];
-        elseif v1_to_v2(1) <  0; xrange = (index_max(1):-1:index_min(1)) - 1;
-        else;                    xrange = (index_min(1)   :index_max(1)) - 1;
-        end
-        a_set_x = (to_plane(1) + (v_dims(1) * xrange)) ./ v1_to_v2(1);
-    
-        if     v1_to_v2(2) == 0; yrange = [];
-        elseif v1_to_v2(2) <  0; yrange = (index_max(2):-1:index_min(2)) - 1;
-        else;                    yrange = (index_min(2)   :index_max(2)) - 1;
-        end
-        a_set_y = (to_plane(2) + (v_dims(2) * yrange)) ./ v1_to_v2(2);
-    
-        if     v1_to_v2(3) == 0; zrange = [];
-        elseif v1_to_v2(3) <  0; zrange = (index_max(3):-1:index_min(3)) - 1;
-        else;                    zrange = (index_min(3)   :index_max(3)) - 1;
-        end
-        a_set_z = (to_plane(3) + (v_dims(3) * zrange)) ./ v1_to_v2(3);
-    
-        % Get the union of the arrays
-        a = unique([a_min, a_set_x, a_set_y, a_set_z, a_max]);
-        % a = sort([a_min, a_set_x, a_set_y, a_set_z, a_max]);
-        a = a(a >= a_min & a <= a_max);
-    
-        idxs = floor(1 + ((a(2:end) + a(1:end-1)).* v1_to_v2./2 - to_plane) ./ v_dims);
-        ls = norm(v1_to_v2) * diff(a);
+    if     v1_to_v2(1) == 0; xrange = [];
+    elseif v1_to_v2(1) <  0; xrange = (index_max(1):-1:index_min(1)) - 1;
+    else;                    xrange = (index_min(1)   :index_max(1)) - 1;
     end
+    a_set_x = (to_plane(1) + (v_dims(1) * xrange)) ./ v1_to_v2(1);
+
+    if     v1_to_v2(2) == 0; yrange = [];
+    elseif v1_to_v2(2) <  0; yrange = (index_max(2):-1:index_min(2)) - 1;
+    else;                    yrange = (index_min(2)   :index_max(2)) - 1;
+    end
+    a_set_y = (to_plane(2) + (v_dims(2) * yrange)) ./ v1_to_v2(2);
+
+    if     v1_to_v2(3) == 0; zrange = [];
+    elseif v1_to_v2(3) <  0; zrange = (index_max(3):-1:index_min(3)) - 1;
+    else;                    zrange = (index_min(3)   :index_max(3)) - 1;
+    end
+    a_set_z = (to_plane(3) + (v_dims(3) * zrange)) ./ v1_to_v2(3);
+
+    % Get the union of the arrays
+    a = unique([a_min, a_set_x, a_set_y, a_set_z, a_max]);
+    % a = sort([a_min, a_set_x, a_set_y, a_set_z, a_max]);
+    a = a(a >= a_min & a <= a_max);
+
+    idxs = floor(1 + ((a(2:end) + a(1:end-1)).* v1_to_v2./2 - to_plane) ./ v_dims);
+    ls = norm(v1_to_v2) * diff(a);
+end
+
+%{
+Example code to run the function:
+ray_trace_many([-6,0,0; 0,-6,0; 0,0,-6; -6,-6,0; 0,0,6; 6,6,6; 6,6,6]', [1,0,0; 0,1,0; 0,0,1; 1,1,0; 0,0,-1; -1,-1,-1; 1,1,1]'.*22, [-2.5;-2.5;-2.5], [1;1;1], [6;6;6])
+
+
+Use above to create the mex function.
+ray_start & v1_to_v2 are double(3x:inf)
+init_plane, v_dims & num_planes are double(3x1)
+%}

@@ -71,8 +71,8 @@ energy_list = xray_source.get_energies(sensor_range);
 
 % Now the fluences
 fluences = xray_source.get_fluences(sensor_range, 1:npy);
-av_fluences = sum(fluences, 1) / npy;
-mean_energy = sum(energy_list .* av_fluences) / sum(av_fluences);
+av_fluences = sum(fluences, 1) ./ npy;
+mean_energy = sum(energy_list .* av_fluences) ./ sum(av_fluences);
 
 % mu_dict = phantom.precalculate_mus(energy_list);
 % mfp_dict = phantom.precalculate_mfps(energy_list);
@@ -136,9 +136,14 @@ parfor angle = 1:num_rotations
 
                 % Calculate the number of scatter points to sample
                 num_points = floor(n_mfps(end) ./ mfp_fraction);
+                if num_points == 0; continue; end
                 ray_num_scatters = num_scatters*num_points;
 
                 % Determine where the scatter points are
+                % Now this algorithm could be significantly improved by
+                % not searching for the voxels to scatter from, but instead
+                % calculate a set of lengths (not in a loop) and then use this 
+                % to calculate the scatter points. Also is every 1% excessive?
                 lis = zeros(1, ray_num_scatters);
                 scatter_points = zeros(3, num_points);
                 probabilities = zeros(1, num_points);

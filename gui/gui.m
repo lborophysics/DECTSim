@@ -290,7 +290,7 @@ classdef gui < matlab.apps.AppBase
                 sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));       
                 if do_fan2para
                     rotation_angle = scan_angles(1); % Assumes even spacing 
-                    [P,~,paraRotAngles] = fan2para(sinogram, dist_to_detector/2, ...
+                    [P,~,paraRotAngles] = fan2para(sinogram, (dist_to_detector/2)/pixel_dims(1), ...
                         'FanSensorSpacing', sensor_spacing, "Interpolation", interpolation, ...
                         'FanRotationIncrement', rotation_angle, ...
                         "FanSensorGeometry", sensor_geom ... 
@@ -313,7 +313,7 @@ classdef gui < matlab.apps.AppBase
                     % Reconstruct the image
                     % recon2 = iradon(sinogram2, scan_angles, interpolation, filter);
                     if do_fan2para
-                        [P,~,paraRotAngles] = fan2para(sinogram2, dist_to_detector/2, ...
+                        [P,~,paraRotAngles] = fan2para(sinogram2, (dist_to_detector/2)/pixel_dims(1), ...
                             'FanSensorSpacing', sensor_spacing, "Interpolation", interpolation, ...
                             'FanRotationIncrement', rotation_angle, ...
                             "FanSensorGeometry", sensor_geom ...
@@ -805,7 +805,7 @@ classdef gui < matlab.apps.AppBase
                 fprintf(fid, "recon = iradon(sinogram, scan_angles, interpolation, filter);\n");
             else
                 fprintf(fid, "radius = dist_to_detector/2;\n");
-                fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram, radius, ...\n");
+                fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram, radius/pixel_dims(1), ...\n");
                 fprintf(fid, "    'FanSensorSpacing', sensor_spacing, ...\n");
                 fprintf(fid, "    'Interpolation', interpolation, ...\n");
                 fprintf(fid, "    'FanRotationIncrement', 2*pi / num_rotations, ...\n");
@@ -819,7 +819,7 @@ classdef gui < matlab.apps.AppBase
                 if strcmp(source_type, 'Parallel Beam')
                     fprintf(fid, "recon2 = iradon(sinogram2, scan_angles, interpolation, filter);\n");
                 else
-                    fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram2, radius, ...\n");
+                    fprintf(fid, "[P,~,paraRotAngles] = fan2para(sinogram2, radius/pixel_dims(1), ...\n");
                     fprintf(fid, "    'FanSensorSpacing', sensor_spacing, ...\n");
                     fprintf(fid, "    'Interpolation', interpolation, ...\n");
                     fprintf(fid, "    'FanRotationIncrement', 2*pi / num_rotations, ...\n");
