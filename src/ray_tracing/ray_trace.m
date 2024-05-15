@@ -56,3 +56,11 @@ function [lengths, indices] = ray_trace(ray_start, v1_to_v2, init_plane, v_dims,
     indices = floor(1 + ((a(2:end) + a(1:end-1)).* v1_to_v2./2 - to_plane) ./ v_dims);
     lengths = norm(v1_to_v2) * diff(a);
 end
+
+%{
+Example code to run the function:
+ray_trace([6;6;6], [-22;-22;-22], [-2.5;-2.5;-2.5], [1;1;1], [6;6;6])
+
+Use above to create the mex function.
+All the inputs must be double(3x1)
+%}
