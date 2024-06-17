@@ -20,7 +20,6 @@ function my_phantom = custom_phantom(varargin)
        idx = find(((x.^2)./rsq + (y.^2)./rsq) <= 1);
        
        my_phantom(idx) = A;
-      % my_phantom(idx) = my_phantom(idx) + A;
     end
        
 
@@ -30,7 +29,7 @@ function [circ,n] = parse_inputs(varargin)
     
     n=256;     % The default size
     circ = [];
-    defaults = {'small_circ', 'one', 'j_sphere', 'j_rods', 'acr'};
+    defaults = {'small_circ', 'one', 'jzk', 'acr'};
 
     for i=1:nargin
         if ischar(varargin{i})         % Look for a default phantom
@@ -43,11 +42,11 @@ function [circ,n] = parse_inputs(varargin)
                     circ = test_small_dot;
                 case 'one'
                     circ = test_one;
-                case 'j_sphere'
-                    circ = generate_j_sphere;
-                case 'j_rods'
-                    circ = generate_j_rods;
+                case 'jzk'
+                    %Jaszczak spherical phantom
+                    circ = generate_jzk;
                 case 'acr'
+                    %Accreditation phantom ACR
                     circ = generate_acr;
             end
     
@@ -69,7 +68,7 @@ function small_circ= test_small_dot
 %             -----------------------
 small_circ = [  1   .9    0     0   ];
 
-function j_sphere = generate_j_sphere
+function jzk = generate_jzk
 
 r_phantom = 0.901;
 half_r = r_phantom/2;
@@ -79,7 +78,7 @@ y_coords = half_r*sin(pi/6);
 %               A     r    x0    y0    
 %             -----------------------
 
-j_sphere = [ 1  r_phantom   0           0         %overall phantom
+jzk =       [ 1  r_phantom   0           0         %overall phantom
              0  0.0409      0           half_r
              0  0.0547      x_coords    y_coords
              0  0.0685      x_coords    -y_coords
@@ -87,51 +86,19 @@ j_sphere = [ 1  r_phantom   0           0         %overall phantom
              0  0.109       -x_coords   -y_coords
              0  0.137       -x_coords   y_coords ];
 
-%{
-function j_rods = generate_j_rods
-r_phantom = 0.901;
-
-r1 = 0.0207;
-r2 = 0.0276;
-r3 = 0.0361;
-r4 = 0.0409;
-r5 = 0.0478;
-r6 = 0.0547;
-
-A_vec = ones(11,1);
-A_vec(2:end) = -1;
-x0_vec = zeros(11,1);
-y0_vec = zeros(11,1);
-R = zeros(11,1);
-R(1,1) = r_phantom;
-R(2:end,1) = r1;
-
-for i = 1:10
-    dr = 3*r1;
-    y0 = i*dr;
-    x0 = -2/3 * y0 + dr;
-
-    y0_vec(1+i,1) = y0;
-    x0_vec(1+i,1) = x0;
-end
-
-j_rods = horzcat(A_vec, R, x0_vec, y0_vec);
-
-%}
-
 
 function acr = generate_acr
 r_phantom = 0.9;
-r_insert = r_phantom/5; %replace this with literature value
+r_insert = r_phantom/5; 
 d = r_phantom/2 * cos(pi/4);
 %               A     r    x0    y0    
 %             -----------------------
 
 acr = [ 0.5             r_phantom   0    0         %overall phantom
-        0.5-0.095/2     r_insert   -d   d
+        0.5-0.1/2     r_insert   -d   d
         0.5+0.955/2     r_insert   d    d
-        0               r_insert   d    -d 
-        0.5 + 0.120/2   r_insert   -d   -d];
+        0.2             r_insert   d    -d 
+        0.5 - 0.06/2   r_insert   -d   -d];
 
 
 function one= test_one

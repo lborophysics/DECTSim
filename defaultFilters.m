@@ -40,23 +40,3 @@ function defaultFilters(R, P, theta, phantom_res)
     getMetrics(hann,P)
 
 end
-
-%{
-close all;
-omega = 0:64;
-
-%plot of filters:
-ramlakFilt = 2*pi*(omega)/64;  
-shepplogFilt = ramlakFilt.*(sinc(ramlakFilt));
-cosineFilt = ramlakFilt.*cos(ramlakFilt);
-hammingFilt = ramlakFilt.*(.54 + .46 * cos(ramlakFilt));
-hannFilt = ramlakFilt.*(1+cos(ramlakFilt)) / 2;
-
-figure, hold on;
-axis([1 11 0 1]);
-plot(ramlakFilt), hold on;
-plot(shepplogFilt), hold on;
-plot(cosineFilt), hold on;
-plot(hammingFilt), hold on;
-plot(hannFilt), hold off;
-%}

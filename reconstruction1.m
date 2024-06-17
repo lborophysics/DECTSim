@@ -2,8 +2,6 @@ function I = reconstruction1(R, theta, phantom_res) %, interp, filter, frequency
     
     %inverseradon
     I = iradon(R, theta, 'linear', phantom_res);
-
-    
     I2 = iradon(R, theta,'linear', 'None', phantom_res);
   %  figure, imagesc(I), colormap gray;colorbar;
   %  title('Shepp-Logan Reconstruction')

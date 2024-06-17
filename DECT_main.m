@@ -1,45 +1,4 @@
-%% DECT MAIN
-%{
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Get three ACR phantoms of different energies
 
-%choose 3 different energies:
-E1 = 1e-3; %MeV
-E2 = 1e-1; %MeV
-E3 = 10;   %MeV
-
-%generate phantoms with custom attenuation for each energy:
-P_E1 = get_phantom_var_energy(E1, 'acr');
-P_E2 = get_phantom_var_energy(E2, 'acr');
-P_E3 = get_phantom_var_energy(E3, 'acr');
-
-%compare plots!
-figure, imshow(P_E1), title(['ACR phantom for photon of energy ', num2str(E1), ' MeV'])
-figure, imshow(P_E2), title(['ACR phantom for photon of energy ', num2str(E2), ' MeV'])
-figure, imshow(P_E3), title(['ACR phantom for photon of energy ', num2str(E3), ' MeV'])
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Plot NIST data on one plot
-
-%initialise materials class
-materials_class = Materials;
-
-names = [ "water"; "bone"; "air"; "polyethylene"];
-figure, 
-title("NIST data"), xlabel("log Photon Energy [MeV]"), ylabel("log Attenuation [cm^2/g]");
-hold on;
-label = [];
-for i = 1:length(names)
-    name = names(i);
-    data = materials_class.get_NIST_data(name);
-    energy = data.energy;
-    attenuation = data.attenuation;
-    label = [label; name ];
-    plot(log(energy), log(attenuation), "LineWidth", 2), legend(label), hold on;
-end
-hold off;
-%}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FBP for two photon energies. Comparison to DECT. 
 close all; 
 clear all;
@@ -49,6 +8,8 @@ clc;
 E1 = 47e-3; %MeV (70 keV)
 E2 = 100e-3; %MeV (150 keV)
 
+%E1 = 30e-3;
+%E2 = 70e-3;
 %generate acr phantoms with custom attenuation for each energy:
 P_E1 = get_phantom_var_energy(E1, 'acr');
 P_E2 = get_phantom_var_energy(E2, 'acr');

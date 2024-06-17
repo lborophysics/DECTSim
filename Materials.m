@@ -96,7 +96,6 @@ classdef Materials
             % provided by NIST so it doesnt get extrapolated. 
 
             % photon energy limits for this model [MeV]: 
-            %note: should this be converted to x-ray tube energy?
             NIST_data = get_NIST_data(obj, name);
             energy = NIST_data.energy;
             
@@ -137,12 +136,10 @@ classdef Materials
             end
         end
         
-        %currently does not work - fix it 
         %plot NIST data for a specific material (on a logarithmic scale)
         function plot_material_parameters(obj, name)
 
             %only runs if fit_maps objects are already defined
-            %how i code to ensure this? 
 
             if isKey(obj.material, name)
 

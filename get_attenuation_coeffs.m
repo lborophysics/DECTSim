@@ -71,10 +71,7 @@ function [attenuation_coeffs] = get_attenuation_coeffs(varargin)
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % Attenuation coefficients generating functions:
 
-%Note: how to normalise mu to be between 0 and 1? This is the pixel value
-%range of the phantoms.
 
-%Could this be optimised by a for loop?
 function air = coeff_air(E)
     
     %initialise materials class - only once per material:

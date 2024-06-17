@@ -54,14 +54,17 @@ figure, imshow(I1_norm), title('E1 ACR phantom reconstruction');
 figure, imshow(I2_norm), title('E2 ACR phantom reconstruction');
 
 %Combine images I1_norm and I2_norm:
-DECT_times = I1_norm.*I2_norm;
-DECT_divide = I2_norm./I1_norm;
+%normalise and weight reconstructions WRT water mean attenuation
+%water is often used to calibrate in CT
+I1_water_mean = 0.482681;
+I2_water_mean = 0.930128;
 
+I1_norm = I1./I1_water_mean;
+I2_norm = I2./I2_water_mean;
+DECT_times = I1_norm .* I2_norm;
 DECT_times_norm = DECT_times/(max(DECT_times,[],'all'));
-DECT_divide_norm = DECT_divide/(max(DECT_divide,[],'all'));
 
-figure, imshow(DECT_times_norm), title('DECT - times');
-figure, imshow(DECT_divide_norm), title('DECT - divide 2');
+figure, imshow(DECT_times_norm), title('DECT ACR reconstruction');
 
 %get metrics for each reconstruction:
 getMetrics(I1_norm, P_E1)
@@ -69,3 +72,27 @@ getMetrics(I2_norm, P_E2)
 
 ref_DECT = (P_E1.*P_E2)/(max((P_E1.*P_E2),[],'all'));
 getMetrics(DECT_times_norm, ref_DECT )
+
+%get CNR for each reconstruction
+%does not require normalisation anyway
+air_E1  = get_CNR_acr(I1_norm, 'air') ;
+air_E2  = get_CNR_acr(I2_norm, 'air') ;
+disp('DECT:')
+air_DECT= get_CNR_acr(DECT_times_norm, 'air') ;
+
+bone_E1 = get_CNR_acr(I1_norm, 'bone');
+bone_E2 = get_CNR_acr(I2_norm, 'bone');
+disp('DECT:')
+bone_DECT = get_CNR_acr(DECT_times_norm, 'bone');
+
+pol_E1 = get_CNR_acr(I1_norm, 'polyethylene');
+pol_E2 = get_CNR_acr(I2_norm, 'polyethylene');
+disp('DECT:')
+pol_DECT = get_CNR_acr(DECT_times_norm, 'polyethylene');
+
+acryl_E1 = get_CNR_acr(I1_norm, 'acrylic');
+acryl_E2 = get_CNR_acr(I2_norm, 'acrylic');
+disp('DECT:')
+acryl_DECT = get_CNR_acr(DECT_times_norm, 'acrylic');
+
+

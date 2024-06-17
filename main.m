@@ -101,7 +101,7 @@ R_mean = mean(R, "all");
 R_SNR = 10*log10(sqrt(R_mean));
 R_noise = awgn(R, R_SNR);
 
-%filtered backprojection with Hann filter
+%filtered backprojection with all filters
 
 I1 = iradon(R_noise, theta,'linear', 'None', 256);
 I2 = iradon(R_noise, theta,'linear', 'Ram-Lak', 256);
@@ -142,12 +142,3 @@ getMetrics(I5, P)
 figure, imshow(I6_norm), title('Hann');
 getMetrics(I6, P)
 
-
-
-    figure, hold on;
-    imagesc(R_noise),colormap gray;
-    title('Sinogram with Noise');
-    xlabel('\theta (degrees)');
-    ylabel('x''');
-    axis tight;
-    hold off;
