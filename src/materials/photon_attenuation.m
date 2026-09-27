@@ -367,7 +367,7 @@ Example code to run the function:
 photon_attenuation([6, 7, 8, 18], [0.000124, 0.755268, 0.231781, 0.012827], 1.205E-03, [1 3 10 30 100])
 
 Use above to create the mex function.
-z & fracs are double(3x:100)
+z & fracs are double(1x:100)
 density is a double(1x1)
 nrj is a double (1x:inf)
 %}
