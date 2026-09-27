@@ -1,0 +1,34 @@
+DECTSim Application License
+
+The DECTSim source code is separately available under the BSD 3-Clause License in the accompanying LICENSE file.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+MATHWORKS COMPONENTS
+
+DECTSim includes MATLAB Runtime and other components owned by The MathWorks, Inc. or its licensors. You may use those components only as part of DECTSim and only to run DECTSim. You may not:
+
+- use MATLAB Runtime separately from DECTSim
+- use it with another application
+- provide it as a service
+- redistribute it separately
+- claim any right to use or deploy MATLAB or any other MathWorks product.
+
+Use of MATLAB Runtime is also subject to the MATLAB Runtime License, which is incorporated into this licence by reference. It is available at: [MATLAB Runtime installation directory]\R2026a\matlabruntime_license_agreement.pdf and agreement to this is required during DECTSim install.
+
+You must not remove or alter any copyright, trademark, logo, proprietary-rights, disclaimer, or warning notice contained in DECTSim or its MathWorks components.
+
+DECTSim and its MathWorks components are provided “as is,” without warranties of any kind. No warranty is provided for MATLAB Runtime or any other MathWorks program. MathWorks, Inc. and its licensors are excluded from all liability for damages, remedies, claims, losses, or expenses arising from the use of DECTSim or any MathWorks component. 
+
+
+
+

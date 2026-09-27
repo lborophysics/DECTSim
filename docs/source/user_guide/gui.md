@@ -8,7 +8,7 @@ The simulation by default will run with the following parameters, for understand
     - Parallel beam
 - Phantom:
     - 3D cylinder including air, water, bone, fat, blood and muscle
-    - 1 cm voxel size
+    - 1 mm voxel size
 - Detector:
     - 1D flat detector
     - 900 pixels
@@ -16,7 +16,7 @@ The simulation by default will run with the following parameters, for understand
     - Ideal sensor (has an equal response to all energies)
 - Reconstruction:
     - No filter
-    - Interpolation method: Nearest neighbour
+    - Interpolation method: Linear
 - Scatter:
     - No scatter
 - Gantry:
@@ -33,7 +33,7 @@ The phantom is the object being imaged. It is the representation of the 3D objec
 
 The voxel size is the size of each cube in the phantom, therefore, the smaller the voxel size, the more accurate the simulation will be, but the longer it will take to run the simulation.
 
-It is possible to load a custom phantom, this must be a '.mat' file containing an object called `phantom`, using the objects within the DECTSim backend. In the future, you should be able to create this new phantom within the GUI.
+It is possible to load a custom phantom, this must be a '.mat' file containing an object called `phantom`, using the objects within the DECTSim backend. If you also create a preview image, as in the examples, this will display the central slice of your phantom in the GUI. In the future, you should be able to create this new phantom within the GUI.
 
 ### Phantom Examples
 

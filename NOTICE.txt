@@ -1,0 +1,19 @@
+DECTSim Notices
+===============
+
+DECTSim
+Copyright (c) 2023, Joshua Gray and Sofia Pearson.
+
+DECTSim source code is distributed under the BSD 3-Clause License.
+See the accompanying LICENSE file for the complete terms.
+
+MATLAB®. © 1984 - 2026 The MathWorks, Inc.
+
+The application was created using MATLAB Compiler and requires
+MATLAB Runtime.
+
+MATLAB and MATLAB Runtime are products of The MathWorks, Inc.
+
+Use of DECTSim and the MATLAB Runtime components is subject to
+the accompanying APPLICATION_LICENSE.txt and the applicable
+MATLAB Runtime License.

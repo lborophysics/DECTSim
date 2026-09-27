@@ -189,5 +189,5 @@ The sinogram is a 3D matrix, with the first two dimensions representing the dete
 This sinogram can be reconstructed into an image using the default MATLAB reconstruction algorithms, such as `iradon` or `ifanbeam`.
 
 ```MATLAB
-reconstruction = iradon(sinogram, g.get_scan_angles());
+reconstruction = iradon(sinogram, g.scan_angles);
 ```

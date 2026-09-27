@@ -11,6 +11,7 @@ Welcome to DECTSim's documentation!
    :caption: User Guide:
    :glob: 
    
+   user_guide/first_run.md
    user_guide/gui.md
    user_guide/first_sim.md
 
@@ -20,11 +21,13 @@ Welcome to DECTSim's documentation!
    :glob: 
    
    dev_guide/intro.md
+   dev_guide/building_the_app.md
    dev_guide/detector_movement.rst
    dev_guide/detector_arrays.rst
    dev_guide/detector.rst
    dev_guide/materials.rst
    dev_guide/voxel_shapes.rst
+   dev_guide/save_phantom_preview.rst
    dev_guide/voxel_array.rst
    dev_guide/ray_tracing.rst
    dev_guide/sensors.rst

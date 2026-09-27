@@ -74,7 +74,7 @@ Methods
     Pre-calculates the linear attenuation coefficient for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
 
     :param nrj_arr: An array of energies in keV. This is an n-Dimensional array of energies, the output is the same shape as the input.
-    :type nrjs: MxN double
+    :type nrj_arr: MxN double
   
     :returns: **mu_dict** -- A PxMxN double with the first dimension representing the index of the voxel object in your array, the other dimensions are the same as the input ``nrj_arr``. The values are the linear attenuation coefficients for each voxel object in ``voxel_objs`` at each energy in ``nrj_arr``. P is the number of voxel objects + 1, the last element is the linear attenuation coefficient of the world material.
     :rtype: :class:`PxMxN double`
@@ -84,7 +84,7 @@ Methods
     Pre-calculates the Compton mean free path for each voxel object in ``voxel_objs`` for each energy in ``nrjs``.
 
     :param nrj_arr: An array of energies in keV. This is an n-Dimensional array of energies, the output is the same shape as the input.
-    :type nrjs: MxN double
+    :type nrj_arr: MxN double
 
     :returns: **mfp_dict** -- A PxMxN double with the first dimension representing the index of the voxel object in your array, the other dimensions are the same as the input ``nrj_arr``. The values are the Compton mean free paths for each voxel object in ``voxel_objs`` at each energy in ``nrj_arr``. P is the number of voxel objects + 1, the last element is the Compton mean free path of the world material.
     :rtype: :class:`PxMxN double`

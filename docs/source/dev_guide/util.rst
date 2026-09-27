@@ -18,6 +18,7 @@ Available units
 - Area (m2, cm2 (default), mm2, um2, nm2, barn)
 - Mass (kg, g (default), mg, ug)
 - Energy (MeV, keV (default), eV, meV)
+- Time (s (default), ms, us, ns)
 
 Possible future improvements
 ----------------------------
