@@ -1,3 +1,5 @@
+guiDir = fileparts(mfilename("fullpath"));
+
 % Voxel array constants
 phantom_scale = 30*units.cm; % In the x-y plane
 voxel_size = 0.5 * units.mm;
@@ -51,7 +53,9 @@ phantom = voxel_array([0;0;0], zeros(3, 1)+2*phantom_scale, ...
     voxel_size, a_shepp_logan);
 
 % Save the phantom
-save gui/PhantomExample1.mat phantom
+save(fullfile(guiDir, "PhantomExample1.mat"), "phantom");
+
+save_phantom_preview(phantom, fullfile(guiDir, "PhantomExample1.png"));
 
 % Example 2!
 
@@ -77,7 +81,8 @@ muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, 
 phantom = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
     voxel_size, {water_cylinder, bone_cylinder, fat_cylinder, blood_cylinder, muscle_cylinder});
 
-save gui/PhantomExample2.mat phantom
+save(fullfile(guiDir, "PhantomExample2.mat"), "phantom");
+save_phantom_preview(phantom, fullfile(guiDir, "PhantomExample2.png"));
 
 % Example 3!
 % Voxel array constants
@@ -102,7 +107,8 @@ muscle_cylinder = voxel_cylinder(init_mat_pos, phantom_radius/5, phantom_width, 
 phantom = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
     voxel_size, {water_cylinder, bone_cylinder, fat_cylinder, ti_cylinder, muscle_cylinder});
 
-save gui/PhantomExample3.mat phantom
+save(fullfile(guiDir, "PhantomExample3.mat"), "phantom");
+save_phantom_preview(phantom, fullfile(guiDir, "PhantomExample3.png"));
 
 % Example 4!
 % Voxel array constants
@@ -120,16 +126,17 @@ ti_cylinder = voxel_cylinder(vox_arr_center, phantom_radius/4, phantom_width, ma
 phantom = voxel_array(vox_arr_center, [zeros(2, 1)+phantom_radius*2; phantom_width], ...
     voxel_size, {water_cylinder, bone_cylinder, fat_cylinder, ti_cylinder});
 
-save gui/PhantomExample4.mat phantom
+save(fullfile(guiDir, "PhantomExample4.mat"), "phantom");
+save_phantom_preview(phantom, fullfile(guiDir, "PhantomExample4.png"));
 
-source_40kvp = source_fromfile('40kvp.spk');
-source_80kvp = source_fromfile('80kvp.spk');
+source_40kvp = source_fromfile(fullfile(guiDir, "40kvp.spk"));
+source_80kvp = source_fromfile(fullfile(guiDir, "80kvp.spk"));
 
 source = source_40kvp;
-save gui/SourceExample40kvp.mat source
+save(fullfile(guiDir, "SourceExample40kvp.mat"), "source");
 
 source = source_80kvp;
-save gui/SourceExample80kvp.mat source
+save(fullfile(guiDir, "SourceExample80kvp.mat"), "source");
 
 function new_struct = create_struct(center, a, b, c, phi, mag)
     new_struct.center = center;
