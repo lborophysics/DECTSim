@@ -101,7 +101,7 @@ Methods
         :param index: The index rotation of the gantry.
         :type index: double
         :param pixel_positions: The position of the pixel on the detector.
-        :type pixel_positions: 3x1 double
+        :type pixel_positions: 3xN double
 
         Returns the positions of the source, directly above the pixel positions. This is used to calculate the ray paths for each projection. For this gantry, the source position is dependent on the pixel position, so the source position is calculated for each pixel position.
 

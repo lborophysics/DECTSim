@@ -6,18 +6,18 @@ This page will list all the functions and classes related to the materials that 
 Functions
 ---------
 
-.. function:: cross_section(Z, nrj) 
+.. function:: cross_section(Z, nrjs)
 
     :param Z: An array of atomic numbers.
     :type Z: 1xN double
-    :param nrj: The photon energy.
-    :type nrj: Mx1 double
+    :param nrjs: The photon energies.
+    :type nrjs: Mx1 double
 
-    Given an array of atomic numbers and a set of photon energies, this function returns the Compton cross section for each element in the array. The method is taken from `Geant4 Compton Scattering <https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html>`_, has been translated to MATLAB, and extended to use arrays of atomic numbers. 
+    Given an array of atomic numbers and a set of photon energies, this function returns the Compton cross section for each element in the array. The method is taken from `Geant4 Compton Scattering <https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html>`_, has been translated to MATLAB, and extended to use arrays of atomic numbers.
     The photon energy does not need to be a column vector, and could be a row vector, but the array of atomic numbers must be a row vector.
 
-    :returns: **cs** -- an array containing the Compton cross section for each ``Z`` at each energy in ``nrj``. 
-    :rtype: :class:`Mx1 double`
+    :returns: **cs** -- an MxN array containing the Compton cross section for each of the N atomic numbers in ``Z`` at each of the M energies in ``nrjs``.
+    :rtype: :class:`MxN double`
 
 
 .. function:: photon_attenuation(Z, fracs, density, nrj)
@@ -111,7 +111,7 @@ Properties
 
 .. attribute:: mu_from_energy
 
-    (:class:`handle`) This is a function handle that returns the linear attenuation coefficient of the material at a given energy. This attribute will only be defined if the `photon_attenuation_mex` function is available.
+    (:class:`handle`) This is a function handle that returns the linear attenuation coefficient of the material at a given energy. This attribute will only be defined if the `photon_attenuation_mex` function is **not** available, as it is only used as a fallback.
 
 .. attribute:: use_mex
 
@@ -143,7 +143,7 @@ Methods
     :param nrj: The photon energy.
     :type nrj: 1xN double
 
-    This method returns the linear attenuation coefficient of the material at a given energy. If the :func:`photon_attenuation_mex` function is available, the method will use the ``mu_from_energy`` attribute (the result of :func:`get_photon_attenuation`) to return the linear attenuation coefficient. Otherwise, the method will use the MEX of the :func:`photon_attenuation` function to return the linear attenuation coefficient.
+    This method returns the linear attenuation coefficient of the material at a given energy. If the :func:`photon_attenuation_mex` function is available, the method will use it directly to return the linear attenuation coefficient. Otherwise, it will use the ``mu_from_energy`` attribute (the result of :func:`get_photon_attenuation`) as a pure-MATLAB fallback.
 
     :returns: **mu** -- the linear attenuation coefficient of the material at each energy in ``nrj``.
     :rtype: :class:`1xN double`

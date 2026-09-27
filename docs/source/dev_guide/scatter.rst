@@ -31,7 +31,7 @@ To retrieve the scatter kernel, the user can use the following function.
     Since the data is retrieved from the file taken from the `xcist` repository, the data needs to be reshaped to column major order, as the data is stored in row major order.
 
     :return: **scatter_kernel** -- The scatter kernel used in the convolutional scatter.
-    :rtype: :class:`65x49 double`
+    :rtype: :class:`49x65 double`
 
 To normalise the photon count, we calculate what the count would be if there was no phantom, an air scan. This function is not limited to the convolutional scatter, it can be used by the user to calculate the air scan, if they so wish.
 
@@ -59,7 +59,7 @@ We determine the number of photons that will hit the pixel by using the attenuat
 
 There are several functions involved in this method, but the main function is the following.
 
-.. function:: monte_carlo_scatter(xray_source, phantom, detector_obj, sfactor)
+.. function:: deterministic_scatter(xray_source, phantom, detector_obj, sfactor)
 
     This function is very similar to :func:`compute_sinogram`, with the only real difference being that this function is used to calculate the scatter, and not the sinogram. This also means that the energy that the rays are scattered with is not the same as the energy that the rays are generated with, and so we need to keep track of this.
 
@@ -85,19 +85,21 @@ There are several functions involved in this method, but the main function is th
     :rtype: :class:`1xN double`
 
 
-.. function:: compton_scatter(direction, inrj, thetas)
+.. function:: compton_scatter(direction, inrj, thetas, phis)
 
-    This function calculates the new direction and energy of the ray after a Compton scatter. The sampling of the new direction is done using the formulae from the `Geant4 physics reference manual <https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html>`_ and assisted by the `Geant4 source code <https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/lowenergy/src/G4PenelopeComptonModel.cc>`_. 
+    This function calculates the new direction and energy of the ray after a Compton scatter. The sampling of the new direction is done using the formulae from the `Geant4 physics reference manual <https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsReferenceManual/html/electromagnetic/gamma_incident/compton/compton.html>`_ and assisted by the `Geant4 source code <https://github.com/Geant4/geant4/blob/master/source/processes/electromagnetic/lowenergy/src/G4PenelopeComptonModel.cc>`_.
 
-    This function uses some code directly from CLHEP to calculate the `vector transformation <https://apc.u-paris.fr/~franco/g4doxy4.10/html/_three_vector_8cc_source.html#l00072>`_ in order to retrieve the new direction of the ray. 
+    This function uses some code directly from CLHEP to calculate the `vector transformation <https://apc.u-paris.fr/~franco/g4doxy4.10/html/_three_vector_8cc_source.html#l00072>`_ in order to retrieve the new direction of the ray.
 
     :param direction: The initial direction of the ray.
     :param inrj: The initial energy of the ray.
     :param thetas: A list of thetas to be used to sample the scatter.
+    :param phis: A list of azimuthal angles to be used to sample the scatter.
 
     :type direction: 3x1 double
     :type inrj: double
     :type thetas: 1xN double
+    :type phis: 1xN double
 
     :return:
         - **direction** (:class:`3x1 double`) - The new direction of the ray after scattering.

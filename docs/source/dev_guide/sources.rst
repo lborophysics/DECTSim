@@ -111,15 +111,17 @@ Methods
     :returns: **energies** -- a list with every element being the energy of the xray, independent of the range.
     :rtype: :class:`1xN double`
 
-.. method:: single_energy.get_fluences(obj, range)
-    
+.. method:: single_energy.get_fluences(obj, range, ypixels)
+
         This method returns the fluence of the xray if it is within the range. If it is not, it returns 0.
-    
+
         :param range: A vector with N rows of [min_energy, max_energy) indicating the range of energies that the source should generate.
         :type range: Nx2 double
-    
-        :returns: **fluences** -- a list with the fluence being :math:`1\times10^6` if the energy is within the range, and 0 if it is not.
-        :rtype: :class:`1xN double`
+        :param ypixels: The y pixel positions the fluence is being generated for.
+        :type ypixels: 1xN double
+
+        :returns: **fluences** -- a matrix with the fluence being :math:`1\times10^6` if the energy is within the range, and 0 if it is not, repeated for every y pixel.
+        :rtype: :class:`MxN double`
 
 .. method:: single_energy.get_nrj_range(obj)
 
