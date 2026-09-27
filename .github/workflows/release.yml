@@ -1,0 +1,160 @@
+name: Build and Attach Release Applications
+
+# Runs when a GitHub Release is published (attaches build artifacts to the
+# release), and also on pull requests targeting main so the build itself
+# can be verified before merging (no release to attach to on a PR run, so
+# that step is skipped and a downloadable workflow artifact is produced
+# instead). Separate from the per-push/PR test workflow in main.yml.
+#
+# Prerequisites for this workflow to succeed:
+#   - scripts/make_mex.m, scripts/build_unix.m and scripts/build_windows.m
+#     must exist on the built commit, and DECTSim.prj must put scripts/
+#     on the path when the project is opened.
+#   - The MATLAB license used by matlab-actions/setup-matlab must be
+#     entitled to MATLAB Coder and MATLAB Compiler, which are paid add-on
+#     products not included with a base MATLAB license.
+#   - include_matlab is passed as true below, bundling MATLAB Runtime into
+#     each installer. This needs compiler.runtime.download to work, which
+#     it does on a real installed MATLAB (as used by matlab-actions), just
+#     not on MATLAB Online.
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          products: Image_Processing_Toolbox MATLAB_Coder MATLAB_Compiler
+
+      - name: Build DECTSim.exe and installer
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            openProject(fullfile(pwd, "DECTSim.prj"));
+            build_windows(true);
+
+      - name: Zip application output
+        shell: pwsh
+        run: Compress-Archive -Path build/application/* -DestinationPath DECTSim-Windows.zip
+
+      - name: Zip installer output
+        shell: pwsh
+        run: Compress-Archive -Path build/installer/* -DestinationPath DECTSimInstaller-Windows.zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DECTSim-Windows
+          path: |
+            DECTSim-Windows.zip
+            DECTSimInstaller-Windows.zip
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            DECTSim-Windows.zip
+            DECTSimInstaller-Windows.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          products: Image_Processing_Toolbox MATLAB_Coder MATLAB_Compiler
+
+      - name: Build DECTSim application
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            openProject(fullfile(pwd, "DECTSim.prj"));
+            build_unix(true);
+
+      - name: Zip application output
+        run: |
+          cd build/application
+          zip -r ../../DECTSim-Linux.zip .
+
+      - name: Zip installer output
+        run: |
+          cd build/installer
+          zip -r ../../DECTSimInstaller-Linux.zip .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DECTSim-Linux
+          path: |
+            DECTSim-Linux.zip
+            DECTSimInstaller-Linux.zip
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            DECTSim-Linux.zip
+            DECTSimInstaller-Linux.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v3
+        with:
+          products: Image_Processing_Toolbox MATLAB_Coder MATLAB_Compiler
+
+      - name: Build DECTSim application
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            openProject(fullfile(pwd, "DECTSim.prj"));
+            build_unix(true);
+
+      - name: Zip application output
+        run: |
+          cd build/application
+          zip -r ../../DECTSim-macOS.zip .
+
+      - name: Zip installer output
+        run: |
+          cd build/installer
+          zip -r ../../DECTSimInstaller-macOS.zip .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: DECTSim-macOS
+          path: |
+            DECTSim-macOS.zip
+            DECTSimInstaller-macOS.zip
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            DECTSim-macOS.zip
+            DECTSimInstaller-macOS.zip
