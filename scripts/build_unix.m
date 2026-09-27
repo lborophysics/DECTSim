@@ -1,20 +1,9 @@
 function build_unix(include_matlab)
 %BUILD_UNIX Build and package DECTSim as a macOS/Linux standalone application.
-%
-% BUILD_UNIX() has the installer download MATLAB Runtime from the end
-% user's own machine when they run it (a much smaller installer file,
-% but it requires the end user's network to reach mathworks.com without
-% interference, e.g. no SSL-inspecting proxy).
-%
-% BUILD_UNIX(true) instead bundles MATLAB Runtime into the installer
-% itself, so end users don't need internet access at install time (a
-% much larger installer file).
-%
-% Requirements:
-%   - macOS or Linux
-%   - MATLAB R2026a or newer
-%   - MATLAB Compiler
-%   - Image Processing Toolbox
+%   BUILD_UNIX() has the installer download MATLAB Runtime at install
+%   time (smaller file, needs the end user's network).
+%   BUILD_UNIX(true) bundles MATLAB Runtime into the installer (larger
+%   file, works offline).
 
     arguments
         include_matlab (1, 1) logical = false
@@ -27,59 +16,38 @@ function build_unix(include_matlab)
     applicationOutput = fullfile(buildRoot, "application");
     installerOutput = fullfile(buildRoot, "installer");
 
-    assert(isunix, ...
-        "DECTSim:UnsupportedPlatform", ...
-        "This build script targets macOS/Linux. Use build_windows.m on Windows.");
-
+    assert(isunix, "DECTSim:UnsupportedPlatform", "Use build_windows.m on Windows.");
     assert(~isempty(which("compiler.build.standaloneApplication")), ...
-        "DECTSim:MissingCompiler", ...
-        "MATLAB Compiler is not available. " + ...
-        "Install and license MATLAB Compiler before building.");
-
+        "DECTSim:MissingCompiler", "MATLAB Compiler is required.");
     assert(~isempty(which("fan2para")) && ~isempty(which("iradon")), ...
-        "DECTSim:MissingImageProcessingToolbox", ...
-        "Image Processing Toolbox is not available. " + ...
-        "DECTSim requires it for reconstruction.");
-
-    assert(isfile(fullfile(guiDir, "gui.m")), ...
-        "DECTSim:MissingGUI", ...
-        "Could not find gui/gui.m.");
-
-    assert(isfolder(srcDir), ...
-        "DECTSim:MissingSource", ...
-        "Could not find the src directory.");
+        "DECTSim:MissingImageProcessingToolbox", "Image Processing Toolbox is required.");
+    assert(isfile(fullfile(guiDir, "gui.m")), "DECTSim:MissingGUI", "Could not find gui/gui.m.");
+    assert(isfolder(srcDir), "DECTSim:MissingSource", "Could not find the src directory.");
 
     if include_matlab
-        % Fail fast, before the multi-minute mcc build below, since
-        % compiler.runtime.download (needed to bundle MATLAB Runtime into
-        % the installer) does not work at all on MATLAB Online, only on a
-        % locally-installed MATLAB Compiler.
-        ensure_runtime_downloadable();
+        % Fail before the multi-minute mcc build below: this doesn't work
+        % on MATLAB Online, only with a locally-installed MATLAB Compiler.
+        ensure_runtime_downloadable("build_unix");
     end
 
     licenseFile = fullfile(rootDir, "LICENSE");
     noticeFile = fullfile(rootDir, "NOTICE.txt");
     appLicenseFile = fullfile(rootDir, "APPLICATION_LICENSE.txt");
-
     assert(isfile(licenseFile) && isfile(noticeFile) && isfile(appLicenseFile), ...
         "DECTSim:MissingLicenseFiles", ...
         "Could not find LICENSE, NOTICE.txt and APPLICATION_LICENSE.txt in %s.", rootDir);
 
-    % Make all DECTSim classes and functions visible during dependency analysis.
     originalPath = path;
     pathCleanup = onCleanup(@() path(originalPath));
-
     addpath(guiDir);
     addpath(genpath(srcDir));
 
-    % Build any of the three DECTSim MEX functions that are missing
-    % (photon_attenuation_mex, ray_trace_many_mex, ray_trace_mex).
-    % material_attenuation and save_phantom_preview need
-    % photon_attenuation_mex to generate the example data below.
-    assert(~isempty(which("make_mex")), ...
-        "DECTSim:MissingMakeMex", ...
-        "Could not find make_mex.m. It should be in the same folder as build_unix.m.");
-    make_mex();
+    % MEX files speed up the app but are not required: material_attenuation
+    % and ray_trace_many fall back to pure MATLAB when missing. They are
+    % prebuilt and committed to the repo (see scripts/make_mex.m) rather
+    % than built here, since this build machine may not have a MATLAB
+    % Coder license.
+    warn_if_mex_missing(rootDir);
 
     requiredDataNames = [
         "PhantomExample1.mat"
@@ -93,41 +61,29 @@ function build_unix(include_matlab)
         "SourceExample40kvp.mat"
         "SourceExample80kvp.mat"
     ];
-
     requiredDataFiles = fullfile(guiDir, requiredDataNames);
 
-    % Generate the bundled example objects when they do not yet exist.
     if any(~isfile(requiredDataFiles))
         fprintf("Generating missing DECTSim example data...\n");
 
-        % run() changes the current folder to the script's own directory
-        % before executing it. ExampleObjects.m saves to relative paths
-        % such as "gui/PhantomExample1.mat", which assumes the current
-        % folder is rootDir, not guiDir. Run from rootDir so either the
-        % old relative-path version or a guiDir-based version works.
+        % run() changes to the script's own folder before executing it,
+        % but ExampleObjects.m saves to paths relative to rootDir.
         originalDir = pwd;
         dirCleanup = onCleanup(@() cd(originalDir));
         cd(rootDir);
-
         run(fullfile(guiDir, "ExampleObjects.m"));
-
         clear dirCleanup
     end
 
     missingData = requiredDataFiles(~isfile(requiredDataFiles));
-
     if ~isempty(missingData)
-        error( ...
-            "DECTSim:MissingExampleData", ...
-            "The following example files were not generated:\n%s", ...
-            strjoin(missingData, newline));
+        error("DECTSim:MissingExampleData", ...
+            "The following example files were not generated:\n%s", strjoin(missingData, newline));
     end
 
-    % Start each build with clean output directories.
     if isfolder(buildRoot)
         rmdir(buildRoot, "s");
     end
-
     mkdir(applicationOutput);
     mkdir(installerOutput);
 
@@ -140,7 +96,6 @@ function build_unix(include_matlab)
     ];
 
     fprintf("Building the standalone application...\n");
-
     buildResults = compiler.build.standaloneApplication( ...
         fullfile(guiDir, "gui.m"), ...
         "ExecutableName", "DECTSim", ...
@@ -157,14 +112,12 @@ function build_unix(include_matlab)
     end
 
     fprintf("Creating the installer...\n");
-
     compiler.package.installer( ...
         buildResults, ...
         "ApplicationName", "DECTSim", ...
         "InstallerName", "DECTSimInstaller", ...
         "Version", "1.0.0", ...
-        "Summary", ...
-            "Dual-energy computed tomography simulation application.", ...
+        "Summary", "Dual-energy computed tomography simulation application.", ...
         "OutputDir", installerOutput, ...
         "RuntimeDelivery", runtimeDelivery, ...
         "AdditionalFiles", [licenseFile; noticeFile; appLicenseFile], ...
@@ -175,81 +128,11 @@ function build_unix(include_matlab)
     fprintf("Installer output:\n  %s\n", installerOutput);
 
     if include_matlab
-        runtimeNote = "MATLAB Runtime bundled inside (no internet access needed at install time)";
+        runtimeNote = "MATLAB Runtime bundled inside (no internet needed to install)";
     else
-        runtimeNote = "MATLAB Runtime downloaded by the installer at install time (requires the end user's network to reach mathworks.com)";
+        runtimeNote = "MATLAB Runtime downloaded at install time (needs internet access)";
     end
+    fprintf("\nRun DECTSimInstaller.install to install DECTSim (%s).\n", runtimeNote);
 
-    if ismac
-        fprintf("\nNote: on macOS, compiler.package.installer produces a " + ...
-                "self-installing .install file, with " + runtimeNote + ...
-                ". Make it executable and run it to install DECTSim.\n");
-    else
-        fprintf("\nNote: on Linux, compiler.package.installer produces a " + ...
-                "self-extracting .install file, with " + runtimeNote + ...
-                ". Run chmod +x DECTSimInstaller.install then " + ...
-                "./DECTSimInstaller.install to install DECTSim.\n");
-    end
-
-    % Keep the onCleanup object alive until the function completes.
     clear pathCleanup
-end
-
-function ensure_runtime_downloadable()
-    % RuntimeDelivery "installer" needs MATLAB Runtime cached locally on
-    % this build machine (compiler.package.installer does not download it
-    % automatically). compiler.runtime.list reports what is already
-    % cached, so only download if the current release's runtime is
-    % missing, since the download is large (multiple GB).
-    assert(~isempty(which("compiler.runtime.download")), ...
-        "DECTSim:MissingRuntimeDownloader", ...
-        "compiler.runtime.download is not available. " + ...
-        "Update MATLAB Compiler before building.");
-
-    currentRelease = "R" + version("-release");
-
-    try
-        cachedRuntimes = compiler.runtime.list();
-        alreadyCached = any(strcmp(string({cachedRuntimes.Release}), currentRelease));
-    catch
-        % If listing fails for any reason, fall back to attempting the
-        % download, which is a no-op if already cached.
-        alreadyCached = false;
-    end
-
-    if alreadyCached
-        fprintf("MATLAB Runtime for %s is already cached.\n", currentRelease);
-        return;
-    end
-
-    fprintf("Downloading MATLAB Runtime for %s (this may take a while)...\n", ...
-        currentRelease);
-
-    try
-        compiler.runtime.download();
-    catch downloadError
-        error( ...
-            "DECTSim:RuntimeDownloadUnavailable", ...
-            "Could not download MATLAB Runtime for %s: %s\n\n" + ...
-            "compiler.runtime.download does not work on MATLAB Online " + ...
-            "(only with a MATLAB Compiler installed on your own machine). " + ...
-            "Use build_unix() (the default, include_matlab=false) instead, " + ...
-            "which has the installer download MATLAB Runtime on the end " + ...
-            "user's own machine rather than bundling it here.", ...
-            currentRelease, downloadError.message);
-    end
-end
-
-function rootDir = find_root_dir(startDir)
-    % Walk up from this script's folder until DECTSim.prj is found, so
-    % build_unix.m works whether it lives at the repo root or in a
-    % subfolder such as scripts/.
-    rootDir = startDir;
-    while ~isfile(fullfile(rootDir, "DECTSim.prj"))
-        parentDir = fileparts(rootDir);
-        assert(~strcmp(parentDir, rootDir), ...
-            "DECTSim:RootNotFound", ...
-            "Could not find DECTSim.prj above %s.", startDir);
-        rootDir = parentDir;
-    end
 end

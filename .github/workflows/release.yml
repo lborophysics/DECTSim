@@ -1,21 +1,7 @@
 name: Build and Attach Release Applications
 
-# Runs when a GitHub Release is published (attaches build artifacts to the
-# release), and also on pull requests targeting main so the build itself
-# can be verified before merging (no release to attach to on a PR run, so
-# that step is skipped and a downloadable workflow artifact is produced
-# instead). Separate from the per-push/PR test workflow in main.yml.
-#
-# Prerequisites for this workflow to succeed:
-#   - scripts/make_mex.m, scripts/build_unix.m and scripts/build_windows.m
-#     must exist on the built commit.
-#   - The MATLAB license used by matlab-actions/setup-matlab must be
-#     entitled to MATLAB Coder and MATLAB Compiler, which are paid add-on
-#     products not included with a base MATLAB license.
-#   - include_matlab is passed as true below, bundling MATLAB Runtime into
-#     each installer. This needs compiler.runtime.download to work, which
-#     it does on a real installed MATLAB (as used by matlab-actions), just
-#     not on MATLAB Online.
+# Runs on release publish (attaches build artifacts) and on PRs to main
+# (build-only check, artifacts uploaded but not attached).
 
 on:
   release:
@@ -37,7 +23,7 @@ jobs:
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
-          products: Image_Processing_Toolbox MATLAB_Coder MATLAB_Compiler
+          products: Image_Processing_Toolbox MATLAB_Compiler
 
       - name: Build DECTSim.exe and installer
         uses: matlab-actions/run-command@v2
@@ -79,7 +65,7 @@ jobs:
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
-          products: Image_Processing_Toolbox MATLAB_Coder MATLAB_Compiler
+          products: Image_Processing_Toolbox MATLAB_Compiler
 
       - name: Build DECTSim application
         uses: matlab-actions/run-command@v2
@@ -123,7 +109,7 @@ jobs:
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v3
         with:
-          products: Image_Processing_Toolbox MATLAB_Coder MATLAB_Compiler
+          products: Image_Processing_Toolbox MATLAB_Compiler
 
       - name: Build DECTSim application
         uses: matlab-actions/run-command@v2
