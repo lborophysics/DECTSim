@@ -8,8 +8,7 @@ name: Build and Attach Release Applications
 #
 # Prerequisites for this workflow to succeed:
 #   - scripts/make_mex.m, scripts/build_unix.m and scripts/build_windows.m
-#     must exist on the built commit, and DECTSim.prj must put scripts/
-#     on the path when the project is opened.
+#     must exist on the built commit.
 #   - The MATLAB license used by matlab-actions/setup-matlab must be
 #     entitled to MATLAB Coder and MATLAB Compiler, which are paid add-on
 #     products not included with a base MATLAB license.
@@ -44,7 +43,7 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            openProject(fullfile(pwd, "DECTSim.prj"));
+            addpath(fullfile(pwd, "scripts"));
             build_windows(true);
 
       - name: Zip application output
@@ -86,7 +85,7 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            openProject(fullfile(pwd, "DECTSim.prj"));
+            addpath(fullfile(pwd, "scripts"));
             build_unix(true);
 
       - name: Zip application output
@@ -130,7 +129,7 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: |
-            openProject(fullfile(pwd, "DECTSim.prj"));
+            addpath(fullfile(pwd, "scripts"));
             build_unix(true);
 
       - name: Zip application output
