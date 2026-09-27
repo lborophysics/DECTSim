@@ -101,7 +101,7 @@ Flat Detector
 Purpose
 ~~~~~~~
 
-The flat_detector class is a subclass of the class :class:`flat_array`. The geometry of this is a flat detector panel, with the source emmitting rays perpendicular to the direction of the array.
+The flat_detector class is a subclass of the class :class:`detector_array`. The geometry of this is a flat detector panel, with the source emmitting rays perpendicular to the direction of the array.
 
 Functions
 ~~~~~~~~~
@@ -122,7 +122,7 @@ Functions
 Methods
 ~~~~~~~
 
-.. method:: flat_detector.set_array_angle(detect_geom, angle_index, ray_per_pixel=1)
+.. method:: flat_detector.set_array_angle(detect_geom, angle_index)
 
     :param detect_geom: an instance of the :class:`gantry`.
     :type detect_geom: gantry

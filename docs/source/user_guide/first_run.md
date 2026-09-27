@@ -2,42 +2,48 @@
 
 DECTSim can be run in three ways:
 
-1. As an installed Windows application.
+1. As an installed application (Windows, macOS, or Linux).
 2. From the source code in MATLAB Desktop.
 3. From the source code in MATLAB Online.
 
 ---
 
-## 1. Windows application
+## 1. Installed application
 
-The Windows application does not require a MATLAB licence. It cannot be used to modify or debug the DECTSim source code, run exported MATLAB scripts, or add new MATLAB functions and classes. Users requiring these capabilities should run the source-code version in MATLAB Desktop or MATLAB Online.
+The installed application does not require a MATLAB licence. It cannot be used to modify or debug the DECTSim source code, run exported MATLAB scripts, or add new MATLAB functions and classes. Users requiring these capabilities should run the source-code version in MATLAB Desktop or MATLAB Online.
+
+Releases are built manually by a maintainer with a MATLAB Compiler licence (see [Building the Standalone Application](../dev_guide/building_the_app.md)) rather than automatically, so not every release is guaranteed to include every platform.
 
 ### Install
 
-
 1. Open the DECTSim **Releases** page on GitHub.
 2. Open the latest release.
-3. Under **Assets**, download:
+3. Under **Assets**, download the file for your platform:
 
-   `DECTSim-Windows.zip`
+   - Windows: `DECTSim-Windows.zip`
+   - macOS: `DECTSim-macOS.zip`
+   - Linux: `DECTSim-Linux.zip`
 
 4. Do not download the file labelled **Source code**, as that contains
-   the MATLAB source rather than the Windows application.
+   the MATLAB source rather than the installed application.
 5. Extract the downloaded ZIP file.
 
-6. Run:
+6. Run the installer:
 
-   ```text
-   DECTSimInstaller.exe
-   ```
+   - Windows: double-click `DECTSimInstaller.exe`.
+   - macOS/Linux: in a terminal, run
+     ```bash
+     chmod +x DECTSimInstaller.install
+     ./DECTSimInstaller.install
+     ```
 
 7. Follow the installer instructions.
 
-8. Allow the installer to install MATLAB Runtime when prompted.
+8. Allow the installer to install MATLAB Runtime when prompted (unless it was already bundled into the installer you downloaded).
 
 ### Run
 
-After installation, open **DECTSim** from the Windows Start menu or desktop shortcut.
+After installation, open **DECTSim** from the Windows Start menu/desktop shortcut, or from wherever the macOS/Linux installer placed it.
 
 When the application opens, leave the settings at their defaults and click:
 
@@ -136,7 +142,7 @@ For later sessions:
 
 The source-code version requires access to MATLAB Online and Image Processing Toolbox.
 
-The compiled Windows application cannot be run in MATLAB Online.
+The compiled application (Windows, macOS, or Linux) cannot be run in MATLAB Online.
 
 ### Clone the repository
 

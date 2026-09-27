@@ -143,7 +143,7 @@ Methods
 Functions
 ---------
 
-.. function:: duke_parser(path_to_duke_out)
+.. function:: dukesim_parser(path_to_duke_out)
 
     This function returns the simulated sinogram and parameters from the DukeSim output folder. The argument ``path_to_duke_out`` is the path to the DukeSim output folder, and equivalent to the ``MainDir`` parameter in the DukeSim input file. 
 
@@ -156,7 +156,7 @@ Functions
 
 .. function:: get_duke_source(path_to_duke_out)
 
-    This function returns a :class:`duke_source`  by calling :func:`duke_parser` with the path to the DukeSim output folder and using the resultant parameters to create the source. A file that is necessary for the source is the ``Spectrum_Duke1_120kV_900_1mAs_1ms_calibrated.bin`` file, which can be found in the DukeSim input folder when running the DukeSim simulation. In the future, this function could be modified to receive the path to the source spectrum file.
+    This function returns a :class:`duke_source`  by calling :func:`dukesim_parser` with the path to the DukeSim output folder and using the resultant parameters to create the source. A file that is necessary for the source is the ``Spectrum_Duke1_120kV_900_1mAs_1ms_calibrated.bin`` file, which can be found in the DukeSim input folder when running the DukeSim simulation. In the future, this function could be modified to receive the path to the source spectrum file.
 
     :param path_to_duke_out: The path to the DukeSim output folder.
     :type path_to_duke_out: string
@@ -166,7 +166,7 @@ Functions
 
 .. function:: get_duke_detector(path_to_duke_out)
 
-    This function returns a :class:`detector` object containing a :class:`gantry`, a :class:`curved_detector` or a :class:`flat_detector` and a :class:`duke_sensor` by calling :func:`duke_parser` with the path to the DukeSim output folder and using the resultant parameters to create the detector. A file that is necessary for the detector is the ``DetResponse_Duke1_120kV_final.bin`` file, which can be found in the DukeSim input folder when running the DukeSim simulation. In the future, this function could be modified to receive the path to the detector response file.
+    This function returns a :class:`detector` object containing a :class:`gantry`, a :class:`curved_detector` or a :class:`flat_detector` and a :class:`duke_sensor` by calling :func:`dukesim_parser` with the path to the DukeSim output folder and using the resultant parameters to create the detector. A file that is necessary for the detector is the ``DetResponse_Duke1_120kV_final.bin`` file, which can be found in the DukeSim input folder when running the DukeSim simulation. In the future, this function could be modified to receive the path to the detector response file.
 
     :param path_to_duke_out: The path to the DukeSim output folder.
     :type path_to_duke_out: string
@@ -178,6 +178,6 @@ Functions
 Files
 -----
 
-.. function:: dukesim_voxel_creator
+.. function:: dukesim_voxel_creater
 
     This file creates the phantom for the DukeSim simulation. It uses the :class:`voxel_array` within this package to define the phantom and then saves it in the format required by DukeSim. Currently it is doing a specific phantom, but it could be modified to create any phantom, as long as it can be defined by the :class:`voxel_array`.

@@ -21,6 +21,7 @@ Welcome to DECTSim's documentation!
    :glob: 
    
    dev_guide/intro.md
+   dev_guide/building_the_app.md
    dev_guide/detector_movement.rst
    dev_guide/detector_arrays.rst
    dev_guide/detector.rst

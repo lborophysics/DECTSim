@@ -65,7 +65,7 @@ Below are some guidelines to ensure smooth collaboration and maintain the qualit
 
 
 ## Creating the mex files
-The mex files are created using the Coder app in MATLAB, this can be opened by typing `coder` in the MATLAB command window. Once the app is open, you can select one of three files that are ready be made into a mex file. 
+The easiest way is to run `scripts/make_mex.m` (needs a MATLAB Coder license) — see [Rebuilding the MEX files](building_the_app.md#rebuilding-the-mex-files) for details. The rest of this section describes doing the same thing manually via the Coder app, which is opened by typing `coder` in the MATLAB command window. Once the app is open, you can select one of three files that are ready be made into a mex file. 
 
 The three files are: 
 - `photon_attenuation.m`
