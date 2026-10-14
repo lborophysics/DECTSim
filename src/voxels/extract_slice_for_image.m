@@ -1,18 +1,19 @@
-function [preview, alpha] = save_phantom_preview( ...
-        phantom, output_file)
-%SAVE_PHANTOM_PREVIEW Save the central axial phantom slice as a PNG.
+
+function [preview, alpha] = extract_slice_for_image(phantom, options)
+%EXTRACT_SLICE_FOR_IMAGE Extract an axial phantom slice as an image.
 %
-%   SAVE_PHANTOM_PREVIEW(PHANTOM, OUTPUT_FILE) evaluates the central
-%   x-y slice of a voxel_array. Different phantom objects are shown as
-%   grayscale levels, while the world/background material is transparent.
+%   [PREVIEW, ALPHA] = EXTRACT_SLICE_FOR_IMAGE(PHANTOM)
+%   extracts the central axial slice.
 %
-%   [PREVIEW, ALPHA] = SAVE_PHANTOM_PREVIEW(...) also returns the image
-%   and alpha arrays.
+%   [PREVIEW, ALPHA] = EXTRACT_SLICE_FOR_IMAGE(PHANTOM, slice=N)
+%   extracts axial slice N without saving a file.
 
     arguments
         phantom (1, 1) voxel_array
-        output_file (1, 1) string
+        options.slice double = []
     end
+
+
 
     % num_planes counts boundaries, so subtract one to get voxel cells.
     num_voxels = phantom.num_planes - 1;
@@ -20,10 +21,27 @@ function [preview, alpha] = save_phantom_preview( ...
     ny = num_voxels(2);
     nz = num_voxels(3);
 
-    % Select the central z voxel.
-    z_index = ceil(nz / 2);
+    % Select requested slice
 
-    % Construct every x-y voxel index on the central slice.
+    if isempty(options.slice)
+        z_index = ceil(nz / 2);
+    else
+        z_index = options.slice;
+    end
+
+    % Validate the requested slice.
+    if ~isscalar(z_index) || ~isreal(z_index) || ...
+            ~isfinite(z_index) || z_index < 1 || ...
+            z_index > nz || z_index ~= floor(z_index)
+
+        error("DECTSim:InvalidSlice", ...
+            "Invalid slice. Please enter a finite whole number " + ...
+            "between 1 and %d.", nz);
+    end
+
+
+
+    % Construct every x-y voxel index on the selected slice.
     [x_indices, y_indices] = ndgrid(1:nx, 1:ny);
 
     indices = [
@@ -73,15 +91,4 @@ function [preview, alpha] = save_phantom_preview( ...
     % Fully transparent background, fully opaque phantom.
     alpha = double(foreground);
 
-    output_folder = fileparts(output_file);
-
-    if output_folder ~= "" && ~isfolder(output_folder)
-        mkdir(output_folder);
-    end
-
-    imwrite( ...
-        preview, ...
-        output_file, ...
-        "png", ...
-        "Alpha", alpha);
 end

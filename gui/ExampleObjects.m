@@ -154,3 +154,9 @@ function new_struct = multiply_fields(struct, factor)
     new_struct.b = struct.b * factor;
     new_struct.c = struct.c * factor;
 end
+
+
+function save_phantom_preview(phantom, output_file)
+    [preview, alpha] = extract_slice_for_image(phantom);
+    imwrite(preview, output_file, "png", "Alpha", alpha);
+end
