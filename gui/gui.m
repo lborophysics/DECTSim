@@ -297,7 +297,7 @@ classdef gui < matlab.apps.AppBase
                         , "ParallelCoverage", "cycle");
                     recon = rot90(iradon(P, paraRotAngles, interpolation, filter),2);
                 else
-                    recon = rot90(iradon(sinogram, scan_angles, interpolation, filter),2);
+                    recon = iradon(sinogram, scan_angles, interpolation, filter),2;
                 end
                 app.ShowDropDown.ItemsData{1} = gui.greyToColour(mat2gray(sinogram));
                 app.recons{1} = gui.greyToColour(mat2gray(recon));
