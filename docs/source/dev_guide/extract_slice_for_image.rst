@@ -1,7 +1,7 @@
 Extract Slice For Image
 ====================
 
-this generates a grayscale image from an axial slice of a voxel phantom, which can then be displayed as a preview in the GUI.
+This generates a grayscale image from an axial slice of a voxel phantom, which can then be displayed as a preview in the GUI.
 
 extract_slice_for_image
 --------------------
