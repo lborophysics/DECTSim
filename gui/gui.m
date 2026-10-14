@@ -120,6 +120,54 @@ classdef gui < matlab.apps.AppBase
         function colourImage = greyToColour(image)
             colourImage = cat(3, image, image, image);
         end
+
+        
+        function ratioImage = NormalisedRatio(numerator, denominator, threshold)
+            numerator = double(numerator);
+            denominator = double(denominator);
+            ratioImage = NaN(size(numerator));
+
+            % Find maximum
+            allValues = [numerator(:); denominator(:)];
+            finiteValues = allValues(isfinite(allValues));
+            if isempty(finiteValues)
+                return;
+            end
+
+            sharedMax = max(abs(finiteValues));
+            if sharedMax == 0
+                return;
+            end
+
+            numerator = numerator / sharedMax;
+            denominator = denominator / sharedMax;
+
+            valid = isfinite(numerator) & ...
+                isfinite(denominator) & ...
+                numerator >= threshold & ...
+                denominator >= threshold;
+
+            if ~any(valid(:))
+                return;
+            end
+
+            ratioImage(valid) = numerator(valid) ./ denominator(valid);
+
+            %Exclude extreme outliers
+            values = sort(ratioImage(valid));
+            n = numel(values);
+
+            lowIdx = max(1, ceil(0.02 * n));
+            highIdx = min(n, max(1, ceil(0.98 * n)));
+            low = values(lowIdx);
+            high = values(highIdx);
+
+            if high > low
+                ratioImage(valid) = min(1, max(0,(ratioImage(valid) - low) / (high - low)));
+            end
+        end
+
+
     end
 
 
@@ -297,7 +345,7 @@ classdef gui < matlab.apps.AppBase
                         , "ParallelCoverage", "cycle");
                     recon = rot90(iradon(P, paraRotAngles, interpolation, filter),2);
                 else
-                    recon = rot90(iradon(sinogram, scan_angles, interpolation, filter),2);
+                    recon = iradon(sinogram, scan_angles, interpolation, filter);
                 end
                 app.ShowDropDown.ItemsData{1} = gui.greyToColour(mat2gray(sinogram));
                 app.recons{1} = gui.greyToColour(mat2gray(recon));
@@ -325,10 +373,12 @@ classdef gui < matlab.apps.AppBase
 
                     app.ShowDropDown.ItemsData{2} = gui.greyToColour(mat2gray(sinogram2));
                     app.ShowDropDown.ItemsData{3} = gui.greyToColour(mat2gray(sinogram - sinogram2));
-                    app.ShowDropDown.ItemsData{4} = gui.greyToColour(mat2gray(sinogram ./ sinogram2));
+                    sinogramRatio = gui.NormalisedRatio(sinogram, sinogram2, 1e-3)
+                    app.ShowDropDown.ItemsData{4} = gui.greyToColour(sinogramRatio);
                     app.recons{2} = gui.greyToColour(mat2gray(recon2));
                     app.recons{3} = gui.greyToColour(mat2gray(recon2 - recon));
-                    app.recons{4} = gui.greyToColour(mat2gray(recon2 ./ recon));
+                    imageRatio = gui.NormalisedRatio(recon, recon2, 1e-2)
+                    app.recons{4} = gui.greyToColour(mat2gray(imageRatio));
                 else
                     app.ShowDropDown.ItemsData{4} = [];
                     app.ShowDropDown.ItemsData{3} = [];
@@ -1404,7 +1454,7 @@ classdef gui < matlab.apps.AppBase
             app.NumberofRotationsLabel.FontSize = 14;
             app.NumberofRotationsLabel.Tooltip = {'Number of projections that will be simulated. The source and detector will be rotated around the phantom at a set angle. '; ''; 'With a cone beam, this is the number of projections within 360 degrees.'; ''; 'For a parallel beam, this is the number of projections in 180 degrees.'};
             app.NumberofRotationsLabel.Position = [87 660 133 22];
-            app.NumberofRotationsLabel.Text = 'Number of Projections';
+            app.NumberofRotationsLabel.Text = 'Number of\\ Projections';
 
             % Create PhantomImage
             app.PhantomImage = uiimage(app.ImagePanel);
