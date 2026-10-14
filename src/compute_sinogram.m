@@ -167,4 +167,11 @@ air_signal = sensor_unit.get_signal(air);
 
 % Convert the signal to a sinogram
 sinogram = sensor_unit.get_image(photon_signal + scatter_signal, air_signal);
+
+if any(isnan(sinogram), "all")
+    warning( ...
+        "DECTSim:NaNSinogram", ...
+        "The calculated sinogram contains NaN values.");
+end
+
 end

@@ -13,6 +13,7 @@ classdef gui < matlab.apps.AppBase
         ResetMenu                       matlab.ui.container.Menu
         HelpMenu                        matlab.ui.container.Menu
         DocumentationMenu               matlab.ui.container.Menu
+        AboutMenu                       matlab.ui.container.Menu
         TabGroup                        matlab.ui.container.TabGroup
         RunTab                          matlab.ui.container.Tab
         ImagePanel                      matlab.ui.container.Panel
@@ -125,6 +126,69 @@ classdef gui < matlab.apps.AppBase
 
     % Callbacks that handle component events
     methods (Access = private)
+
+% Update the phantom preview image
+% Update the phantom preview image
+function UpdatePhantomPreview(app)
+    pathToMLAPP = fileparts(mfilename("fullpath"));
+
+    % Default image used when no PNG preview is available.
+    defaultPreview = fullfile( ...
+        pathToMLAPP, ...
+        "graphics", ...
+        "SheppLogan_Phantom.svg");
+
+    previewPath = defaultPreview;
+
+    phantomIndex = app.PhantomListBox.ValueIndex;
+
+    if isempty(phantomIndex) || ...
+            phantomIndex > numel(app.phantom_files)
+        app.PhantomImage.ImageSource = previewPath;
+        return;
+    end
+
+    phantomFile = string( ...
+        app.phantom_files{phantomIndex});
+
+    % Built-in phantoms are stored as filenames. Custom phantoms are
+    % stored as absolute paths.
+    [phantomFolder, ~, ~] = fileparts(phantomFile);
+
+    if phantomFolder == ""
+        phantomFile = fullfile( ...
+            pathToMLAPP, ...
+            phantomFile);
+    end
+
+    [phantomFolder, phantomName, ~] = ...
+        fileparts(phantomFile);
+
+    % First look beside the MAT-file.
+    adjacentPreview = fullfile( ...
+        phantomFolder, ...
+        phantomName + ".png");
+
+    % Then look in the GUI graphics directory.
+    graphicsPreview = fullfile( ...
+        pathToMLAPP, ...
+        "graphics", ...
+        phantomName + ".png");
+
+    if isfile(adjacentPreview)
+        previewPath = adjacentPreview;
+    elseif isfile(graphicsPreview)
+        previewPath = graphicsPreview;
+    end
+
+    app.PhantomImage.ImageSource = previewPath;
+end
+
+
+% Value changed function: PhantomListBox
+function PhantomListBoxValueChanged(app, ~)
+    app.UpdatePhantomPreview();
+end
 
         % Image clicked function: RaysImage, SourceImage
         function ToggleSourcePanelVisibility(app, ~)
@@ -287,7 +351,7 @@ classdef gui < matlab.apps.AppBase
                 interpolation = app.InterpolationDropDown.Value;
 
                 % Source 1
-                sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));       
+                sinogram = squeeze(compute_sinogram(source1, phantom, d, scatter_type, scatter_factor));     
                 if do_fan2para
                     rotation_angle = scan_angles(1); % Assumes even spacing 
                     [P,~,paraRotAngles] = fan2para(sinogram, (dist_to_detector/2)/pixel_dims(1), ...
@@ -437,42 +501,86 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Callback function: LoadPhantomMenu, PhantomLoadButton
-        function PhantomLoadButtonPushed(app, ~)
-            [file,path] = uigetfile('*.mat','Load Saved Phantom File');
-            if ischar(file)
-                [~, name, ~] = fileparts(file);
-                app.PhantomListBox.Items{end + 1} = name;
-                try
-                    app.PhantomListBox.ItemsData{end + 1} = ...
-                        load(fullfile(path, file), 'phantom').phantom;
-                    app.phantom_files{end+1} = fullfile(path, file);
-                catch ME
-                    % If there is an error loading the phantom - let the user know
-                    uialert(app.UIFigure, ME.message, 'Invalid Phantom File');
-                end
+        function PhantomLoadButtonPushed(app, event)
+
+            [phantomFile, phantomPath] = uigetfile( ...
+                "*.mat", ...
+                "Load Phantom");
+
+            if isequal(phantomFile, 0)
+                return;
             end
-        end
+
+            fullPhantomPath = fullfile(phantomPath, phantomFile);
+            [~, phantomName] = fileparts(phantomFile);
+
+            try
+                loadedData = load(fullPhantomPath, "phantom");
+
+                if ~isfield(loadedData, "phantom")
+                    error("The selected MAT-file does not contain a variable named 'phantom'.");
+                end
+
+                loadedPhantom = loadedData.phantom;
+            catch ME
+                uialert( ...
+                    app.UIFigure, ...
+                    sprintf("The phantom could not be loaded:\n\n%s", ME.message), ...
+                    "Load Phantom Error");
+                return;
+            end
+
+            app.PhantomListBox.Items{end + 1} = phantomName;
+            app.PhantomListBox.ItemsData{end + 1} = loadedPhantom;
+            app.phantom_files{end + 1} = fullPhantomPath;
+
+            % Select the newly loaded phantom.
+            app.PhantomListBox.Value = loadedPhantom;
+            app.UpdatePhantomPreview();
+
+        end 
 
         % Callback function: LoadSourceMenu, SourceLoadButton
-        function SourceLoadButtonPushed(app, ~)
-            [file,path] = uigetfile({'*.mat;*.spk', 'MATLAB file or SpekPy spectrum file (*.mat, *.spk)'}, 'Load Saved Source File');
-            if ischar(file)
-                [~, name, ext] = fileparts(file);
-                app.Source1DropDown.Items{end+1} = name;
-                app.Source2DropDown.Items{end+1} = name;
-                try
-                    if ext == ".spk"
-                        loaded_source = source_fromfile(fullfile(path, file));
-                    else
-                        loaded_source = load(fullfile(path, file), 'source').source;
+        function SourceLoadButtonPushed(app, event)
+
+            [sourceFile, sourcePath] = uigetfile( ...
+                {"*.mat;*.spk", "DECTSim source files (*.mat, *.spk)"; ...
+                "*.mat", "MAT-files (*.mat)"; ...
+                "*.spk", "Spectrum files (*.spk)"}, ...
+                "Load Source");
+
+            if isequal(sourceFile, 0)
+                return;
+            end
+
+            fullSourcePath = fullfile(sourcePath, sourceFile);
+            [~, sourceName, sourceExtension] = fileparts(sourceFile);
+
+            try
+                if strcmpi(sourceExtension, ".spk")
+                    loadedSource = source_fromfile(fullSourcePath);
+                else
+                    loadedData = load(fullSourcePath, "source");
+
+                    if ~isfield(loadedData, "source")
+                        error("The selected MAT-file does not contain a variable named 'source'.");
                     end
-                catch ME
-                    % If there is an error loading the source - let the user know
-                    uialert(app.UIFigure, ME.message, 'Invalid Source File');
+
+                    loadedSource = loadedData.source;
                 end
-                app.Source1DropDown.ItemsData{end+1} = loaded_source;
-                app.Source2DropDown.ItemsData{end+1} = loaded_source;
-            end % Nothing selected
+            catch ME
+                uialert( ...
+                    app.UIFigure, ...
+                    sprintf("The source could not be loaded:\n\n%s", ME.message), ...
+                    "Load Source Error");
+                return;
+            end
+
+            app.Source1DropDown.Items{end + 1} = sourceName;
+            app.Source1DropDown.ItemsData{end + 1} = loadedSource;
+
+            app.Source2DropDown.Items{end + 1} = sourceName;
+            app.Source2DropDown.ItemsData{end + 1} = loadedSource;
         end
 
         % Menu selected function: ResetInContextMenu, ResetMenu
@@ -511,8 +619,12 @@ classdef gui < matlab.apps.AppBase
             app.Source2DropDown.Items = {'None', 'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
             app.Source2DropDown.ItemsData = {'None', 'Low Energy (40 kvp)', 'High Energy (80 kvp)'};
             app.Source2DropDown.Value = 'None';
-            app.PhantomListBox.Items = {'Example 1', 'Example 2'};
-            app.PhantomListBox.ItemsData = {'Example 1', 'Example 2'};
+
+            app.PhantomListBox.Items = {"Modified Shepp Logan","Example 2","Example 3","Example 4"};
+            app.PhantomListBox.ItemsData = {"Modified Shepp Logan","Example 2", "Example 3", "Example 4"};
+            app.PhantomListBox.Value = "Modified Shepp Logan";
+            app.phantom_files = {'PhantomExample1.mat', 'PhantomExample2.mat', 'PhantomExample3.mat','PhantomExample4.mat'};
+            app.UpdatePhantomPreview();
 
             % Reset the edit fields
             app.VoxelSizeEditField.Value = 1;
@@ -595,6 +707,7 @@ classdef gui < matlab.apps.AppBase
             state.phantom_selected = app.PhantomListBox.Value;
             state.phantoms         = app.PhantomListBox.Items;
             state.phantom_data     = app.PhantomListBox.ItemsData;
+            state.phantom_files    = app.phantom_files;
             state.voxel_size       = app.VoxelSizeEditField.Value;
             state.voxel_units      = app.VoxelSizeUnits.Value;
 
@@ -620,13 +733,27 @@ classdef gui < matlab.apps.AppBase
 
         % Menu selected function: LoadStateInContextMenu, LoadStateMenu
         function LoadStateSelected(app, event)
-            try
-                state_file = uigetfile('*.mat','Load State');
-                state = load(state_file, 'state').state;
-            catch ME
-                uialert(app.UIFigure, ME.message, 'Invalid State File');
+            [stateFile, statePath] = uigetfile("*.mat", "Load State");
+            if isequal(stateFile, 0)
+                return;
             end
-            if ~ischar(state_file); return; end % Nothing selected
+
+            try
+                loadedData = load(fullfile(statePath, stateFile), "state");
+
+                if ~isfield(loadedData, "state")
+                    error("The selected file does not contain a variable named 'state'.");
+                end
+
+                state = loadedData.state;
+            catch ME
+                uialert( ...
+                    app.UIFigure, ...
+                    sprintf("The state file could not be loaded:\n\n%s", ME.message), ...
+                    "Load State Error");
+                return;
+            end
+
             app.ReconstructionPanel.Visible = state.recon_visible;
             app.DetectorPanel.Visible = state.detector_visible;
             app.PhantomPanel.Visible = state.phantom_visible;
@@ -655,6 +782,9 @@ classdef gui < matlab.apps.AppBase
             app.PhantomListBox.Value = state.phantom_selected;            
             app.VoxelSizeEditField.Value = state.voxel_size;
             app.VoxelSizeUnits.Value = state.voxel_units;
+            if isfield(state, "phantom_files") 
+                app.phantom_files = state.phantom_files;
+            end    
 
             % Set the gantry information
             app.DistToDetectorField.Value = state.dist_to_detector;
@@ -677,16 +807,41 @@ classdef gui < matlab.apps.AppBase
             app.ShowDropDownChanged(event);
             app.DetectorShapeDropDownValueChanged(event);
             app.SourceTypeDropDownValueChanged(event);
+            app.UpdatePhantomPreview();
         end
 
         % Menu selected function: ReconstructionHelpMenu
         function ReconstructionHelpMenuSelected(~, ~)
-            doc iradon
-            web('docs/build/html/user_guide/gui.html#reconstruction')
+            % doc iradon
+            web("https://dectsim.readthedocs.io/en/latest/user_guide/gui.html#reconstruction","-browser");
         end
 
         % Menu selected function: ExportMenu, ExporttoScriptMenu
         function ExporttoScriptMenuSelected(app, ~)
+            
+            %When using exe export is possible but files cannot be used.
+            if isdeployed
+                choice = uiconfirm( ...
+                    app.UIFigure, ...
+                    [ ...
+                        "DECTSim can export the simulation as a MATLAB script, " ...
+                        "but MATLAB Runtime cannot execute MATLAB scripts." newline newline ...
+                        "To run the exported script, you will need a licensed MATLAB " ...
+                        "installation with the required toolboxes." newline newline ...
+                        "Would you still like to export the script?" ...
+                    ], ...
+                        "MATLAB Required to Run Exported Script", ...
+                        "Options", ["Export Script", "Cancel"], ...
+                        "DefaultOption", "Export Script", ...
+                        "CancelOption", "Cancel", ...
+                        "Icon", "warning");
+
+                    if choice == "Cancel"
+                        return;
+                    end
+                end
+
+
             % Create a script to run the simulation
             [file,path] = uiputfile('*.m','Save Script');
             if ~ischar(file); return; end % Nothing selected
@@ -711,7 +866,7 @@ classdef gui < matlab.apps.AppBase
             has_source2 = source2_selected > 1;
             if has_source2 && source2_selected <= 3
                 fprintf(fid, "source2 = load('%s', 'source').source;\n", ...
-                    fullfile(pathToMLAPP, app.source_files{source2_selected}));
+                    fullfile(pathToMLAPP, app.source_files{source2_selected - 1}));
             elseif source2_selected > 3
                 source2 = app.Source2DropDown.ItemsData{source2_selected};
                 save(fullfile(path, 'source2.mat'), "source2");
@@ -838,46 +993,92 @@ classdef gui < matlab.apps.AppBase
         end
 
         % Menu selected function: DocumentationMenu
-        function DocumentationMenuSelected(~, ~)
-            web('docs\build\html\index.html')
+        function DocumentationMenuSelected(app, event)
+            web("https://dectsim.readthedocs.io/en/latest/", "-browser");
         end
 
-        % Menu selected function: SourceHelpMenu_run
-        function SourceHelpMenu_runSelected(~, ~)
-            web('docs/build/html/user_guide/gui.html#source')
+        % Menu selected function: AboutMenu
+        function AboutMenuSelected(app, event)
+            message = sprintf([ ...
+                'DECTSim 1.0.0\n\n' ...
+                'Dual-energy computed tomography simulation application.\n\n' ...
+                'MATLAB®. © 1984 - 2026 The MathWorks, Inc.\n\n' ...
+                'This application was created using MATLAB Compiler and ' ...
+                'requires MATLAB Runtime.\n\n' ...
+                'DECTSim is distributed under the BSD 3-Clause License.\n' ...
+                'Copyright (c) 2023, Joshua Gray and Sofia Pearson.\n\n' ...
+                'See APPLICATION_LICENSE.txt,' ...
+                'for the applicable terms and notices.' ...
+            ]);
+
+            uialert( ...
+                app.UIFigure, ...
+                message, ...
+                'About DECTSim', ...
+                'Icon', 'info');
         end
+         
 
         % Menu selected function: PhantomHelpMenu_run
         function PhantomHelpMenu_runSelected(~, ~)
-            web('docs/build/html/user_guide/gui.html#phantom')
+            web("https://dectsim.readthedocs.io/en/latest/user_guide/gui.html#phantom","-browser");
         end
 
         % Menu selected function: DetectorHelpMenu_run
         function DetectorContextMenuSelected(~, ~)
-            web('docs/build/html/user_guide/gui.html#detector')
+            web("https://dectsim.readthedocs.io/en/latest/user_guide/gui.html#detector","-browser");
         end
 
         % Menu selected function: ScatterHelpMenu
         function ScatterContextMenuSelected(~, ~)
-            web('docs/build/html/user_guide/gui.html#scatter')
+            web("https://dectsim.readthedocs.io/en/latest/user_guide/gui.html#scatter","-browser");
         end
 
         % Menu selected function: ReconstructionMenu_3, SinogramMenu_3
         function OpeninImageViewerMenuSelected(app, event)
-            show_sinogram = strcmp(event.Source.Text, 'Sinogram');
+
+            showSinogram = strcmp(event.Source.Text, "Sinogram");
+
             if isempty(app.recons{1})
-                errordlg('No sinogram to view', 'Invalid Sinogram');return;
+                uialert( ...
+                    app.UIFigure, ...
+                    "Run a simulation before opening an image.", ...
+                    "No Image Available");
+                return;
             end
+
+            if showSinogram
+                imageData = ...
+                    app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex};
+                windowTitle = "DECTSim Sinogram";
+            else
+                imageData = app.recons{app.ShowDropDown.ValueIndex};
+                windowTitle = "DECTSim Reconstruction";
+            end
+
             try
-                if show_sinogram
-                    imageViewer(app.ShowDropDown.ItemsData{app.ShowDropDown.ValueIndex});
+                if isdeployed
+                    % imageViewer is unavailable in MATLAB Runtime.
+                    % Use a standard MATLAB figure instead.
+                    imageFigure = figure( ...
+                        "Name", windowTitle, ...
+                        "NumberTitle", "off");
+
+                    imageAxes = axes(imageFigure);
+
+                    imshow(imageData, ...
+                        "Parent", imageAxes, ...
+                        "InitialMagnification", "fit");
                 else
-                    imageViewer(app.recons{app.ShowDropDown.ValueIndex})
+                    % imageViewer is available in normal MATLAB.
+                    %#exclude imageViewer
+                    imageViewer(imageData);
                 end
             catch ME
-                % If there is an error opening the image viewer - tell the user the error and suggest they install the image processing toolbox
-                message = sprintf('Error opening the image viewer: %s\nIt is possible that the image processing toolbox is not installed. You can install it from the Add-Ons menu.', ME.message);
-                uialert(app.UIFigure, message, 'Error opening image viewer');
+                uialert( ...
+                    app.UIFigure, ...
+                    sprintf("The image could not be opened:\n\n%s", ME.message), ...
+                    "Image Display Error");
             end
         end
     end
@@ -935,6 +1136,13 @@ classdef gui < matlab.apps.AppBase
             app.DocumentationMenu = uimenu(app.HelpMenu);
             app.DocumentationMenu.MenuSelectedFcn = createCallbackFcn(app, @DocumentationMenuSelected, true);
             app.DocumentationMenu.Text = 'Documentation';
+
+            % Create AboutMenu
+            app.AboutMenu = uimenu(app.HelpMenu);
+            app.AboutMenu.MenuSelectedFcn = ...
+                createCallbackFcn(app, @AboutMenuSelected, true);
+            app.AboutMenu.Separator = 'on';
+            app.AboutMenu.Text = 'About DECTSim';
 
             % Create TabGroup
             app.TabGroup = uitabgroup(app.UIFigure);
@@ -1145,6 +1353,7 @@ classdef gui < matlab.apps.AppBase
             app.PhantomListBox = uilistbox(app.PhantomPanel);
             app.PhantomListBox.Items = {'Modified Shepp Logan', 'Example 2', 'Example 3', 'Example 4'};
             app.PhantomListBox.ItemsData = {'Modified Shepp Logan', 'Example 2', 'Example 3', 'Example 4'};
+            app.PhantomListBox.ValueChangedFcn = createCallbackFcn(app, @PhantomListBoxValueChanged, true);
             app.PhantomListBox.Tooltip = {'Select the available phantoms'};
             app.PhantomListBox.Position = [95 51 158 74];
             app.PhantomListBox.Value = 'Modified Shepp Logan';
@@ -1608,6 +1817,7 @@ classdef gui < matlab.apps.AppBase
             app.ScatterFactorSpinner.ContextMenu = app.ScatterContextMenu;
 
             % Show the figure after all components are created
+            app.UpdatePhantomPreview();
             app.UIFigure.Visible = 'on';
         end
     end
